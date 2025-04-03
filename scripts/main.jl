@@ -114,3 +114,50 @@ begin
     Colorbar(f[1,end+1], p)
     f
 end
+
+## Extract infos from BON
+
+# Extract sites
+sites = DataFrame(x=xs, y=ys)
+filter!(:y => !iszero, sites) # remove site with zero as coordinate (for now)
+
+# Extract richness/species info
+@transform!(sites, :richness = [ranges_richness[x, y] for (x,y) in zip(sites.x, sites.y)])
+# Extract species observed from ranges
+ranges_mat = zeros(Int, ns, ns, nsites)
+for i in 1:ns
+    ranges_mat[:, :, i] = deepcopy(ranges.occurrence[i].range_map)
+    ranges_mat[:, :, i] = replace(ranges_mat[:, :, i], 1 => i)
+end
+ranges_mat
+# Extract species observed at sites
+species_mat = [unique(filter(!iszero, ranges_mat[x, y, :])) for x in 1:ns, y in 1:ns]
+@transform!(sites, :species_set = [species_mat[r.x, r.y] for r in eachrow(sites)])
+# List observed species
+observed_species = unique(reduce(vcat, sites.species_set))
+proportion_observed_species = length(observed_species) / ns
+@info "Proportion of species observed at sampled sites: $(round(proportion_observed_species; sigdigits=3))"
+
+# Extract links/interaction info
+@transform!(sites, :links_realized = [realized_links[r.x, r.y] for r in eachrow(sites)])
+@transform!(sites, :links_detected = [detected_links[r.x, r.y] for r in eachrow(sites)])
+# Extract local networks at sites
+@transform!(
+    sites,
+    :realized = [SIN.render(SIN.Binary, realized.scale.network[r.x, r.y]) for r in eachrow(sites)],
+    :detected = [SIN.render(SIN.Binary, detected.scale.network[r.x, r.y]) for r in eachrow(sites)],
+)
+# Extract interactions at sites
+@transform!(sites, :int_realized = [SIN.interactions(r.realized) for r in eachrow(sites)])
+@transform!(sites, :int_detected = [SIN.interactions(r.detected) for r in eachrow(sites)])
+
+# List unique interactions
+observed_int = unique(reduce(vcat, sites.int_realized))
+detected_int = unique(reduce(vcat, sites.int_detected))
+realized_int = SIN.interactions(SIN.render(SIN.Binary, realized.metaweb))
+
+# List proportions
+proportion_observed_int = length(observed_int) / length(realized_int)
+@info "Proportion of interactions observed at sampled sites: $(round(proportion_observed_int; sigdigits=3))"
+proportion_detected_int = length(detected_int) / length(realized_int)
+@info "Proportion of interactions detected at sampled sites: $(round(proportion_detected_int; sigdigits=3))"
