@@ -110,28 +110,43 @@ sum(binary_metaweb)
 
 ## Extract network measures
 
-# Extract spatial link matrix
-detected_links = zeros(Int, size(detected))
-for i in 1:size(detected)[1], j in 1:size(detected)[2]
-    detected_links[i,j] = SIN.links(detected.scale.network[i,j])
+# Function to extract measure across local networks
+function measure(f, m::T) where T <: Metaweb
+    measured = zeros(Int, size(m))
+    for i in 1:size(m)[1], j in 1:size(m)[2]
+        measured[i,j] = f(m.scale.network[i,j])
+    end
+    return measured
 end
-detected_links
-heatmap(detected_links)
 
-# Extract spatial link matrix
-realized_links = zeros(Int, size(realized))
-for i in 1:size(realized)[1], j in 1:size(realized)[2]
-    realized_links[i,j] = SIN.links(realized.scale.network[i,j])
+# Heatmap with colorbar
+function heatmapcb(mat; label="", kw...)
+    f, ax, p = heatmap(mat; kw...)
+    Colorbar(f[1,end+1], p; label=label)
+    f
 end
-realized_links
-heatmap(realized_links; axis=(; aspect=1))
-heatmap(realized_links - detected_links; axis=(; aspect=1))
+
+# Extract detected link matrix
+detected_links = measure(SIN.links, detected)
+heatmapcb(detected_links; axis=(; aspect=1), label="detected")
+
+# Extract realized link matrix
+realized_links = measure(SIN.links, realized)
+heatmapcb(realized_links; axis=(; aspect=1), label="realized")
+heatmapcb(realized_links - detected_links; axis=(; aspect=1), label="realized - detected")
+
+# Extract possible link matrix
+possible_links = measure(SIN.links, pos)
+heatmapcb(possible_links; axis=(; aspect=1), label="possible")
+heatmapcb(ranges_richness; axis=(; aspect=1), label="richness")
+heatmapcb(possible_links./(ranges_richness.^2); axis=(; aspect=1), label="connectance")
+
 
 ## Add BON
 
 # Generate uncertainty layer
 uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(), (100, 100)) end
-heatmap(uncertainty; axis=(; aspect=1))
+heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
 
 # Generate BON
 # bon = BON.sample(BON.AdaptiveHotspot(), uncertainty)
@@ -158,17 +173,20 @@ end
 # View sampling over richness
 ranges_richness = sum(occurrence(ranges))
 begin
-    f, ax, p = heatmap(ranges_richness; axis=(; aspect=1), colormap=:cividis)
+    f = heatmapcb(ranges_richness; axis=(; aspect=1))
     scatter!(xs, ys; color="red")
-    Colorbar(f[1,end+1], p)
     f
 end
 
 # View sampling over interactions
 begin
-    f, ax, p = heatmap(realized_links; axis=(; aspect=1), colormap=:cividis)
+    f = heatmapcb(possible_links; axis=(; aspect=1))
     scatter!(xs, ys; color="red")
-    Colorbar(f[1,end+1], p)
+    f
+end
+begin
+    f = heatmapcb(realized_links; axis=(; aspect=1))
+    scatter!(xs, ys; color="red")
     f
 end
 
@@ -197,28 +215,47 @@ proportion_observed_species = length(observed_species) / ns
     $(round(proportion_observed_species; sigdigits=3))"
 
 # Extract links/interaction info
-@transform!(sites, :links_realized = [realized_links[r.x, r.y] for r in eachrow(sites)])
-@transform!(sites, :links_detected = [detected_links[r.x, r.y] for r in eachrow(sites)])
+@transform!(
+    sites,
+    :links_detected = [detected_links[r.x, r.y] for r in eachrow(sites)],
+    :links_realized = [realized_links[r.x, r.y] for r in eachrow(sites)],
+    :links_possible = [possible_links[r.x, r.y] for r in eachrow(sites)],
+)
 # Extract local networks at sites
 @transform!(
     sites,
-    :realized = [SIN.render(SIN.Binary, realized.scale.network[r.x, r.y]) for r in eachrow(sites)],
     :detected = [SIN.render(SIN.Binary, detected.scale.network[r.x, r.y]) for r in eachrow(sites)],
+    :realized = [SIN.render(SIN.Binary, realized.scale.network[r.x, r.y]) for r in eachrow(sites)],
+    :possible = [SIN.render(SIN.Binary, pos.scale.network[r.x, r.y]) for r in eachrow(sites)],
 )
 # Extract interactions at sites
-@transform!(sites, :int_realized = [SIN.interactions(r.realized) for r in eachrow(sites)])
-@transform!(sites, :int_detected = [SIN.interactions(r.detected) for r in eachrow(sites)])
+@transform!(
+    sites,
+    :int_detected = [SIN.interactions(r.detected) for r in eachrow(sites)],
+    :int_realized = [SIN.interactions(r.realized) for r in eachrow(sites)],
+    :int_possible = [SIN.interactions(r.possible) for r in eachrow(sites)],
+)
 
 # List unique interactions
-observed_int = unique(reduce(vcat, sites.int_realized))
-detected_int = unique(reduce(vcat, sites.int_detected))
-realized_int = SIN.interactions(SIN.render(SIN.Binary, realized.metaweb))
+sampled_int_detected = unique(reduce(vcat, sites.int_detected))
+sampled_int_realized = unique(reduce(vcat, sites.int_realized))
+sampled_int_possible = unique(reduce(vcat, sites.int_possible))
+
+# List all interactionsw
+all_int_detected = SIN.interactions(SIN.render(SIN.Binary, detected.metaweb))
+all_int_realized = SIN.interactions(SIN.render(SIN.Binary, realized.metaweb))
+all_int_possible = SIN.interactions(SIN.render(SIN.Binary, pos.metaweb))
+
 
 # List proportions
-proportion_observed_int = length(observed_int) / length(realized_int)
-@info "Proportion of interactions observed at sampled sites:
-    $(round(proportion_observed_int; sigdigits=3))"
-proportion_detected_int = length(detected_int) / length(realized_int)
-@info "Proportion of interactions detected at sampled sites:
-    $(round(proportion_detected_int; sigdigits=3))"
+prop_detected_int = length(sampled_int_detected) / length(all_int_detected)
+prop_realized_int = length(sampled_int_realized) / length(all_int_realized)
+prop_possible_int = length(sampled_int_possible) / length(all_int_possible)
 
+# Info message
+@info "Proportion of sampled interactions based on detected interactions:
+    $(round(prop_realized_int; sigdigits=3))"
+@info "Proportion of sampled interactions based on realized interactions:
+    $(round(prop_realized_int; sigdigits=3))"
+@info "Proportion of sampled interactions based on possible interactions:
+    $(round(prop_possible_int; sigdigits=3))"
