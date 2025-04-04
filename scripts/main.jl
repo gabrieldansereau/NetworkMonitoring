@@ -27,6 +27,10 @@ ranges.occurrence[2].range_map
 ra = generate(NormalizedLogNormal(σ=1.2), metaweb)
 ra.abundance
 
+# Generate possible local networks
+pos = possible(metaweb, ranges)
+pos.metaweb
+
 # Generate detectable metaweb given abundances
 detectable = detectability(RelativeAbundanceScaled(), metaweb, ra)
 
@@ -41,25 +45,70 @@ realize!(realized)
 detected = deepcopy(realized)
 detect!(detected, detectable)
 
+## Extract network info - SIS.jl's metaweb objects
+
 # Investigate output
 Matrix{Int}(detected.metaweb.edges.edges) == Matrix{Int}(realized.metaweb.edges.edges)
 adjacency(detected.metaweb) == adjacency(realized.metaweb)
-detected_metaweb = Matrix{Int}(adjacency(detected.metaweb) .>= 1)
-realized_metaweb = Matrix{Int}(adjacency(realized.metaweb) .>= 1)
-binary_metaweb = Matrix{Int}(adjacency(metaweb))
-detected_metaweb == binary_metaweb # different
-detected_metaweb == realized_metaweb # same 🤨
-sum(detected_metaweb)
-sum(binary_metaweb)
-heatmap(binary_metaweb - detected_metaweb)
+
+# Extract metawebs
+detected_metaweb1 = Matrix{Int}(adjacency(detected.metaweb) .>= 1)
+realized_metaweb1 = Matrix{Int}(adjacency(realized.metaweb) .>= 1)
+possible_metaweb1 = Matrix{Int}(adjacency(pos.metaweb) .>= 1)
+binary_metaweb1 = Matrix{Int}(adjacency(metaweb))
+
+# Check differences
+detected_metaweb1 == binary_metaweb1 # different
+detected_metaweb1 == possible_metaweb1 # different
+detected_metaweb1 == realized_metaweb1 # same? 🤨
+sum(detected_metaweb1)
+sum(realized_metaweb1)
+sum(possible_metaweb1)
+sum(binary_metaweb1)
+heatmap(binary_metaweb1 - detected_metaweb1)
+
+# Is this worth anything?
+sum(detected_metaweb1) == SIN.links(detected.metaweb) # yep
+sum(realized_metaweb1) == SIN.links(realized.metaweb) # yep
+sum(possible_metaweb1) == SIN.links(pos.metaweb) # yep
+# So just extra steps not to gain much essentially
+# Except to notice difference between detected & realized?
+
+## Extract network info - Manually from scale objects
+
+# Create function to extract metaweb from scale objects
+function metawebify(m::T; binary=true) where T <: Metaweb
+    m_adj = convert.(Matrix{Int}, adjacency(m.scale))
+    m_acc = accumulate(+, vec(m_adj))
+    m_end = m_acc[end]
+    if binary
+        m_end = Matrix{Int}(m_end .>= 1)
+    end
+    return m_end
+end
 
 # Build detected metaweb
-d_all = convert.(Matrix{Int}, adjacency(detected.scale))
-d_acc = accumulate(+, vec(d_all))
-detected_metaweb = Matrix{Int}(d_acc[end] .>= 1)
-sum(detected_metaweb)
+detected_metaweb = metawebify(detected)
+detected_metaweb == detected_metaweb1 # false? 🤨
+(sum(detected_metaweb), sum(detected_metaweb1)) # why so few?
+# same issue as identified previously:
+#   somehow detected_metaweb1 == realized_metaweb, but should it?
+
+# Build realized metaweb
+realized_metaweb = metawebify(realized)
+realized_metaweb == realized_metaweb1 # true 🥳
+(sum(realized_metaweb), sum(realized_metaweb1))
+
+# Build possible metaweb
+possible_metaweb = metawebify(pos)
+possible_metaweb == possible_metaweb1 # true 🥳
+(sum(possible_metaweb), sum(possible_metaweb1))
+
+# Build binary metaweb
+binary_metaweb = binary_metaweb1
 sum(binary_metaweb)
-heatmap(binary_metaweb - detected_metaweb; axis=(; aspect=1))
+
+## Extract network measures
 
 # Extract spatial link matrix
 detected_links = zeros(Int, size(detected))
@@ -115,6 +164,14 @@ begin
     f
 end
 
+# View sampling over interactions
+begin
+    f, ax, p = heatmap(realized_links; axis=(; aspect=1), colormap=:cividis)
+    scatter!(xs, ys; color="red")
+    Colorbar(f[1,end+1], p)
+    f
+end
+
 ## Extract infos from BON
 
 # Extract sites
@@ -136,7 +193,8 @@ species_mat = [unique(filter(!iszero, ranges_mat[x, y, :])) for x in 1:ns, y in 
 # List observed species
 observed_species = unique(reduce(vcat, sites.species_set))
 proportion_observed_species = length(observed_species) / ns
-@info "Proportion of species observed at sampled sites: $(round(proportion_observed_species; sigdigits=3))"
+@info "Proportion of species observed at sampled sites:
+    $(round(proportion_observed_species; sigdigits=3))"
 
 # Extract links/interaction info
 @transform!(sites, :links_realized = [realized_links[r.x, r.y] for r in eachrow(sites)])
@@ -158,6 +216,9 @@ realized_int = SIN.interactions(SIN.render(SIN.Binary, realized.metaweb))
 
 # List proportions
 proportion_observed_int = length(observed_int) / length(realized_int)
-@info "Proportion of interactions observed at sampled sites: $(round(proportion_observed_int; sigdigits=3))"
+@info "Proportion of interactions observed at sampled sites:
+    $(round(proportion_observed_int; sigdigits=3))"
 proportion_detected_int = length(detected_int) / length(realized_int)
-@info "Proportion of interactions detected at sampled sites: $(round(proportion_detected_int; sigdigits=3))"
+@info "Proportion of interactions detected at sampled sites:
+    $(round(proportion_detected_int; sigdigits=3))"
+
