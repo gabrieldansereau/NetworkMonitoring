@@ -138,6 +138,9 @@ heatmapcb(realized_links - detected_links; axis=(; aspect=1), label="realized - 
 # Extract possible link matrix
 possible_links = measure(SIN.links, pos)
 heatmapcb(possible_links; axis=(; aspect=1), label="possible")
+
+# Extract richess
+ranges_richness = sum(occurrence(ranges))
 heatmapcb(ranges_richness; axis=(; aspect=1), label="richness")
 heatmapcb(possible_links./(ranges_richness.^2); axis=(; aspect=1), label="connectance")
 
@@ -164,28 +167,26 @@ bon = BON.sample(BON.SimpleRandom(50), uncertainty)
 xs = round.(Int, 100*[n.coordinate[1] for n in bon.nodes])
 ys = round.(Int, 100*[n.coordinate[2] for n in bon.nodes])
 begin
-    f, ax, p = heatmap(uncertainty; axis=(; aspect=1))
+    f = heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
     scatter!(xs, ys; color="red")
-    Colorbar(f[1,end+1], p)
     f
 end
 
 # View sampling over richness
-ranges_richness = sum(occurrence(ranges))
 begin
-    f = heatmapcb(ranges_richness; axis=(; aspect=1))
+    f = heatmapcb(ranges_richness; axis=(; aspect=1), label="richness")
     scatter!(xs, ys; color="red")
     f
 end
 
 # View sampling over interactions
 begin
-    f = heatmapcb(possible_links; axis=(; aspect=1))
+    f = heatmapcb(possible_links; axis=(; aspect=1), label="possible links")
     scatter!(xs, ys; color="red")
     f
 end
 begin
-    f = heatmapcb(realized_links; axis=(; aspect=1))
+    f = heatmapcb(realized_links; axis=(; aspect=1), label="realized links")
     scatter!(xs, ys; color="red")
     f
 end
@@ -194,10 +195,11 @@ end
 
 # Extract sites
 sites = DataFrame(x=xs, y=ys)
+sites.coords = CartesianIndex.(xs, ys)
 filter!(:y => !iszero, sites) # remove site with zero as coordinate (for now)
 
 # Extract richness/species info
-@transform!(sites, :richness = [ranges_richness[x, y] for (x,y) in zip(sites.x, sites.y)])
+@transform!(sites, :richness = ranges_richness[sites.coords])
 # Extract species observed from ranges
 ranges_mat = zeros(Int, ns, ns, nsites)
 for i in 1:ns
@@ -217,23 +219,23 @@ proportion_observed_species = length(observed_species) / ns
 # Extract links/interaction info
 @transform!(
     sites,
-    :links_detected = [detected_links[r.x, r.y] for r in eachrow(sites)],
-    :links_realized = [realized_links[r.x, r.y] for r in eachrow(sites)],
-    :links_possible = [possible_links[r.x, r.y] for r in eachrow(sites)],
+    :links_detected = detected_links[sites.coords],
+    :links_realized = realized_links[sites.coords],
+    :links_possible = possible_links[sites.coords],
 )
 # Extract local networks at sites
 @transform!(
     sites,
-    :detected = [SIN.render(SIN.Binary, detected.scale.network[r.x, r.y]) for r in eachrow(sites)],
-    :realized = [SIN.render(SIN.Binary, realized.scale.network[r.x, r.y]) for r in eachrow(sites)],
-    :possible = [SIN.render(SIN.Binary, pos.scale.network[r.x, r.y]) for r in eachrow(sites)],
+    :detected = SIN.render.(SIN.Binary, detected.scale.network[sites.coords]),
+    :realized = SIN.render.(SIN.Binary, realized.scale.network[sites.coords]),
+    :possible = SIN.render.(SIN.Binary, pos.scale.network[sites.coords]),
 )
 # Extract interactions at sites
 @transform!(
     sites,
-    :int_detected = [SIN.interactions(r.detected) for r in eachrow(sites)],
-    :int_realized = [SIN.interactions(r.realized) for r in eachrow(sites)],
-    :int_possible = [SIN.interactions(r.possible) for r in eachrow(sites)],
+    :int_detected = SIN.interactions.(sites.detected),
+    :int_realized = SIN.interactions.(sites.realized),
+    :int_possible = SIN.interactions.(sites.possible),
 )
 
 # List unique interactions
@@ -241,11 +243,10 @@ sampled_int_detected = unique(reduce(vcat, sites.int_detected))
 sampled_int_realized = unique(reduce(vcat, sites.int_realized))
 sampled_int_possible = unique(reduce(vcat, sites.int_possible))
 
-# List all interactionsw
+# List all interactions
 all_int_detected = SIN.interactions(SIN.render(SIN.Binary, detected.metaweb))
 all_int_realized = SIN.interactions(SIN.render(SIN.Binary, realized.metaweb))
 all_int_possible = SIN.interactions(SIN.render(SIN.Binary, pos.metaweb))
-
 
 # List proportions
 prop_detected_int = length(sampled_int_detected) / length(all_int_detected)
@@ -254,7 +255,7 @@ prop_possible_int = length(sampled_int_possible) / length(all_int_possible)
 
 # Info message
 @info "Proportion of sampled interactions based on detected interactions:
-    $(round(prop_realized_int; sigdigits=3))"
+    $(round(prop_detected_int; sigdigits=3))"
 @info "Proportion of sampled interactions based on realized interactions:
     $(round(prop_realized_int; sigdigits=3))"
 @info "Proportion of sampled interactions based on possible interactions:
