@@ -14,17 +14,25 @@ Random.seed!(42)
 
 ## Generate network & abundances
 
-# Generate metaweb using Niche Model
+# Define all required variables
 ns = 100
-Random.seed!(42); metaweb = generate(NicheModel(ns,0.2))
+nsites = 100
+C_exp = 0.2
+ra_sigma = 1.2
+ra_scaling = 50.0
+energy_NFL = 100_000
+H_nlm = 0.5
+nbon = 50
+
+# Generate metaweb using Niche Model
+Random.seed!(42); metaweb = generate(NicheModel(ns, C_exp))
 
 # Generate autocorrelated ranges
-nsites = 100
 ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
 ranges.occurrence[2].range_map
 
 # Generate realized abundances
-ra = generate(NormalizedLogNormal(σ=1.2), metaweb)
+ra = generate(NormalizedLogNormal(σ=ra_sigma), metaweb)
 ra.abundance
 
 # Generate possible local networks
@@ -32,12 +40,12 @@ pos = possible(metaweb, ranges)
 pos.metaweb
 
 # Generate detectable metaweb given abundances
-detectable = detectability(RelativeAbundanceScaled(), metaweb, ra)
+detectable = detectability(RelativeAbundanceScaled(ra_scaling), metaweb, ra)
 
 # Generate possible spatial metaweb (given cooccurrence)
 realized = possible(metaweb, ranges)
 # Make network realizable given Neutrally forbidden links
-realizable!(NeutrallyForbiddenLinks(10000), realized, ra)
+realizable!(NeutrallyForbiddenLinks(energy_NFL), realized, ra)
 # Realize it
 realize!(realized)
 
@@ -148,7 +156,7 @@ heatmapcb(possible_links./(ranges_richness.^2); axis=(; aspect=1), label="connec
 ## Add BON
 
 # Generate uncertainty layer
-uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(), (100, 100)) end
+uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(H_nlm), (nsites, nsites)) end
 heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
 
 # Generate BON
@@ -163,7 +171,7 @@ heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
 # end # ???
 
 # Use Simple Random sampling instead
-bon = BON.sample(BON.SimpleRandom(50), uncertainty)
+bon = BON.sample(BON.SimpleRandom(nbon), uncertainty)
 xs = round.(Int, 100*[n.coordinate[1] for n in bon.nodes])
 ys = round.(Int, 100*[n.coordinate[2] for n in bon.nodes])
 begin
