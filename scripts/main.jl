@@ -158,7 +158,7 @@ heatmapcb(possible_links./(ranges_richness.^2); axis=(; aspect=1), label="connec
 ## Add BON
 
 # Generate uncertainty layer
-uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(H_nlm), (nsites, nsites)) end
+uncertainty = begin Random.seed!(42); SDT.SDMLayer(MidpointDisplacement(H_nlm), (nsites, nsites)) end
 heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
 
 # Generate BON
@@ -174,8 +174,8 @@ heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
 
 # Use Simple Random sampling instead
 bon = BON.sample(BON.SimpleRandom(nbon), uncertainty)
-xs = round.(Int, 100*[n.coordinate[1] for n in bon.nodes])
-ys = round.(Int, 100*[n.coordinate[2] for n in bon.nodes])
+xs = round.([n.coordinate[1] for n in bon.nodes]; digits=2)
+ys = round.([n.coordinate[2] for n in bon.nodes]; digits=2)
 begin
     f = heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
     scatter!(xs, ys; color="red")
@@ -184,19 +184,19 @@ end
 
 # View sampling over richness
 begin
-    f = heatmapcb(ranges_richness; axis=(; aspect=1), label="richness")
+    f = heatmapcb(SDT.SDMLayer(ranges_richness); axis=(; aspect=1), label="richness")
     scatter!(xs, ys; color="red")
     f
 end
 
 # View sampling over interactions
 begin
-    f = heatmapcb(possible_links; axis=(; aspect=1), label="possible links")
+    f = heatmapcb(SDT.SDMLayer(possible_links); axis=(; aspect=1), label="possible links")
     scatter!(xs, ys; color="red")
     f
 end
 begin
-    f = heatmapcb(realized_links; axis=(; aspect=1), label="realized links")
+    f = heatmapcb(SDT.SDMLayer(realized_links); axis=(; aspect=1), label="realized links")
     scatter!(xs, ys; color="red")
     f
 end
@@ -205,11 +205,11 @@ end
 
 # Extract sites
 sites = DataFrame(x=xs, y=ys)
-sites.coords = CartesianIndex.(xs, ys)
+# sites.coords = CartesianIndex.(xs, ys)
 filter!(:y => !iszero, sites) # remove site with zero as coordinate (for now)
 
 # Extract richness/species info
-@transform!(sites, :richness = ranges_richness[sites.coords])
+@transform!(sites, :richness = [SDT.SDMLayer(ranges_richness)[x, y] for (x,y) in zip(sites.x, sites.y)])
 # Extract species observed from ranges
 ranges_mat = zeros(Int, ns, ns, nsites)
 for i in 1:ns
