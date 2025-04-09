@@ -4,11 +4,13 @@ using GeoMakie
 using NeutralLandscapes
 using Random
 using SparseArrays
+using SpeciesInteractionNetworks
 using SpeciesInteractionSamplers
 using Statistics
 import BiodiversityObservationNetworks as BON
 import SpeciesDistributionToolkit as SDT
-import SpeciesInteractionNetworks as SIN
+import SpeciesInteractionSamplers as SIS
+using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
 
 Random.seed!(42)
 
@@ -20,12 +22,12 @@ nsites = 100
 C_exp = 0.2
 ra_sigma = 1.2
 ra_scaling = 50.0
-energy_NFL = 100_000
+energy_NFL = 10_000
 H_nlm = 0.5
 nbon = 50
 
 # Generate metaweb using Niche Model
-Random.seed!(42); metaweb = generate(NicheModel(ns, C_exp))
+Random.seed!(42); metaweb = generate(SIS.NicheModel(ns, C_exp))
 
 # Generate autocorrelated ranges
 ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
@@ -76,9 +78,9 @@ sum(binary_metaweb1)
 heatmap(binary_metaweb1 - detected_metaweb1)
 
 # Is this worth anything?
-sum(detected_metaweb1) == SIN.links(detected.metaweb) # yep
-sum(realized_metaweb1) == SIN.links(realized.metaweb) # yep
-sum(possible_metaweb1) == SIN.links(pos.metaweb) # yep
+sum(detected_metaweb1) == links(detected.metaweb) # yep
+sum(realized_metaweb1) == links(realized.metaweb) # yep
+sum(possible_metaweb1) == links(pos.metaweb) # yep
 # So just extra steps not to gain much essentially
 # Except to notice difference between detected & realized?
 
@@ -135,16 +137,16 @@ function heatmapcb(mat; label="", kw...)
 end
 
 # Extract detected link matrix
-detected_links = measure(SIN.links, detected)
+detected_links = measure(links, detected)
 heatmapcb(detected_links; axis=(; aspect=1), label="detected")
 
 # Extract realized link matrix
-realized_links = measure(SIN.links, realized)
+realized_links = measure(links, realized)
 heatmapcb(realized_links; axis=(; aspect=1), label="realized")
 heatmapcb(realized_links - detected_links; axis=(; aspect=1), label="realized - detected")
 
 # Extract possible link matrix
-possible_links = measure(SIN.links, pos)
+possible_links = measure(links, pos)
 heatmapcb(possible_links; axis=(; aspect=1), label="possible")
 
 # Extract richess
@@ -234,16 +236,16 @@ proportion_observed_species = length(observed_species) / ns
 # Extract local networks at sites
 @transform!(
     sites,
-    :detected = SIN.render.(SIN.Binary, detected.scale.network[sites.coords]),
-    :realized = SIN.render.(SIN.Binary, realized.scale.network[sites.coords]),
-    :possible = SIN.render.(SIN.Binary, pos.scale.network[sites.coords]),
+    :detected = render.(Binary, detected.scale.network[sites.coords]),
+    :realized = render.(Binary, realized.scale.network[sites.coords]),
+    :possible = render.(Binary, pos.scale.network[sites.coords]),
 )
 # Extract interactions at sites
 @transform!(
     sites,
-    :int_detected = SIN.interactions.(sites.detected),
-    :int_realized = SIN.interactions.(sites.realized),
-    :int_possible = SIN.interactions.(sites.possible),
+    :int_detected = interactions.(sites.detected),
+    :int_realized = interactions.(sites.realized),
+    :int_possible = interactions.(sites.possible),
 )
 
 # List unique interactions
@@ -252,9 +254,9 @@ sampled_int_realized = unique(reduce(vcat, sites.int_realized))
 sampled_int_possible = unique(reduce(vcat, sites.int_possible))
 
 # List all interactions
-all_int_detected = SIN.interactions(SIN.render(SIN.Binary, detected.metaweb))
-all_int_realized = SIN.interactions(SIN.render(SIN.Binary, realized.metaweb))
-all_int_possible = SIN.interactions(SIN.render(SIN.Binary, pos.metaweb))
+all_int_detected = interactions(render(Binary, detected.metaweb))
+all_int_realized = interactions(render(Binary, realized.metaweb))
+all_int_possible = interactions(render(Binary, pos.metaweb))
 
 # List proportions
 prop_detected_int = length(sampled_int_detected) / length(all_int_detected)
