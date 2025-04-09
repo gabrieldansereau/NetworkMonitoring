@@ -12,34 +12,36 @@ import SpeciesDistributionToolkit as SDT
 import SpeciesInteractionSamplers as SIS
 using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
 
-Random.seed!(42)
+# Random.seed!(42)
 
 ## Generate network & abundances
 
 # Define all required variables
-ns = 100
-nsites = 100
-C_exp = 0.2
-ra_sigma = 1.2
-ra_scaling = 50.0
-energy_NFL = 10_000
-H_nlm = 0.5
-nbon = 50
+# set_params = true
+if !(@isdefined set_params) || set_params
+    @info "Setting parameters to default values"
+    ns = 100
+    nsites = 100
+    C_exp = 0.2
+    ra_sigma = 1.2
+    ra_scaling = 50.0
+    energy_NFL = 10_000
+    H_nlm = 0.5
+    nbon = 50
+end;
 
 # Generate metaweb using Niche Model
-Random.seed!(42); metaweb = generate(SIS.NicheModel(ns, C_exp))
+# Random.seed!(42);
+metaweb = generate(SIS.NicheModel(ns, C_exp))
 
 # Generate autocorrelated ranges
 ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
-ranges.occurrence[2].range_map
 
 # Generate realized abundances
 ra = generate(NormalizedLogNormal(σ=ra_sigma), metaweb)
-ra.abundance
 
 # Generate possible local networks
 pos = possible(metaweb, ranges)
-pos.metaweb
 
 # Generate detectable metaweb given abundances
 detectable = detectability(RelativeAbundanceScaled(ra_scaling), metaweb, ra)
@@ -54,35 +56,6 @@ realize!(realized)
 # Detect it
 detected = deepcopy(realized)
 detect!(detected, detectable)
-
-## Extract network info - SIS.jl's metaweb objects
-
-# Investigate output
-Matrix{Int}(detected.metaweb.edges.edges) == Matrix{Int}(realized.metaweb.edges.edges)
-adjacency(detected.metaweb) == adjacency(realized.metaweb)
-
-# Extract metawebs
-detected_metaweb1 = Matrix{Int}(adjacency(detected.metaweb) .>= 1)
-realized_metaweb1 = Matrix{Int}(adjacency(realized.metaweb) .>= 1)
-possible_metaweb1 = Matrix{Int}(adjacency(pos.metaweb) .>= 1)
-binary_metaweb1 = Matrix{Int}(adjacency(metaweb))
-
-# Check differences
-detected_metaweb1 == binary_metaweb1 # different
-detected_metaweb1 == possible_metaweb1 # different
-detected_metaweb1 == realized_metaweb1 # same? 🤨
-sum(detected_metaweb1)
-sum(realized_metaweb1)
-sum(possible_metaweb1)
-sum(binary_metaweb1)
-heatmap(binary_metaweb1 - detected_metaweb1)
-
-# Is this worth anything?
-sum(detected_metaweb1) == links(detected.metaweb) # yep
-sum(realized_metaweb1) == links(realized.metaweb) # yep
-sum(possible_metaweb1) == links(pos.metaweb) # yep
-# So just extra steps not to gain much essentially
-# Except to notice difference between detected & realized?
 
 ## Extract network info - Manually from scale objects
 
@@ -99,24 +72,15 @@ end
 
 # Build detected metaweb
 detected_metaweb = metawebify(detected)
-detected_metaweb == detected_metaweb1 # false? 🤨
-(sum(detected_metaweb), sum(detected_metaweb1)) # why so few?
-# same issue as identified previously:
-#   somehow detected_metaweb1 == realized_metaweb, but should it?
 
 # Build realized metaweb
 realized_metaweb = metawebify(realized)
-realized_metaweb == realized_metaweb1 # true 🥳
-(sum(realized_metaweb), sum(realized_metaweb1))
 
 # Build possible metaweb
 possible_metaweb = metawebify(pos)
-possible_metaweb == possible_metaweb1 # true 🥳
-(sum(possible_metaweb), sum(possible_metaweb1))
 
 # Build binary metaweb
-binary_metaweb = binary_metaweb1
-sum(binary_metaweb)
+binary_metaweb = Matrix{Int}(adjacency(metaweb))
 
 ## Extract network measures
 
@@ -138,68 +102,26 @@ end
 
 # Extract detected link matrix
 detected_links = measure(links, detected)
-heatmapcb(detected_links; axis=(; aspect=1), label="detected")
 
 # Extract realized link matrix
 realized_links = measure(links, realized)
-heatmapcb(realized_links; axis=(; aspect=1), label="realized")
-heatmapcb(realized_links - detected_links; axis=(; aspect=1), label="realized - detected")
 
 # Extract possible link matrix
 possible_links = measure(links, pos)
-heatmapcb(possible_links; axis=(; aspect=1), label="possible")
 
 # Extract richess
 ranges_richness = sum(occurrence(ranges))
-heatmapcb(ranges_richness; axis=(; aspect=1), label="richness")
-heatmapcb(possible_links./(ranges_richness.^2); axis=(; aspect=1), label="connectance")
-
 
 ## Add BON
 
 # Generate uncertainty layer
-uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(H_nlm), (nsites, nsites)) end
-heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
-
-# Generate BON
-# bon = BON.sample(BON.AdaptiveHotspot(), uncertainty)
-# xs = [n.coordinate[1] for n in bon.nodes]
-# ys = [n.coordinate[2] for n in bon.nodes]
-# begin
-#     f, ax, p = heatmap(uncertainty; axis=(; aspect=1))
-#     scatter!(100xs, 100ys; color="red")
-#     Colorbar(f[1,end+1], p)
-#     f
-# end # ???
+# uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(H_nlm), (nsites, nsites)) end
+uncertainty = rand(MidpointDisplacement(H_nlm), (nsites, nsites))
 
 # Use Simple Random sampling instead
 bon = BON.sample(BON.SimpleRandom(nbon), uncertainty)
-xs = round.(Int, 100*[n.coordinate[1] for n in bon.nodes])
-ys = round.(Int, 100*[n.coordinate[2] for n in bon.nodes])
-begin
-    f = heatmapcb(uncertainty; axis=(; aspect=1), label="uncertainty")
-    scatter!(xs, ys; color="red")
-    f
-end
-
-# View sampling over richness
-begin
-    f = heatmapcb(ranges_richness; axis=(; aspect=1), label="richness")
-    scatter!(xs, ys; color="red")
-    f
-end
-
-# View sampling over interactions
-begin
-    f = heatmapcb(possible_links; axis=(; aspect=1), label="possible links")
-    scatter!(xs, ys; color="red")
-    f
-end
-begin
-    f = heatmapcb(realized_links; axis=(; aspect=1), label="realized links")
-    scatter!(xs, ys; color="red")
-    f
-end
+xs = round.(Int, nsites*[n.coordinate[1] for n in bon.nodes])
+ys = round.(Int, nsites*[n.coordinate[2] for n in bon.nodes])
 
 ## Extract infos from BON
 
@@ -207,6 +129,7 @@ end
 sites = DataFrame(x=xs, y=ys)
 sites.coords = CartesianIndex.(xs, ys)
 filter!(:y => !iszero, sites) # remove site with zero as coordinate (for now)
+filter!(:x => !iszero, sites) # remove site with zero as coordinate (for now)
 
 # Extract richness/species info
 @transform!(sites, :richness = ranges_richness[sites.coords])
@@ -222,9 +145,9 @@ species_mat = [unique(filter(!iszero, ranges_mat[x, y, :])) for x in 1:ns, y in 
 @transform!(sites, :species_set = [species_mat[r.x, r.y] for r in eachrow(sites)])
 # List observed species
 observed_species = unique(reduce(vcat, sites.species_set))
-proportion_observed_species = length(observed_species) / ns
-@info "Proportion of species observed at sampled sites:
-    $(round(proportion_observed_species; sigdigits=3))"
+prop_observed_sp = length(observed_species) / ns
+# @info "Proportion of species observed at sampled sites:
+#     $(round(prop_observed_sp; sigdigits=3))"
 
 # Extract links/interaction info
 @transform!(
@@ -264,9 +187,9 @@ prop_realized_int = length(sampled_int_realized) / length(all_int_realized)
 prop_possible_int = length(sampled_int_possible) / length(all_int_possible)
 
 # Info message
-@info "Proportion of sampled interactions based on detected interactions:
-    $(round(prop_detected_int; sigdigits=3))"
-@info "Proportion of sampled interactions based on realized interactions:
-    $(round(prop_realized_int; sigdigits=3))"
-@info "Proportion of sampled interactions based on possible interactions:
-    $(round(prop_possible_int; sigdigits=3))"
+# @info "Proportion of sampled interactions based on detected interactions:
+#     $(round(prop_detected_int; sigdigits=3))"
+# @info "Proportion of sampled interactions based on realized interactions:
+#     $(round(prop_realized_int; sigdigits=3))"
+# @info "Proportion of sampled interactions based on possible interactions:
+#     $(round(prop_possible_int; sigdigits=3))"
