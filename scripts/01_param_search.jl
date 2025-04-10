@@ -1,9 +1,11 @@
 include("00_include.jl")
 
+# Define script options
 Random.seed!(42)
 SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 set_params = false
 
+# Define parameters to explore
 param_grid = allcombinations(
     DataFrame,
     ns = [100],
@@ -20,6 +22,7 @@ param_grid = allcombinations(
     prop_possible_int = missings(Float64, 1),
 )
 
+# Run for all combinations
 @showprogress for i in 1:nrow(param_grid)
     r = param_grid[i, :]
     global ns = r.ns
@@ -40,4 +43,5 @@ param_grid = allcombinations(
 end
 param_grid
 
+# Export results
 CSV.write("param_grid.csv", param_grid)

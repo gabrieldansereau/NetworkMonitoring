@@ -1,3 +1,4 @@
+using AlgebraOfGraphics
 using CairoMakie
 using CSV
 using DataFramesMeta
