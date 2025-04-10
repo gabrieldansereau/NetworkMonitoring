@@ -44,4 +44,4 @@ end
 param_grid
 
 # Export results
-CSV.write("param_grid.csv", param_grid)
+CSV.write("data/param_grid.csv", param_grid)

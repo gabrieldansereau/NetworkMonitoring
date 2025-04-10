@@ -1,7 +1,7 @@
 include("00_include.jl")
 
 # Load results
-param_grid = CSV.read("param_grid.csv", DataFrame)
+param_grid = CSV.read("data/param_grid.csv", DataFrame)
 
 # Stack all proportion variables
 param_stack = stack(
