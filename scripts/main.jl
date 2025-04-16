@@ -9,6 +9,7 @@ using SpeciesInteractionSamplers
 using Statistics
 import BiodiversityObservationNetworks as BON
 import SpeciesDistributionToolkit as SDT
+import SpeciesDistributionToolkit.SimpleSDMLayers as SSL
 import SpeciesInteractionSamplers as SIS
 using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
 
@@ -115,13 +116,17 @@ ranges_richness = sum(occurrence(ranges))
 ## Add BON
 
 # Generate uncertainty layer
-# uncertainty = begin Random.seed!(42); rand(MidpointDisplacement(H_nlm), (nsites, nsites)) end
-uncertainty = rand(MidpointDisplacement(H_nlm), (nsites, nsites))
+uncertainty = SDT.SDMLayer(
+    MidpointDisplacement(H_nlm), (nsites, nsites);
+    x=(0.0, nsites), y=(0.0, nsites)
+)
 
 # Use Simple Random sampling instead
 bon = BON.sample(BON.SimpleRandom(nbon), uncertainty)
-xs = round.(Int, nsites*[n.coordinate[1] for n in bon.nodes])
-ys = round.(Int, nsites*[n.coordinate[2] for n in bon.nodes])
+boncoords = BON.GI.coordinates(bon)
+bonidx = [SSL.__get_grid_coordinate_by_latlon(uncertainty, bc...) for bc in boncoords]
+xs = getfield.(bonidx, 1)
+ys = getfield.(bonidx, 2)
 
 ## Extract infos from BON
 
@@ -187,9 +192,11 @@ prop_realized_int = length(sampled_int_realized) / length(all_int_realized)
 prop_possible_int = length(sampled_int_possible) / length(all_int_possible)
 
 # Info message
-# @info "Proportion of sampled interactions based on detected interactions:
-#     $(round(prop_detected_int; sigdigits=3))"
-# @info "Proportion of sampled interactions based on realized interactions:
-#     $(round(prop_realized_int; sigdigits=3))"
-# @info "Proportion of sampled interactions based on possible interactions:
-#     $(round(prop_possible_int; sigdigits=3))"
+#=
+@info "Proportion of sampled interactions based on detected interactions:
+    $(round(prop_detected_int; sigdigits=3))"
+@info "Proportion of sampled interactions based on realized interactions:
+    $(round(prop_realized_int; sigdigits=3))"
+@info "Proportion of sampled interactions based on possible interactions:
+    $(round(prop_possible_int; sigdigits=3))"
+ =#
