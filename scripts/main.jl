@@ -111,42 +111,20 @@ prop_observed_sp = length(observed_species) / ns
 # @info "Proportion of species observed at sampled sites:
 #     $(round(prop_observed_sp; sigdigits=3))"
 
-# Extract links/interaction info
-@transform!(
-    sites,
-    :links_detected = detected_links[sites.coords],
-    :links_realized = realized_links[sites.coords],
-    :links_possible = possible_links[sites.coords],
-)
-# Extract local networks at sites
-@transform!(
-    sites,
-    :detected = render.(Binary, detected.scale.network[sites.coords]),
-    :realized = render.(Binary, realized.scale.network[sites.coords]),
-    :possible = render.(Binary, pos.scale.network[sites.coords]),
-)
-# Extract interactions at sites
-@transform!(
-    sites,
-    :int_detected = interactions.(sites.detected),
-    :int_realized = interactions.(sites.realized),
-    :int_possible = interactions.(sites.possible),
-)
-
-# List unique interactions
-sampled_int_detected = unique(reduce(vcat, sites.int_detected))
-sampled_int_realized = unique(reduce(vcat, sites.int_realized))
-sampled_int_possible = unique(reduce(vcat, sites.int_possible))
+# List monitored interactions
+int_detected = monitor(x -> interactions(render(Binary, x)), detected, bon; makeunique=true)
+int_realized = monitor(x -> interactions(render(Binary, x)), realized, bon; makeunique=true)
+int_possible = monitor(x -> interactions(render(Binary, x)), pos, bon; makeunique=true)
 
 # List all interactions
-all_int_detected = interactions(render(Binary, detected.metaweb))
-all_int_realized = interactions(render(Binary, realized.metaweb))
-all_int_possible = interactions(render(Binary, pos.metaweb))
+all_detected = interactions(render(Binary, detected.metaweb))
+all_realized = interactions(render(Binary, realized.metaweb))
+all_possible = interactions(render(Binary, pos.metaweb))
 
-# List proportions
-prop_detected_int = length(sampled_int_detected) / length(all_int_detected)
-prop_realized_int = length(sampled_int_realized) / length(all_int_realized)
-prop_possible_int = length(sampled_int_possible) / length(all_int_possible)
+# List proportions to compare
+prop_detected_int = length(int_detected) / length(all_detected)
+prop_realized_int = length(int_realized) / length(all_realized)
+prop_possible_int = length(int_possible) / length(all_possible)
 
 # Info message
 #=

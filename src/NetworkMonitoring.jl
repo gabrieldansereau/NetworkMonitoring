@@ -24,9 +24,10 @@ using Reexport
 end
 
 include("metaweb.jl")
+include("monitor.jl")
 include("plots.jl")
 
 export BON, SDT, SSL, SIS, SIN
-export metawebify, extract, heatmapcb
+export metawebify, extract, heatmapcb, monitor
 
 end # module NetworkMonitoring
