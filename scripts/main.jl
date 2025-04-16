@@ -121,8 +121,8 @@ uncertainty = SDT.SDMLayer(
     x=(0.0, nsites), y=(0.0, nsites)
 )
 
-# Use Simple Random sampling instead
-bon = BON.sample(BON.SimpleRandom(nbon), uncertainty)
+# Use BalancedAcceptance sampling
+bon = BON.sample(BON.BalancedAcceptance(nbon), uncertainty)
 boncoords = BON.GI.coordinates(bon)
 bonidx = [SSL.__get_grid_coordinate_by_latlon(uncertainty, bc...) for bc in boncoords]
 xs = getfield.(bonidx, 1)
