@@ -33,10 +33,13 @@ end;
 
 # Generate metaweb using Niche Model
 # Random.seed!(42);
+sp = SpeciesPool(Symbol.("sp", 1:ns))
 metaweb = generate(SIS.NicheModel(ns, C_exp))
+metaweb.species = sp
 
 # Generate autocorrelated ranges
-ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
+ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)), ns)
+ranges.species .= sp.names
 
 # Generate realized abundances
 ra = generate(NormalizedLogNormal(σ=ra_sigma), metaweb)
