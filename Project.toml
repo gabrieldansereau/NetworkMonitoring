@@ -1,3 +1,5 @@
+name = "NetworkMonitoring"
+
 [deps]
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 BiodiversityObservationNetworks = "a5b868d3-191d-4bba-a38a-ad28190da010"
