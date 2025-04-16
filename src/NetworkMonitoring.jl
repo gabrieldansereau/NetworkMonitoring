@@ -1,5 +1,32 @@
 module NetworkMonitoring
 
-greet() = print("Hello World!")
+using Reexport
+
+@reexport begin
+    using CairoMakie
+    using DataFramesMeta
+    using GeoMakie
+    using NeutralLandscapes
+    using Random
+    using SparseArrays
+    using SpeciesInteractionNetworks
+    using SpeciesInteractionSamplers
+    using Statistics
+
+    import BiodiversityObservationNetworks as BON
+    import SpeciesDistributionToolkit as SDT
+    import SpeciesDistributionToolkit.SimpleSDMLayers as SSL
+    import SpeciesInteractionSamplers as SIS
+
+    using BiodiversityObservationNetworks: GI.coordinates
+    using SpeciesDistributionToolkit: SimpleSDMLayers.__get_grid_coordinate_by_latlon as get_grid_coordinate_by_latlon
+    using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
+end
+
+include("metaweb.jl")
+include("plots.jl")
+
+export BON, SDT, SSL, SIS, SIN
+export metawebify, extract, heatmapcb
 
 end # module NetworkMonitoring

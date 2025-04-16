@@ -1,17 +1,4 @@
-using CairoMakie
-using DataFramesMeta
-using GeoMakie
-using NeutralLandscapes
-using Random
-using SparseArrays
-using SpeciesInteractionNetworks
-using SpeciesInteractionSamplers
-using Statistics
-import BiodiversityObservationNetworks as BON
-import SpeciesDistributionToolkit as SDT
-import SpeciesDistributionToolkit.SimpleSDMLayers as SSL
-import SpeciesInteractionSamplers as SIS
-using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
+using NetworkMonitoring
 
 # Random.seed!(42)
 
@@ -60,17 +47,6 @@ detect!(detected, detectable)
 
 ## Extract network info - Manually from scale objects
 
-# Create function to extract metaweb from scale objects
-function metawebify(m::T; binary=true) where T <: Metaweb
-    m_adj = convert.(Matrix{Int}, adjacency(m.scale))
-    m_acc = accumulate(+, vec(m_adj))
-    m_end = m_acc[end]
-    if binary
-        m_end = Matrix{Int}(m_end .>= 1)
-    end
-    return m_end
-end
-
 # Build detected metaweb
 detected_metaweb = metawebify(detected)
 
@@ -85,30 +61,14 @@ binary_metaweb = Matrix{Int}(adjacency(metaweb))
 
 ## Extract network measures
 
-# Function to extract measure across local networks
-function measure(f, m::T) where T <: Metaweb
-    measured = zeros(Int, size(m))
-    for i in 1:size(m)[1], j in 1:size(m)[2]
-        measured[i,j] = f(m.scale.network[i,j])
-    end
-    return measured
-end
-
-# Heatmap with colorbar
-function heatmapcb(mat; label="", kw...)
-    f, ax, p = heatmap(mat; kw...)
-    Colorbar(f[1,end+1], p; label=label)
-    f
-end
-
 # Extract detected link matrix
-detected_links = measure(links, detected)
+detected_links = extract(links, detected)
 
 # Extract realized link matrix
-realized_links = measure(links, realized)
+realized_links = extract(links, realized)
 
 # Extract possible link matrix
-possible_links = measure(links, pos)
+possible_links = extract(links, pos)
 
 # Extract richess
 ranges_richness = sum(occurrence(ranges))
@@ -123,8 +83,8 @@ uncertainty = SDT.SDMLayer(
 
 # Use BalancedAcceptance sampling
 bon = BON.sample(BON.BalancedAcceptance(nbon), uncertainty)
-boncoords = BON.GI.coordinates(bon)
-bonidx = [SSL.__get_grid_coordinate_by_latlon(uncertainty, bc...) for bc in boncoords]
+boncoords = coordinates(bon)
+bonidx = [get_grid_coordinate_by_latlon(uncertainty, bc...) for bc in boncoords]
 xs = getfield.(bonidx, 1)
 ys = getfield.(bonidx, 2)
 
@@ -133,23 +93,20 @@ ys = getfield.(bonidx, 2)
 # Extract sites
 sites = DataFrame(x=xs, y=ys)
 sites.coords = CartesianIndex.(xs, ys)
-filter!(:y => !iszero, sites) # remove site with zero as coordinate (for now)
-filter!(:x => !iszero, sites) # remove site with zero as coordinate (for now)
 
 # Extract richness/species info
 @transform!(sites, :richness = ranges_richness[sites.coords])
 # Extract species observed from ranges
-ranges_mat = zeros(Int, ns, ns, nsites)
+ranges_mat = Array{Union{Nothing, Symbol}}(nothing, ns, ns, nsites)
 for i in 1:ns
-    ranges_mat[:, :, i] = deepcopy(ranges.occurrence[i].range_map)
-    ranges_mat[:, :, i] = replace(ranges_mat[:, :, i], 1 => i)
+    ranges_mat[findall(!iszero, ranges.occurrence[i].range_map), i] .= ranges.species[i]
 end
 ranges_mat
 # Extract species observed at sites
-species_mat = [unique(filter(!iszero, ranges_mat[x, y, :])) for x in 1:ns, y in 1:ns]
+species_mat = [unique(filter(!isnothing, ranges_mat[x, y, :])) for x in 1:ns, y in 1:ns]
 @transform!(sites, :species_set = [species_mat[r.x, r.y] for r in eachrow(sites)])
 # List observed species
-observed_species = unique(reduce(vcat, sites.species_set))
+observed_species = Vector{Symbol}(unique(reduce(vcat, sites.species_set)))
 prop_observed_sp = length(observed_species) / ns
 # @info "Proportion of species observed at sampled sites:
 #     $(round(prop_observed_sp; sigdigits=3))"
