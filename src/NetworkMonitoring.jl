@@ -5,6 +5,7 @@ using Reexport
 @reexport begin
     using CairoMakie
     using DataFramesMeta
+    using DrWatson
     using GeoMakie
     using NeutralLandscapes
     using Random
@@ -23,11 +24,11 @@ using Reexport
     using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
 end
 
-include("metaweb.jl")
-include("monitor.jl")
-include("plots.jl")
-include("ranges.jl")
-include("utils.jl")
+include(srcdir("metaweb.jl"))
+include(srcdir("monitor.jl"))
+include(srcdir("plots.jl"))
+include(srcdir("ranges.jl"))
+include(srcdir("utils.jl"))
 
 export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor

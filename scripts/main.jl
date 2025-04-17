@@ -1,4 +1,5 @@
-using NetworkMonitoring
+using DrWatson
+@quickactivate :NetworkMonitoring
 
 # Random.seed!(42)
 
