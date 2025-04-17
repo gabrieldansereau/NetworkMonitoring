@@ -8,7 +8,7 @@ using NetworkMonitoring
 # set_params = true
 if !(@isdefined set_params) || set_params
     @info "Setting parameters to default values"
-    ns = 100
+    ns = 75
     nsites = 100
     C_exp = 0.2
     ra_sigma = 1.2
@@ -71,7 +71,7 @@ realized_links = extract(links, realized)
 possible_links = extract(links, pos)
 
 # Extract richess
-ranges_richness = sum(occurrence(ranges))
+possible_richness = extract(sum, ranges)
 
 ## Add BON
 
@@ -83,33 +83,12 @@ uncertainty = SDT.SDMLayer(
 
 # Use BalancedAcceptance sampling
 bon = BON.sample(BON.BalancedAcceptance(nbon), uncertainty)
-boncoords = coordinates(bon)
-bonidx = [get_grid_coordinate_by_latlon(uncertainty, bc...) for bc in boncoords]
-xs = getfield.(bonidx, 1)
-ys = getfield.(bonidx, 2)
 
 ## Extract infos from BON
 
-# Extract sites
-sites = DataFrame(x=xs, y=ys)
-sites.coords = CartesianIndex.(xs, ys)
-
-# Extract richness/species info
-@transform!(sites, :richness = ranges_richness[sites.coords])
-# Extract species observed from ranges
-ranges_mat = Array{Union{Nothing, Symbol}}(nothing, ns, ns, nsites)
-for i in 1:ns
-    ranges_mat[findall(!iszero, ranges.occurrence[i].range_map), i] .= ranges.species[i]
-end
-ranges_mat
-# Extract species observed at sites
-species_mat = [unique(filter(!isnothing, ranges_mat[x, y, :])) for x in 1:ns, y in 1:ns]
-@transform!(sites, :species_set = [species_mat[r.x, r.y] for r in eachrow(sites)])
 # List observed species
-observed_species = Vector{Symbol}(unique(reduce(vcat, sites.species_set)))
-prop_observed_sp = length(observed_species) / ns
-# @info "Proportion of species observed at sampled sites:
-#     $(round(prop_observed_sp; sigdigits=3))"
+sp_monitored = monitor(x -> findall(isone, x), ranges, bon; makeunique=true)
+sp_monitored = NetworkMonitoring._getspecies(sp_monitored, ranges)
 
 # List monitored interactions
 int_detected = monitor(x -> interactions(render(Binary, x)), detected, bon; makeunique=true)
@@ -122,16 +101,19 @@ all_realized = interactions(render(Binary, realized.metaweb))
 all_possible = interactions(render(Binary, pos.metaweb))
 
 # List proportions to compare
-prop_detected_int = length(int_detected) / length(all_detected)
-prop_realized_int = length(int_realized) / length(all_realized)
-prop_possible_int = length(int_possible) / length(all_possible)
+prop_detected_int = length(int_detected) / sum(detected_metaweb)
+prop_realized_int = length(int_realized) / sum(realized_metaweb)
+prop_possible_int = length(int_possible) / sum(possible_metaweb)
+prop_monitored_sp = length(sp_monitored) / ns
 
 # Info message
 #=
-@info "Proportion of sampled interactions based on detected interactions:
+@info "Proportion of monitored interactions based on detected interactions:
     $(round(prop_detected_int; sigdigits=3))"
-@info "Proportion of sampled interactions based on realized interactions:
+@info "Proportion of monitored interactions based on realized interactions:
     $(round(prop_realized_int; sigdigits=3))"
-@info "Proportion of sampled interactions based on possible interactions:
+@info "Proportion of monitored interactions based on possible interactions:
     $(round(prop_possible_int; sigdigits=3))"
+@info "Proportion of monitored species over all species:
+    $(round(prop_monitored_sp; sigdigits=3))"
  =#

@@ -26,6 +26,8 @@ end
 include("metaweb.jl")
 include("monitor.jl")
 include("plots.jl")
+include("ranges.jl")
+include("utils.jl")
 
 export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor
