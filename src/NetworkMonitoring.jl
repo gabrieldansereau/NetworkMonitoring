@@ -3,6 +3,7 @@ module NetworkMonitoring
 using Reexport
 
 @reexport begin
+    using AlgebraOfGraphics
     using CairoMakie
     using CSV
     using DrWatson

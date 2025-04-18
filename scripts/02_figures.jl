@@ -1,7 +1,8 @@
-include("00_include.jl")
+using DrWatson
+@quickactivate :NetworkMonitoring
 
 # Load results
-param_grid = CSV.read("data/param_grid.csv", DataFrame)
+param_grid = CSV.read(datadir("param_grid.csv"), DataFrame)
 
 # Stack all proportion variables
 param_stack = stack(
@@ -44,7 +45,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/connectance.png", fig; px_per_unit=2.0)
+save(plotsdir("connectance.png"), fig; px_per_unit=2.0)
 
 # RA_sigma
 fig = jitterplot *
@@ -53,7 +54,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/ra_sigma.png", fig; px_per_unit=2.0)
+save(plotsdir("ra_sigma.png"), fig; px_per_unit=2.0)
 
 # RA_scaling
 fig = jitterplot *
@@ -62,7 +63,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/ra_scaling.png", fig; px_per_unit=2.0)
+save(plotsdir("ra_scaling.png"), fig; px_per_unit=2.0)
 
 # Energy
 fig = jitterplot *
@@ -71,7 +72,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/energy_nfl.png", fig; px_per_unit=2.0)
+save(plotsdir("energy_nfl.png"), fig; px_per_unit=2.0)
 
 # Autocorrelation
 fig = jitterplot *
@@ -80,7 +81,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/h_nlm.png", fig; px_per_unit=2.0)
+save(plotsdir("h_nlm.png"), fig; px_per_unit=2.0)
 
 # Number of sampled sites
 fig = jitterplot *
@@ -89,7 +90,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/nbon.png", fig; px_per_unit=2.0)
+save(plotsdir("nbon.png"), fig; px_per_unit=2.0)
 
 
 
