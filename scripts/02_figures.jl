@@ -1,5 +1,11 @@
+# using DrWatson
+# @quickactivate :NetworkMonitoring
+
+using CSV
+using DataFramesMeta
+using AlgebraOfGraphics
+using CairoMakie
 using DrWatson
-@quickactivate :NetworkMonitoring
 
 # Load results
 param_grid = CSV.read(datadir("param_grid.csv"), DataFrame)
@@ -39,7 +45,11 @@ jitterplot = data(param_stack) *
     )
 
 # Connectance
-fig = jitterplot *
+fig = data(param_stack) *
+    visual(
+        RainClouds;
+        markersize=8, jitter_width=0.5, clouds=nothing, plot_boxplots=false
+    ) *
     mapping(
         :C_exp => nonnumeric => "Expected connectance",
         :prop => "Proportion of sampled elements";
