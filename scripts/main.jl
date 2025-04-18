@@ -6,28 +6,26 @@ using DrWatson
 # Define all required variables
 # set_params = true
 const defaults = Dict(
-    "ns" => 75,
-    "nsites" => 100,
-    "C_exp" => 0.2,
-    "ra_sigma" => 1.2,
-    "ra_scaling" => 50.0,
-    "energy_NFL" => 10_000,
-    "H_nlm" => 0.5,
-    "nbon" => 50,
-    "refmethod" => "metawebify",
+    :ns => 75,
+    :nsites => 100,
+    :C_exp => 0.2,
+    :ra_sigma => 1.2,
+    :ra_scaling => 50.0,
+    :energy_NFL => 10_000,
+    :H_nlm => 0.5,
+    :nbon => 50,
+    :refmethod => "metawebify",
 )
-# dicts = dict_list(all_params)
-
 
 ## Generate network & abundances
 
 function generate_networks(;
-    ns=defaults["ns"],
-    nsites=defaults["nsites"],
-    C_exp=defaults["C_exp"],
-    ra_sigma=defaults["ra_sigma"],
-    ra_scaling=defaults["ra_scaling"],
-    energy_NFL=defaults["energy_NFL"],
+    ns=defaults[:ns],
+    nsites=defaults[:nsites],
+    C_exp=defaults[:C_exp],
+    ra_sigma=defaults[:ra_sigma],
+    ra_scaling=defaults[:ra_scaling],
+    energy_NFL=defaults[:energy_NFL],
 )
     # Generate metaweb using Niche Model
     # Random.seed!(42);
@@ -56,7 +54,7 @@ function generate_networks(;
     detected = deepcopy(realized)
     detect!(detected, detectable)
 
-    res = @strdict metaweb ranges ra pos realized detected
+    res = @dict metaweb ranges ra pos realized detected
 
     return res
 end
@@ -64,9 +62,9 @@ end
 ## Add BON
 
 function generate_bon(;
-    nsites=defaults["nsites"],
-    H_nlm=defaults["H_nlm"],
-    nbon=defaults["nbon"],
+    nsites=defaults[:nsites],
+    H_nlm=defaults[:H_nlm],
+    nbon=defaults[:nbon],
 )
     # Generate uncertainty layer
     uncertainty = SDT.SDMLayer(
@@ -149,7 +147,6 @@ function main(d::Dict)
     prop_realized_int = evaluate_monitoring(realized, bon; ref=ref)
     prop_possible_int = evaluate_monitoring(pos, bon; ref=ref)
 
-    return @strdict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
+    return @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
 end
 main() = main(defaults)
-main()
