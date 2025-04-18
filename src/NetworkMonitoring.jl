@@ -4,8 +4,8 @@ using Reexport
 
 @reexport begin
     using CairoMakie
-    using DataFramesMeta
     using DrWatson
+    using DataFramesMeta
     using GeoMakie
     using NeutralLandscapes
     using Random
@@ -24,11 +24,16 @@ using Reexport
     using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
 end
 
-include(srcdir("metaweb.jl"))
-include(srcdir("monitor.jl"))
-include(srcdir("plots.jl"))
-include(srcdir("ranges.jl"))
-include(srcdir("utils.jl"))
+include("metaweb.jl")
+include("monitor.jl")
+include("plots.jl")
+include("ranges.jl")
+include("utils.jl")
+
+# Trick LanguageServer into cooperating in script files
+@static if false
+    include("../scripts/main.jl")
+end
 
 export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor
