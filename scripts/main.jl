@@ -3,118 +3,153 @@ using DrWatson
 
 # Random.seed!(42)
 
-## Generate network & abundances
-
 # Define all required variables
 # set_params = true
-if !(@isdefined set_params) || set_params
-    @info "Setting parameters to default values"
-    ns = 75
-    nsites = 100
-    C_exp = 0.2
-    ra_sigma = 1.2
-    ra_scaling = 50.0
-    energy_NFL = 10_000
-    H_nlm = 0.5
-    nbon = 50
-end;
+const defaults = Dict(
+    "ns" => 75,
+    "nsites" => 100,
+    "C_exp" => 0.2,
+    "ra_sigma" => 1.2,
+    "ra_scaling" => 50.0,
+    "energy_NFL" => 10_000,
+    "H_nlm" => 0.5,
+    "nbon" => 50,
+    "refmethod" => "metawebify",
+)
+# dicts = dict_list(all_params)
 
-# Generate metaweb using Niche Model
-# Random.seed!(42);
-metaweb = generate(SIS.NicheModel(ns, C_exp))
 
-# Generate autocorrelated ranges
-ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
+## Generate network & abundances
 
-# Generate realized abundances
-ra = generate(NormalizedLogNormal(σ=ra_sigma), metaweb)
+function generate_networks(;
+    ns=defaults["ns"],
+    nsites=defaults["nsites"],
+    C_exp=defaults["C_exp"],
+    ra_sigma=defaults["ra_sigma"],
+    ra_scaling=defaults["ra_scaling"],
+    energy_NFL=defaults["energy_NFL"],
+)
+    # Generate metaweb using Niche Model
+    # Random.seed!(42);
+    metaweb = generate(SIS.NicheModel(ns, C_exp))
 
-# Generate possible local networks
-pos = possible(metaweb, ranges)
+    # Generate autocorrelated ranges
+    ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
 
-# Generate detectable metaweb given abundances
-detectable = detectability(RelativeAbundanceScaled(ra_scaling), metaweb, ra)
+    # Generate realized abundances
+    ra = generate(NormalizedLogNormal(σ=ra_sigma), metaweb)
 
-# Generate possible spatial metaweb (given cooccurrence)
-realized = possible(metaweb, ranges)
-# Make network realizable given Neutrally forbidden links
-realizable!(NeutrallyForbiddenLinks(energy_NFL), realized, ra)
-# Realize it
-realize!(realized)
+    # Generate possible local networks
+    pos = possible(metaweb, ranges)
 
-# Detect it
-detected = deepcopy(realized)
-detect!(detected, detectable)
+    # Generate detectable metaweb given abundances
+    detectable = detectability(RelativeAbundanceScaled(ra_scaling), metaweb, ra)
 
-## Extract network info - Manually from scale objects
+    # Generate possible spatial metaweb (given cooccurrence)
+    realized = possible(metaweb, ranges)
+    # Make network realizable given Neutrally forbidden links
+    realizable!(NeutrallyForbiddenLinks(energy_NFL), realized, ra)
+    # Realize it
+    realize!(realized)
 
-# Build detected metaweb
-detected_metaweb = metawebify(detected)
+    # Detect it
+    detected = deepcopy(realized)
+    detect!(detected, detectable)
 
-# Build realized metaweb
-realized_metaweb = metawebify(realized)
+    res = @strdict metaweb ranges ra pos realized detected
 
-# Build possible metaweb
-possible_metaweb = metawebify(pos)
-
-# Build binary metaweb
-binary_metaweb = Matrix{Int}(adjacency(metaweb))
-
-## Extract network measures
-
-# Extract detected link matrix
-detected_links = extract(links, detected)
-
-# Extract realized link matrix
-realized_links = extract(links, realized)
-
-# Extract possible link matrix
-possible_links = extract(links, pos)
-
-# Extract richess
-possible_richness = extract(sum, ranges)
+    return res
+end
 
 ## Add BON
 
-# Generate uncertainty layer
-uncertainty = SDT.SDMLayer(
-    MidpointDisplacement(H_nlm), (nsites, nsites);
-    x=(0.0, nsites), y=(0.0, nsites)
+function generate_bon(;
+    nsites=defaults["nsites"],
+    H_nlm=defaults["H_nlm"],
+    nbon=defaults["nbon"],
 )
+    # Generate uncertainty layer
+    uncertainty = SDT.SDMLayer(
+        MidpointDisplacement(H_nlm), (nsites, nsites);
+        x=(0.0, nsites), y=(0.0, nsites)
+    )
 
-# Use BalancedAcceptance sampling
-bon = BON.sample(BON.BalancedAcceptance(nbon), uncertainty)
+    # Use BalancedAcceptance sampling
+    bon = BON.sample(BON.BalancedAcceptance(nbon), uncertainty)
 
-## Extract infos from BON
+    return bon
+end
 
-# List observed species
-sp_monitored = monitor(x -> findall(isone, x), ranges, bon; makeunique=true)
-sp_monitored = NetworkMonitoring._getspecies(sp_monitored, ranges)
+## Extract infos from BON & evaluate monitoring
 
-# List monitored interactions
-int_detected = monitor(x -> interactions(render(Binary, x)), detected, bon; makeunique=true)
-int_realized = monitor(x -> interactions(render(Binary, x)), realized, bon; makeunique=true)
-int_possible = monitor(x -> interactions(render(Binary, x)), pos, bon; makeunique=true)
+# Species
+function evaluate_monitoring(
+    occ::T, bon::BON.BiodiversityObservationNetwork
+) where T <: Occurrence
+    # List monitored species
+    monitored = monitor(x -> findall(isone, x), occ, bon; makeunique=true)
+    monitored = NetworkMonitoring._getspecies(monitored, occ)
 
-# List all interactions
-all_detected = interactions(render(Binary, detected.metaweb))
-all_realized = interactions(render(Binary, realized.metaweb))
-all_possible = interactions(render(Binary, pos.metaweb))
+    # Evaluate proportion of monitored species
+    prop_monitored = length(monitored) / length(occ.species)
+end
 
-# List proportions to compare
-prop_detected_int = length(int_detected) / sum(detected_metaweb)
-prop_realized_int = length(int_realized) / sum(realized_metaweb)
-prop_possible_int = length(int_possible) / sum(possible_metaweb)
-prop_monitored_sp = length(sp_monitored) / ns
+# Interactions
+function evaluate_monitoring(
+    m::T, bon::BON.BiodiversityObservationNetwork; ref=nothing
+) where T <: Metaweb
+    # List monitored interactions
+    monitored = monitor(x -> interactions(render(Binary, x)), m, bon; makeunique=true)
 
-# Info message
-#=
-@info "Proportion of monitored interactions based on detected interactions:
-    $(round(prop_detected_int; sigdigits=3))"
-@info "Proportion of monitored interactions based on realized interactions:
-    $(round(prop_realized_int; sigdigits=3))"
-@info "Proportion of monitored interactions based on possible interactions:
-    $(round(prop_possible_int; sigdigits=3))"
-@info "Proportion of monitored species over all species:
-    $(round(prop_monitored_sp; sigdigits=3))"
- =#
+    # Rebuild global metaweb for reference
+    m_global = metawebify(m)
+
+    # List proportions to compare
+    if isnothing(ref)
+        prop_monitored = length(monitored) / sum(m_global)
+    else
+        prop_monitored = length(monitored) / ref
+    end
+end
+
+## Run all
+
+function main(d::Dict)
+    # Extract parameters
+    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
+
+    # Generate networks using simulations
+    nets_dict = generate_networks(;
+        ns=ns,
+        nsites=nsites,
+        C_exp=C_exp,
+        ra_sigma=ra_sigma,
+        ra_scaling=ra_scaling,
+        energy_NFL=energy_NFL,
+    )
+    @unpack detected, realized, pos, metaweb, ranges = nets_dict
+
+    # Generate BON
+    bon = generate_bon(;
+        nsites=nsites,
+        H_nlm=H_nlm,
+        nbon=nbon,
+    )
+
+    # Evaluate species monitoring
+    prop_monitored_sp = evaluate_monitoring(ranges, bon)
+
+    # Evaluate interactions monitoring
+    if refmethod == "metawebify"
+        ref = nothing
+    elseif refmethod == "global"
+        ref = length(metaweb.metaweb)
+    end
+    prop_detected_int = evaluate_monitoring(detected, bon; ref=ref)
+    prop_realized_int = evaluate_monitoring(realized, bon; ref=ref)
+    prop_possible_int = evaluate_monitoring(pos, bon; ref=ref)
+
+    return @strdict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
+end
+main() = main(defaults)
+main()
