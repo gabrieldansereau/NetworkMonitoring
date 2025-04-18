@@ -4,10 +4,12 @@ using Reexport
 
 @reexport begin
     using CairoMakie
+    using CSV
     using DrWatson
     using DataFramesMeta
     using GeoMakie
     using NeutralLandscapes
+    using ProgressMeter
     using Random
     using SparseArrays
     using SpeciesInteractionNetworks
