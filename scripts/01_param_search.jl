@@ -1,37 +1,39 @@
-using DrWatson
-@quickactivate :NetworkMonitoring
+using Distributed
+addprocs(8)
+@everywhere using DrWatson
+
+@everywhere begin
+    @quickactivate :NetworkMonitoring
+
+    # Load main script
+    include("main.jl")
+end
 
 # Define script options
 Random.seed!(42)
 const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 
-# Load main script
-include("main.jl")
-main() # precompile
-
 # Define parameters to explore
 const params = Dict(
-    :ns => [100],
+    :ns => [75],
     :nsites => [100],
-    :C_exp => [0.1, 0.2, 0.3],
-    :ra_sigma => [0.6, 1.2, 1.8],
-    :ra_scaling => [25.0, 50.0, 75.0],
-    :energy_NFL => [1000, 10_000, 100_000],
-    :H_nlm => [0.25, 0.5, 0.75],
-    :nbon => [25, 50, 100],
-    :refmethod => ["metawebify"]
+    :C_exp => [0.2],
+    :ra_sigma => [1.2],
+    :ra_scaling => [50.0],
+    :energy_NFL => [50_000],
+    :H_nlm => [0.5],
+    :nbon => collect(1:100),
+    :nrep => collect(1:20),
+    :refmethod => ["metawebify", "global"]
 )
 const dicts = dict_list(params)
 
 # Run for all combinations
-function run_search!()
-    @showprogress for d in dicts
-        res = main(d)
-        merge!(d, res)
-        tagsave(datadir("sim", savename(d, "jld2")), tostringdict(d))
-    end
+@showprogress @distributed for d in dicts
+    res = main(d)
+    d2 = merge!(d, res)
+    tagsave(datadir("sim", savename(d, "jld2")), tostringdict(d2))
 end
-run_search!()
 
 # Test load (with gitcommit)
 # wload(datadir("sim", readdir(datadir("sim"))[1]))
