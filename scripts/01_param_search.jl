@@ -41,40 +41,5 @@ end
 # Collect & export results
 param_grid = collect_results(datadir("sim"))
 
-# Why are there more than expect amount?
-_params =  names(param_grid) |> filter(!startswith("prop")) |> filter(!=("path"))
-_dups = param_grid[nonunique(param_grid, _params; keep=:noduplicates), :]
-replace.(_dups.path, datadir("sim") => "") |>
-    x -> replace.(x, ".jld2" => "") #|>
-    x -> show(DataFrame(path=x), allrows=true)
-
-_d = dicts[1]
-savename(_d)
-DrWatson.allaccess(_d)
-
-_fixed_params = Symbol[]
-@time for (k,v) in params
-    if length(v) == 1
-        push!(_fixed_params, k)
-    end
-end
-_fixed_params
-
-savename(_d; ignores=_fixed_params)
-savename(_d; accesses=_fixed_params)
-
-
-_oldpaths = replace.(_dups.path, datadir("sim") => "", "/" => "", ".jld2"=>"")
-parse_savename.(_oldpaths)[1]
-
-_oldpaths = replace.(param_grid.path, datadir("sim") => "", "/" => "", ".jld2"=>"")
-_expected = savename.(dicts)
-intersect(_oldpaths, _expected)
-filter(in(_expected), _oldpaths)
-
-_oldpaths[1]
-
-wsave("_tmp.jld2", dicts[1])
-
 # Export results
 CSV.write(datadir("param_grid.csv", param_grid))
