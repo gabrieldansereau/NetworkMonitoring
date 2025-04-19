@@ -112,7 +112,7 @@ end
 
 ## Run all
 
-function main(d::Dict)
+function main(d::Dict; res=nothing)
     # Extract parameters
     @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
 
@@ -147,6 +147,13 @@ function main(d::Dict)
     prop_realized_int = evaluate_monitoring(realized, bon; ref=ref)
     prop_possible_int = evaluate_monitoring(pos, bon; ref=ref)
 
-    return @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
+    # Return proportions or all elements
+    if res == :all
+        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp realized pos metaweb bon
+    else
+        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
+    end
+
+    return res
 end
-main() = main(defaults)
+main(; kw...) = main(defaults; kw...)
