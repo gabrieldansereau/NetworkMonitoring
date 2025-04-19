@@ -39,10 +39,13 @@ renamed = Dict(
 
 # Common plot
 fig = data(param_stack) *
-    visual(
-        RainClouds;
-        markersize=4, jitter_width=0.0, clouds=nothing, plot_boxplots=false
-    ) *
+    (visual(
+        # visual(
+        Scatter;
+        markersize=4, #jitter_width=0.0, clouds=nothing, plot_boxplots=false
+    # )
+    # ) + linear(; interval=:prediction)) *
+    ) + linear(; interval=:confidence)) *
     mapping(
         :nbon => "Number of sites in BON",
         :prop => "Proportion of sampled elements";
