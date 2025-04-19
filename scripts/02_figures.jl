@@ -55,3 +55,22 @@ fig = data(param_stack) *
         figure=(; size=(700,450))
     )
 save(plotsdir("nbon.png"), fig; px_per_unit=2.0)
+
+# Log scale
+fig = data(param_stack) *
+    visual(
+        RainClouds;
+        markersize=4, jitter_width=0.0, clouds=nothing, plot_boxplots=false
+    ) *
+    mapping(
+        :nbon => log => "Number of sites in BON (log scale)",
+        :prop => "Proportion of sampled elements";
+        color=:variable => presorted => "Sampled element",
+        layout=:refmethod => renamer("global" => "Global reference", "metawebify" => "Per-element reference"),
+    ) |> x ->
+    draw(x,
+        axis=(; yticks=(0.0:0.25:1.0)),
+        legend=(; framevisible=false),
+        figure=(; size=(700,450))
+    )
+save(plotsdir("nbon_logx.png"), fig; px_per_unit=2.0)
