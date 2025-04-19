@@ -36,6 +36,8 @@ include("utils.jl")
 # Trick LanguageServer into cooperating in script files
 @static if false
     include("../scripts/main.jl")
+    include("../scripts/01_param_search.jl")
+    include("../scripts/02_figures.jl")
 end
 
 export BON, SDT, SSL, SIS, SIN
