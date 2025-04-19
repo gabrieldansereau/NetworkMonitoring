@@ -1,7 +1,14 @@
-include("00_include.jl")
+# using DrWatson
+# @quickactivate :NetworkMonitoring
+
+using CSV
+using DataFramesMeta
+using AlgebraOfGraphics
+using CairoMakie
+using DrWatson
 
 # Load results
-param_grid = CSV.read("data/param_grid.csv", DataFrame)
+param_grid = CSV.read(datadir("param_grid.csv"), DataFrame)
 
 # Stack all proportion variables
 param_stack = stack(
@@ -38,13 +45,17 @@ jitterplot = data(param_stack) *
     )
 
 # Connectance
-fig = jitterplot *
+fig = data(param_stack) *
+    visual(
+        RainClouds;
+        markersize=8, jitter_width=0.5, clouds=nothing, plot_boxplots=false
+    ) *
     mapping(
         :C_exp => nonnumeric => "Expected connectance",
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/connectance.png", fig; px_per_unit=2.0)
+save(plotsdir("connectance.png"), fig; px_per_unit=2.0)
 
 # RA_sigma
 fig = jitterplot *
@@ -53,7 +64,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/ra_sigma.png", fig; px_per_unit=2.0)
+save(plotsdir("ra_sigma.png"), fig; px_per_unit=2.0)
 
 # RA_scaling
 fig = jitterplot *
@@ -62,7 +73,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/ra_scaling.png", fig; px_per_unit=2.0)
+save(plotsdir("ra_scaling.png"), fig; px_per_unit=2.0)
 
 # Energy
 fig = jitterplot *
@@ -71,7 +82,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/energy_nfl.png", fig; px_per_unit=2.0)
+save(plotsdir("energy_nfl.png"), fig; px_per_unit=2.0)
 
 # Autocorrelation
 fig = jitterplot *
@@ -80,7 +91,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/h_nlm.png", fig; px_per_unit=2.0)
+save(plotsdir("h_nlm.png"), fig; px_per_unit=2.0)
 
 # Number of sampled sites
 fig = jitterplot *
@@ -89,7 +100,7 @@ fig = jitterplot *
         :prop => "Proportion of sampled elements";
         color=:variable => presorted => "Sampled element"
     ) |> draw
-save("figures/nbon.png", fig; px_per_unit=2.0)
+save(plotsdir("nbon.png"), fig; px_per_unit=2.0)
 
 
 

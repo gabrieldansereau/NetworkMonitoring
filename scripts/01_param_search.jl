@@ -1,47 +1,67 @@
-include("00_include.jl")
+using Distributed
+addprocs(8)
+@everywhere using DrWatson
+
+@everywhere begin
+    @quickactivate :NetworkMonitoring
+
+    # Load main script
+    include("main.jl")
+end
 
 # Define script options
 Random.seed!(42)
-SpeciesInteractionSamplers.INTERACTIVE_REPL = false
-set_params = false
+const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
+
+## Run parameter search
 
 # Define parameters to explore
-param_grid = allcombinations(
-    DataFrame,
-    ns = [100],
-    nsites = [100],
-    C_exp = [0.1, 0.2, 0.3],
-    ra_sigma = [0.6, 1.2, 1.8],
-    ra_scaling = [25.0, 50.0, 75.0],
-    energy_NFL = [1000, 10_000, 100_000],
-    H_nlm = [0.25, 0.5, 0.75],
-    nbon = [25, 50, 100],
-    prop_observed_sp = missings(Float64, 1),
-    prop_detected_int = missings(Float64, 1),
-    prop_realized_int = missings(Float64, 1),
-    prop_possible_int = missings(Float64, 1),
+const params = Dict(
+    :ns => [75],
+    :nsites => [100],
+    :C_exp => [0.2],
+    :ra_sigma => [1.2],
+    :ra_scaling => [50.0],
+    :energy_NFL => [50_000],
+    :H_nlm => [0.5],
+    :nbon => collect(1:100),
+    :nrep => collect(1:20),
+    :refmethod => ["metawebify", "global"]
 )
+const dicts = dict_list(params)
+const _fixed_params = Symbol[]
+for (k,v) in params
+    if length(v) == 1
+        push!(_fixed_params, k)
+    end
+end
 
 # Run for all combinations
-@showprogress for i in 1:nrow(param_grid)
-    r = param_grid[i, :]
-    global ns = r.ns
-    global nsites = r.nsites
-    global C_exp = r.C_exp
-    global ra_sigma = r.ra_sigma
-    global ra_scaling = r.ra_scaling
-    global energy_NFL = r.energy_NFL
-    global H_nlm = r.H_nlm
-    global nbon = r.nbon
-
-    include("main.jl")
-
-    r.prop_observed_sp = round(prop_observed_sp; sigdigits=3)
-    r.prop_detected_int = round(prop_detected_int; sigdigits=3)
-    r.prop_realized_int = round(prop_realized_int; sigdigits=3)
-    r.prop_possible_int = round(prop_possible_int; sigdigits=3)
+@showprogress @distributed for d in dicts
+    res = main(d)
+    d2 = merge(d, res)
+    tagsave(datadir("sim", savename(d, "jld2"; ignores=_fixed_params)), tostringdict(d2))
 end
-param_grid
+
+# Test load (with gitcommit)
+# wload(datadir("sim", readdir(datadir("sim"))[1]))
+
+## Extract results
+
+# Collect results
+param_grid = collect_results(datadir("sim"))
+select!(param_grid, Not([:path, _fixed_params...]))
+
+# Sort results
+select!(
+    param_grid,
+    [:nbon, :nrep, :refmethod,
+     :prop_monitored_sp, :prop_possible_int, :prop_realized_int, :prop_detected_int]
+)
+sort!(param_grid, [:refmethod, :nbon, :nrep])
+
+# Remove duplicates?
+unique!(param_grid, filter(!startswith("prop"), names(param_grid)))
 
 # Export results
-CSV.write("data/param_grid.csv", param_grid)
+CSV.write(datadir("param_grid.csv"), param_grid)
