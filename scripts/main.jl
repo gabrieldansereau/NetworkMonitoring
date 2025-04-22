@@ -149,7 +149,13 @@ function main(d::Dict; res=nothing)
 
     # Return proportions or all elements
     if res == :all
-        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp realized pos metaweb bon
+        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp realized pos metaweb bon detected
+    elseif res == :monitored
+        m = render(Binary, metaweb.metaweb)
+        networks_pos = monitor(x -> render(Binary, x), pos, bon)
+        networks_realized = monitor(x -> render(Binary, x), realized, bon)
+        networks_detected = monitor(x -> render(Binary, x), detected, bon)
+        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp networks_pos networks_realized networks_detected m
     else
         res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
     end

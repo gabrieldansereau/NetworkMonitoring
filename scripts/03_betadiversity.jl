@@ -16,17 +16,36 @@ d = Dict(
 )
 
 Random.seed!(42)
-res = main(d; res=:all)
+res_all = main(d; res=:all)
+res_not = main(d; res=nothing)
+res_monitored = main(d; res=:monitored)
 
+d_all = merge(d, res_all)
+d_not = merge(d, res_not)
+d_mon = merge(d, res_monitored)
+tagsave("res_all.jld2", tostringdict(d_all))
+tagsave("res_not.jld2", tostringdict(d_not))
+tagsave("res_mon.jld2", tostringdict(d_mon))
+
+res = res_all
 bon = res[:bon]
 m = render(Binary, res[:metaweb].metaweb)
-n = res[:pos]
+pos = res[:pos]
+realized = res[:realized]
+detected = res[:detected]
 # extract(x -> render(Binary, x), r)
 
 # Should I simplify and when?
 # Should I rebuild species list based on ranges?
 # networks = monitor(x -> simplify(render(Binary, x)), n, bon)
-networks = monitor(x -> render(Binary, x), n, bon)
+networks_pos = monitor(x -> render(Binary, x), pos, bon)
+networks_realized = monitor(x -> render(Binary, x), realized, bon)
+networks_detected = monitor(x -> render(Binary, x), detected, bon)
+
+res_monitored = @dict networks_pos networks_realized networks_detected m
+d_monitored = merge(d, res_not, res_monitored)
+tagsave("res_monitored.jld2", tostringdict(d_monitored))
+
 
 
 # betadiversity(βS, m, n)
