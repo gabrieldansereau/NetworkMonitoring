@@ -1,5 +1,5 @@
 using Distributed
-addprocs(8)
+addprocs(4)
 @everywhere using DrWatson
 
 @everywhere begin
