@@ -1,3 +1,6 @@
 Manifest.toml
 scripts/_*
 data/sim*
+
+# Large files
+data/betadiversity.csv
