@@ -27,8 +27,9 @@ simfiles = readdir(datadir("sim"); join=true)
     end
 
     # Export results
-    res = DataFrame(merge(βres, d));
+    res = DataFrame(merge(βres, d))
     select!(res, sim_params, r"^β")
+    unique!(res)
     append!(all_res, res)
 end
 
