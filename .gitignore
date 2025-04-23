@@ -4,3 +4,4 @@ data/sim*
 
 # Large files
 data/betadiversity*.csv
+data/*.jld2

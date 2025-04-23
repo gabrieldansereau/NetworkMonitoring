@@ -35,12 +35,20 @@ all_res_df = [DataFrame(
         βosprime = KGL08(βcomponents)
         βres["βos_$n"] = βosprime
 
-        # Median βOS values at monitored
+        # Median βOS' values at monitored sites
         βcomponents = [betadiversity(βOS, m, n) for n in networks]
         βosprime = KGL08.(βcomponents)
         βres["βos_med_$n"] = median(βosprime)
         βres["βos_low_$n"] = quantile(βosprime, 0.025)
         βres["βos_upp_$n"] = quantile(βosprime, 0.975)
+
+        # Median βOS' values between monitored sites and monitored metaweb
+        βcomponents = [betadiversity(βOS, m_monitored, n) for n in networks]
+        βosprime = KGL08.(βcomponents)
+        βres["βos_mon_med_$n"] = median(βosprime)
+        βres["βos_mon_low_$n"] = try quantile(βosprime, 0.025) catch NaN end
+        βres["βos_mon_upp_$n"] = try quantile(βosprime, 0.975) catch NaN end
+
     end
 
     βres["nbon"] = d["nbon"]
@@ -54,4 +62,5 @@ all_res = vcat(all_res_df...)
 
 # Export all βOS results
 sort!(all_res, [:refmethod, :nbon, :nrep])
+save(datadir("all_res.jld2"), @dict(all_res))
 CSV.write(datadir("betadiversity.csv"), all_res)
