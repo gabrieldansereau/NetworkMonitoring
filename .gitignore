@@ -3,4 +3,4 @@ scripts/_*
 data/sim*
 
 # Large files
-data/betadiversity.csv
+data/betadiversity*.csv

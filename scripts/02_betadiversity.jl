@@ -7,15 +7,13 @@ sim_params = filter(!startswith("prop"), names(param_grid))
 
 # Load results
 simfiles = readdir(datadir("sim"); join=true)
+filter!(contains("global"), simfiles)
 nrows = length(simfiles)
-all_res_nt = (
-    nbon=Vector{Int}(undef, nrows),
-    nrep=Vector{Int}(undef, nrows),
-    refmethod=Vector{String}(undef, nrows),
-    βos_possible=Vector{Float64}(undef, nrows),
-    βos_realized=Vector{Float64}(undef, nrows),
-    βos_detected=Vector{Float64}(undef, nrows),
-)
+all_res_df = [DataFrame(
+    nbon=Int[],
+    nrep=Int[],
+    refmethod=String[],
+) for i in 1:Threads.nthreads()]
 @showprogress Threads.@threads for i in eachindex(simfiles)
     f = simfiles[i]
 
@@ -25,26 +23,34 @@ all_res_nt = (
     # Extract metaweb for the simulation
     m = d["m"]
 
-    # Compute βOS' between monitored and real metaweb
-    βres = Dict{String, Float64}()
+    # Compute βOS
+    βres = Dict{String, Any}()
     for n in ["pos", "realized", "detected"]
         networks = d["networks_$n"]
+        n = n == "pos" ? "possible" : n
+
+        # βOS' between monitored and real metaweb
         m_monitored = reduce(union, networks)
         βcomponents = betadiversity(βOS, m, m_monitored)
         βosprime = KGL08(βcomponents)
-        n = n == "pos" ? "possible" : n
         βres["βos_$n"] = βosprime
+
+        # Median βOS values at monitored
+        βcomponents = [betadiversity(βOS, m, n) for n in networks]
+        βosprime = KGL08.(βcomponents)
+        βres["βos_med_$n"] = median(βosprime)
+        βres["βos_low_$n"] = quantile(βosprime, 0.025)
+        βres["βos_upp_$n"] = quantile(βosprime, 0.975)
     end
 
+    βres["nbon"] = d["nbon"]
+    βres["nrep"] = d["nrep"]
+    βres["refmethod"] = d["refmethod"]
+
     # Export results
-    all_res_nt.nbon[i]=d["nbon"]
-    all_res_nt.nrep[i]=d["nrep"]
-    all_res_nt.refmethod[i]=d["refmethod"]
-    all_res_nt.βos_possible[i]=βres["βos_possible"]
-    all_res_nt.βos_realized[i]=βres["βos_realized"]
-    all_res_nt.βos_detected[i]=βres["βos_detected"]
+    push!(all_res_df[Threads.threadid()], βres; cols=:union)
 end
-all_res = DataFrame(all_res_nt)
+all_res = vcat(all_res_df...)
 
 # Export all βOS results
 sort!(all_res, [:refmethod, :nbon, :nrep])
