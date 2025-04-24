@@ -4,9 +4,6 @@ addprocs(4)
 
 @everywhere begin
     @quickactivate :NetworkMonitoring
-
-    # Load main script
-    include("main.jl")
 end
 
 # Define script options
@@ -38,7 +35,7 @@ end
 
 # Run for all combinations
 @showprogress @distributed for d in dicts
-    res = main(d; res=:monitored)
+    res = runsim(d; res=:monitored)
     d2 = merge(d, res)
     tagsave(datadir("sim", savename(d, "jld2"; ignores=_fixed_params)), tostringdict(d2))
 end

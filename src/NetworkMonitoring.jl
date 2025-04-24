@@ -31,16 +31,16 @@ include("metaweb.jl")
 include("monitor.jl")
 include("plots.jl")
 include("ranges.jl")
+include("runsim.jl")
 include("utils.jl")
 
 # Trick LanguageServer into cooperating in script files
 @static if false
-    include("../scripts/main.jl")
-    include("../scripts/01_param_search.jl")
-    # include("../scripts/02_figures.jl")
+    # include("../scripts/file.jl")
 end
 
 export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor
+export generate_networks, generate_bon, evaluate_monitoring, runsim
 
 end # module NetworkMonitoring

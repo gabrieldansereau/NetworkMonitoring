@@ -1,10 +1,4 @@
-using DrWatson
-@quickactivate :NetworkMonitoring
-
-# Random.seed!(42)
-
-# Define all required variables
-# set_params = true
+# Default parameters
 const defaults = Dict(
     :ns => 75,
     :nsites => 100,
@@ -112,7 +106,7 @@ end
 
 ## Run all
 
-function main(d::Dict; res=nothing)
+function runsim(d::Dict; res=nothing)
     # Extract parameters
     @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
 
@@ -162,4 +156,4 @@ function main(d::Dict; res=nothing)
 
     return res
 end
-main(; kw...) = main(defaults; kw...)
+runsim(; kw...) = runsim(defaults; kw...)
