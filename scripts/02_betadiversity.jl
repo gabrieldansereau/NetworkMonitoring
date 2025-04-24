@@ -13,6 +13,9 @@ all_res_df = [DataFrame(
     nbon=Int[],
     nrep=Int[],
     refmethod=String[],
+    βos_possible=Float64[],
+    βos_realized=Float64[],
+    βos_detected=Float64[],
 ) for i in 1:Threads.nthreads()]
 @showprogress Threads.@threads for i in eachindex(simfiles)
     f = simfiles[i]
@@ -34,13 +37,6 @@ all_res_df = [DataFrame(
         βcomponents = betadiversity(βOS, m, m_monitored)
         βosprime = KGL08(βcomponents)
         βres["βos_$n"] = βosprime
-
-        # Median βOS values at monitored
-        βcomponents = [betadiversity(βOS, m, n) for n in networks]
-        βosprime = KGL08.(βcomponents)
-        βres["βos_med_$n"] = median(βosprime)
-        βres["βos_low_$n"] = quantile(βosprime, 0.025)
-        βres["βos_upp_$n"] = quantile(βosprime, 0.975)
     end
 
     βres["nbon"] = d["nbon"]
