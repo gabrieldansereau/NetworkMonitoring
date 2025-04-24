@@ -1,5 +1,5 @@
 using Distributed
-addprocs(8)
+addprocs(4)
 @everywhere using DrWatson
 
 @everywhere begin
@@ -38,7 +38,7 @@ end
 
 # Run for all combinations
 @showprogress @distributed for d in dicts
-    res = main(d)
+    res = main(d; res=:monitored)
     d2 = merge(d, res)
     tagsave(datadir("sim", savename(d, "jld2"; ignores=_fixed_params)), tostringdict(d2))
 end

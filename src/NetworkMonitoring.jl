@@ -37,7 +37,7 @@ include("utils.jl")
 @static if false
     include("../scripts/main.jl")
     include("../scripts/01_param_search.jl")
-    include("../scripts/02_figures.jl")
+    # include("../scripts/02_figures.jl")
 end
 
 export BON, SDT, SSL, SIS, SIN
