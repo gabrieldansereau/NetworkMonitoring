@@ -182,3 +182,33 @@ fig = data(beta_gp) *
         # figure=(; size=(700,450))
     )
 save(plotsdir("betadiversity_meds_meds.png"), fig; px_per_unit=2.0)
+
+## βOS' with monitored metaweb
+
+# Load results
+# beta_meds = CSV.read(datadir("betadiversity.csv"), DataFrame)
+all_res = wload("./data/all_res.jld2")
+beta_mon = all_res["all_res"]
+select!(beta_mon, :nbon, r"^βos_mon")
+inds_nothing = findall(isnothing, beta_mon.βos_mon_low_detected)
+deleteat!(beta_mon, inds_nothing)
+
+# Plot
+fig = data(beta_mon) *
+    visual(
+        RainClouds;
+        markersize=4, jitter_width=0.0, clouds=nothing, plot_boxplots=false
+    ) *
+    mapping(
+        :nbon => "Number of sites in BON",
+        [:βos_mon_med_possible;
+         :βos_mon_med_realized;
+         :βos_mon_med_detected] .=> "βos' at monitored sites";
+        # color=dims(2) => renamer(["upp", "med", "low"]) => "Quantile",
+        row=dims(1) => renamer(["possible", "realized", "detected"]),
+    ) |> x ->
+    draw(x,
+        axis=(; xticks=(0:25:100)),
+        legend=(; framevisible=false),
+    )
+save(plotsdir("betadiversity_mon.png"), fig; px_per_unit=2.0)
