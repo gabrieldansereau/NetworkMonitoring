@@ -106,12 +106,23 @@ end
 
 ## Run all
 
-function runsim(d::Dict; res::Symbol=:prop)
+function runsim(;
+    ns=defaults[:ns],
+    nsites=defaults[:nsites],
+    C_exp=defaults[:C_exp],
+    ra_sigma=defaults[:ra_sigma],
+    ra_scaling=defaults[:ra_scaling],
+    energy_NFL=defaults[:energy_NFL],
+    H_nlm=defaults[:H_nlm],
+    nbon=defaults[:nbon],
+    refmethod=defaults[:refmethod],
+    res::Symbol=:prop,
+    )
     _valid_output = [:prop, :monitored]
     res in _valid_output || throw(ArgumentError("res must be in $(_valid_output)"))
 
     # Extract parameters
-    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
+    # @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
 
     # Generate networks using simulations
     nets_dict = generate_networks(;
@@ -162,4 +173,3 @@ function runsim(d::Dict; res::Symbol=:prop)
 
     return res
 end
-runsim(; kw...) = runsim(defaults; kw...)
