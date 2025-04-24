@@ -57,6 +57,28 @@ fig = data(param_stack) *
     )
 save(plotsdir("nbon.png"), fig; px_per_unit=2.0)
 
+fig = filter(:refmethod => ==("global"), param_stack) |> x ->
+    filter(:variable => in(["Monitored sp"]), x) |> x ->
+    # filter(:variable => in(["Monitored sp", "Possible int"]), x) |> x ->
+    # filter(:variable => in(["Monitored sp", "Possible int", "Realized int"]), x) |> x ->
+    data(x) *
+    visual(
+        RainClouds;
+        markersize=4, jitter_width=0.0, clouds=nothing, plot_boxplots=false
+    ) *
+    mapping(
+        :nbon => "Number of sites in BON",
+        :prop => "Proportion of sampled elements";
+        color=:variable => presorted => "Sampled element",
+        # layout=:refmethod => renamer("global" => "Global reference", "metawebify" => "Per-element reference"),
+    ) |> x ->
+    draw(x,
+        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100), limits=((-4, 104), (-0.05, 1.05))),
+        legend=(; framevisible=false),
+        # figure=(; size=(700,450))
+    )
+save(plotsdir("nbon_global_1.png"), fig; px_per_unit=2.0)
+
 # Log scale
 fig = data(param_stack) *
     visual(
@@ -203,7 +225,7 @@ fig = data(beta_mon) *
         :nbon => "Number of sites in BON",
         [:βos_mon_med_possible;
          :βos_mon_med_realized;
-         :βos_mon_med_detected] .=> "βos' at monitored sites";
+         :βos_mon_med_detected] .=> "βos' at monitored sites (vs monitored metaweb)";
         # color=dims(2) => renamer(["upp", "med", "low"]) => "Quantile",
         row=dims(1) => renamer(["possible", "realized", "detected"]),
     ) |> x ->
