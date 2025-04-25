@@ -1,5 +1,10 @@
-using DrWatson
-@quickactivate :NetworkMonitoring
+using Distributed
+addprocs(4)
+@everywhere using DrWatson
+
+@everywhere begin
+    @quickactivate :NetworkMonitoring
+end
 
 # Define script options
 Random.seed!(42)
@@ -17,10 +22,10 @@ const output = :prop # :monitored or :prop
 const dicts = dict_list(params)
 
 # Run for all combinations
-@showprogress Threads.@threads for d in dicts
+@showprogress @distributed for d in dicts
     res = runsim(; output=output, d...)
     d2 = merge(d, res)
-    tagsave(datadir("sim-test", savename(d, "jld2")), tostringdict(d2))
+    tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
 end
 
 # Test load (with gitcommit)
