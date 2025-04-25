@@ -6,7 +6,7 @@ param_grid = CSV.read(datadir("param_grid.csv"), DataFrame)
 sim_params = filter(!startswith("prop"), names(param_grid))
 
 # Load results
-simfiles = readdir(datadir("sim"); join=true)
+simfiles = readdir(datadir("sim-monitored"); join=true)
 filter!(contains("global"), simfiles)
 nrows = length(simfiles)
 all_res_df = [DataFrame(
@@ -24,13 +24,12 @@ all_res_df = [DataFrame(
     d = wload(f)
 
     # Extract metaweb for the simulation
-    m = d["m"]
+    m = d["metaweb"]
 
     # Compute βOS
     βres = Dict{String, Any}()
-    for n in ["pos", "realized", "detected"]
-        networks = d["networks_$n"]
-        n = n == "pos" ? "possible" : n
+    for n in ["possible", "realized", "detected"]
+        networks = d[n]
 
         # βOS' between monitored and real metaweb
         m_monitored = reduce(union, networks)

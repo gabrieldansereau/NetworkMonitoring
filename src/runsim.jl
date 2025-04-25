@@ -1,32 +1,23 @@
-using DrWatson
-@quickactivate :NetworkMonitoring
-
-# Random.seed!(42)
-
-# Define all required variables
-# set_params = true
-const defaults = Dict(
-    :ns => 75,
-    :nsites => 100,
-    :C_exp => 0.2,
-    :ra_sigma => 1.2,
-    :ra_scaling => 50.0,
-    :energy_NFL => 10_000,
-    :H_nlm => 0.5,
-    :nbon => 50,
-    :refmethod => "metawebify",
-)
+# Default parameters
+@kwdef struct DefaultParams
+    ns::Int=75
+    nsites::Int=100
+    C_exp::Float64=0.2
+    ra_sigma::Float64=1.2
+    ra_scaling::Float64=50.0
+    energy_NFL::Union{Float64, Int}=50_000
+    H_nlm::Float64=0.5
+    nbon::Int=50
+    refmethod::String="global"
+    output::Symbol=:prop
+    nrep=nothing
+end
 
 ## Generate network & abundances
 
-function generate_networks(;
-    ns=defaults[:ns],
-    nsites=defaults[:nsites],
-    C_exp=defaults[:C_exp],
-    ra_sigma=defaults[:ra_sigma],
-    ra_scaling=defaults[:ra_scaling],
-    energy_NFL=defaults[:energy_NFL],
-)
+function generate_networks(d::DefaultParams)
+    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL = d
+
     # Generate metaweb using Niche Model
     # Random.seed!(42);
     metaweb = generate(SIS.NicheModel(ns, C_exp))
@@ -58,14 +49,13 @@ function generate_networks(;
 
     return res
 end
+generate_networks(; args...) = generate_networks(DefaultParams(; args...))
 
 ## Add BON
 
-function generate_bon(;
-    nsites=defaults[:nsites],
-    H_nlm=defaults[:H_nlm],
-    nbon=defaults[:nbon],
-)
+function generate_bon(d::DefaultParams)
+    @unpack nsites, H_nlm, nbon = d
+
     # Generate uncertainty layer
     uncertainty = SDT.SDMLayer(
         MidpointDisplacement(H_nlm), (nsites, nsites);
@@ -77,6 +67,7 @@ function generate_bon(;
 
     return bon
 end
+generate_bon(; args...) = generate_bon(DefaultParams(; args...))
 
 ## Extract infos from BON & evaluate monitoring
 
@@ -112,9 +103,11 @@ end
 
 ## Run all
 
-function main(d::Dict; res=nothing)
+function runsim(d::DefaultParams)
     # Extract parameters
-    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
+    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod, output = d
+    _valid_output = [:prop, :monitored]
+    output in _valid_output || throw(ArgumentError("output must be in $(_valid_output)"))
 
     # Generate networks using simulations
     nets_dict = generate_networks(;
@@ -134,32 +127,35 @@ function main(d::Dict; res=nothing)
         nbon=nbon,
     )
 
-    # Evaluate species monitoring
-    prop_monitored_sp = evaluate_monitoring(ranges, bon)
+    # Return proportions or monitored data
+    if output == :prop
+        # Evaluate species monitoring
+        prop_monitored_sp = evaluate_monitoring(ranges, bon)
 
-    # Evaluate interactions monitoring
-    if refmethod == "metawebify"
-        ref = nothing
-    elseif refmethod == "global"
-        ref = length(metaweb.metaweb)
-    end
-    prop_detected_int = evaluate_monitoring(detected, bon; ref=ref)
-    prop_realized_int = evaluate_monitoring(realized, bon; ref=ref)
-    prop_possible_int = evaluate_monitoring(pos, bon; ref=ref)
+        # Evaluate interactions monitoring
+        if refmethod == "metawebify"
+            ref = nothing
+        elseif refmethod == "global"
+            ref = length(metaweb.metaweb)
+        end
+        prop_detected_int = evaluate_monitoring(detected, bon; ref=ref)
+        prop_realized_int = evaluate_monitoring(realized, bon; ref=ref)
+        prop_possible_int = evaluate_monitoring(pos, bon; ref=ref)
 
-    # Return proportions or all elements
-    if res == :all
-        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp realized pos metaweb bon detected
-    elseif res == :monitored
-        m = render(Binary, metaweb.metaweb)
-        networks_pos = monitor(x -> render(Binary, x), pos, bon)
-        networks_realized = monitor(x -> render(Binary, x), realized, bon)
-        networks_detected = monitor(x -> render(Binary, x), detected, bon)
-        res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp networks_pos networks_realized networks_detected m
-    else
         res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
+    elseif output == :monitored
+        # Monitored species
+        species = monitor(x -> findall(isone, x), ranges, bon)
+        species = [NetworkMonitoring._getspecies(s, ranges) for s in species]
+
+        # Monitored interactions
+        metaweb = render(Binary, metaweb.metaweb)
+        possible = monitor(x -> render(Binary, x), pos, bon)
+        realized = monitor(x -> render(Binary, x), realized, bon)
+        detected = monitor(x -> render(Binary, x), detected, bon)
+        res = @dict metaweb species possible realized detected
     end
 
     return res
 end
-main(; kw...) = main(defaults; kw...)
+runsim(; args...) = runsim(DefaultParams(; args...))
