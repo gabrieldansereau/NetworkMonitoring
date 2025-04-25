@@ -18,7 +18,7 @@ const params = Dict(
     :nrep => collect(1:20),
     :refmethod => ["metawebify", "global"],
 )
-const output = :monitored # :monitored ou :prop
+const output = :prop # :monitored or :prop
 const dicts = dict_list(params)
 
 # Run for all combinations
