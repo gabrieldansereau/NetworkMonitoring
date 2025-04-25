@@ -6,7 +6,7 @@ param_grid = CSV.read(datadir("param_grid.csv"), DataFrame)
 sim_params = filter(!startswith("prop"), names(param_grid))
 
 # Load results
-simfiles = readdir(datadir("sim"); join=true)
+simfiles = readdir(datadir("sim-monitored"); join=true)
 filter!(contains("global"), simfiles)
 nrows = length(simfiles)
 all_res_df = [DataFrame(

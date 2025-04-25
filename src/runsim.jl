@@ -9,7 +9,7 @@
     H_nlm::Float64=0.5
     nbon::Int=50
     refmethod::String="global"
-    res::Symbol=:prop
+    output::Symbol=:prop
     nrep=nothing
 end
 
@@ -105,9 +105,9 @@ end
 
 function runsim(d::DefaultParams)
     # Extract parameters
-    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod, res = d
+    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod, output = d
     _valid_output = [:prop, :monitored]
-    res in _valid_output || throw(ArgumentError("res must be in $(_valid_output)"))
+    output in _valid_output || throw(ArgumentError("output must be in $(_valid_output)"))
 
     # Generate networks using simulations
     nets_dict = generate_networks(;
@@ -128,7 +128,7 @@ function runsim(d::DefaultParams)
     )
 
     # Return proportions or monitored data
-    if res == :prop
+    if output == :prop
         # Evaluate species monitoring
         prop_monitored_sp = evaluate_monitoring(ranges, bon)
 
@@ -143,7 +143,7 @@ function runsim(d::DefaultParams)
         prop_possible_int = evaluate_monitoring(pos, bon; ref=ref)
 
         res = @dict prop_detected_int prop_realized_int prop_possible_int prop_monitored_sp
-    elseif res == :monitored
+    elseif output == :monitored
         # Monitored species
         species = monitor(x -> findall(isone, x), ranges, bon)
         species = [NetworkMonitoring._getspecies(s, ranges) for s in species]
