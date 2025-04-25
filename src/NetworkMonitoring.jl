@@ -41,6 +41,6 @@ end
 
 export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor
-export generate_networks, generate_bon, evaluate_monitoring, runsim
+export DefaultParams, generate_networks, generate_bon, evaluate_monitoring, runsim
 
 end # module NetworkMonitoring

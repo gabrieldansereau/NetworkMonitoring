@@ -1,26 +1,23 @@
 # Default parameters
-const defaults = Dict(
-    :ns => 75,
-    :nsites => 100,
-    :C_exp => 0.2,
-    :ra_sigma => 1.2,
-    :ra_scaling => 50.0,
-    :energy_NFL => 50_000,
-    :H_nlm => 0.5,
-    :nbon => 50,
-    :refmethod => "global",
-)
+@kwdef struct DefaultParams
+    ns::Int=75
+    nsites::Int=100
+    C_exp::Float64=0.2
+    ra_sigma::Float64=1.2
+    ra_scaling::Float64=50.0
+    energy_NFL::Union{Float64, Int}=50_000
+    H_nlm::Float64=0.5
+    nbon::Int=50
+    refmethod::String="global"
+    res::Symbol=:prop
+    nrep=nothing
+end
 
 ## Generate network & abundances
 
-function generate_networks(;
-    ns=defaults[:ns],
-    nsites=defaults[:nsites],
-    C_exp=defaults[:C_exp],
-    ra_sigma=defaults[:ra_sigma],
-    ra_scaling=defaults[:ra_scaling],
-    energy_NFL=defaults[:energy_NFL],
-)
+function generate_networks(d::DefaultParams)
+    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL = d
+
     # Generate metaweb using Niche Model
     # Random.seed!(42);
     metaweb = generate(SIS.NicheModel(ns, C_exp))
@@ -52,14 +49,13 @@ function generate_networks(;
 
     return res
 end
+generate_networks(; args...) = generate_networks(DefaultParams(; args...))
 
 ## Add BON
 
-function generate_bon(;
-    nsites=defaults[:nsites],
-    H_nlm=defaults[:H_nlm],
-    nbon=defaults[:nbon],
-)
+function generate_bon(d::DefaultParams)
+    @unpack nsites, H_nlm, nbon = d
+
     # Generate uncertainty layer
     uncertainty = SDT.SDMLayer(
         MidpointDisplacement(H_nlm), (nsites, nsites);
@@ -71,6 +67,7 @@ function generate_bon(;
 
     return bon
 end
+generate_bon(; args...) = generate_bon(DefaultParams(; args...))
 
 ## Extract infos from BON & evaluate monitoring
 
@@ -106,23 +103,11 @@ end
 
 ## Run all
 
-function runsim(;
-    ns=defaults[:ns],
-    nsites=defaults[:nsites],
-    C_exp=defaults[:C_exp],
-    ra_sigma=defaults[:ra_sigma],
-    ra_scaling=defaults[:ra_scaling],
-    energy_NFL=defaults[:energy_NFL],
-    H_nlm=defaults[:H_nlm],
-    nbon=defaults[:nbon],
-    refmethod=defaults[:refmethod],
-    res::Symbol=:prop,
-    )
+function runsim(d::DefaultParams)
+    # Extract parameters
+    @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod, res = d
     _valid_output = [:prop, :monitored]
     res in _valid_output || throw(ArgumentError("res must be in $(_valid_output)"))
-
-    # Extract parameters
-    # @unpack ns, nsites, C_exp, ra_sigma, ra_scaling, energy_NFL, H_nlm, nbon, refmethod = d
 
     # Generate networks using simulations
     nets_dict = generate_networks(;
@@ -173,3 +158,4 @@ function runsim(;
 
     return res
 end
+runsim(; args...) = runsim(DefaultParams(; args...))

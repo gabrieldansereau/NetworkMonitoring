@@ -14,30 +14,18 @@ const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 
 # Define parameters to explore
 const params = Dict(
-    :ns => [75],
-    :nsites => [100],
-    :C_exp => [0.2],
-    :ra_sigma => [1.2],
-    :ra_scaling => [50.0],
-    :energy_NFL => [50_000],
-    :H_nlm => [0.5],
     :nbon => collect(1:100),
     :nrep => collect(1:20),
-    :refmethod => ["metawebify", "global"]
+    :refmethod => ["metawebify", "global"],
+    :res => :monitored,
 )
 const dicts = dict_list(params)
-const _fixed_params = Symbol[]
-for (k,v) in params
-    if length(v) == 1
-        push!(_fixed_params, k)
-    end
-end
 
 # Run for all combinations
 @showprogress @distributed for d in dicts
-    res = runsim(d; res=:monitored)
+    res = runsim(; d...)
     d2 = merge(d, res)
-    tagsave(datadir("sim", savename(d, "jld2"; ignores=_fixed_params)), tostringdict(d2))
+    tagsave(datadir("sim", savename(d, "jld2")), tostringdict(d2))
 end
 
 # Test load (with gitcommit)
@@ -47,7 +35,7 @@ end
 
 # Collect results
 param_grid = collect_results(datadir("sim"))
-select!(param_grid, Not([:path, _fixed_params...]))
+select!(param_grid, Not(:path))
 
 # Sort results
 select!(
