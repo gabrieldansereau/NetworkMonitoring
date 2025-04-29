@@ -1,3 +1,7 @@
 Manifest.toml
 scripts/_*
 data/sim*
+
+# narval
+narval.sh
+jobs/out
