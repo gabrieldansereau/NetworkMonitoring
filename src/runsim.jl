@@ -11,6 +11,7 @@
     refmethod::String="global"
     output::Symbol=:prop
     nrep=nothing
+    sampler=BON.BalancedAcceptance
 end
 
 ## Generate network & abundances
@@ -54,7 +55,7 @@ generate_networks(; args...) = generate_networks(DefaultParams(; args...))
 ## Add BON
 
 function generate_bon(d::DefaultParams)
-    @unpack nsites, H_nlm, nbon = d
+    @unpack nsites, H_nlm, nbon, sampler = d
 
     # Generate uncertainty layer
     uncertainty = SDT.SDMLayer(
@@ -63,7 +64,7 @@ function generate_bon(d::DefaultParams)
     )
 
     # Use BalancedAcceptance sampling
-    bon = BON.sample(BON.BalancedAcceptance(nbon), uncertainty)
+    bon = BON.sample(sampler(nbon), uncertainty)
 
     return bon
 end

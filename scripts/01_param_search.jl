@@ -19,13 +19,14 @@ const params = Dict(
     :refmethod => ["metawebify", "global"],
 )
 const output = :prop # :monitored or :prop
+const sampler = BON.SimpleRandom
 const dicts = dict_list(params)
 
 # Run for all combinations
 @showprogress @distributed for d in dicts
     res = runsim(; output=output, d...)
     d2 = merge(d, res)
-    tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
+    tagsave(datadir("sim-$output-$sampler", savename(d, "jld2")), tostringdict(d2))
 end
 
 # Test load (with gitcommit)
