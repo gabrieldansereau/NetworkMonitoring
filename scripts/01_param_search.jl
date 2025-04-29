@@ -2,13 +2,13 @@ using Distributed
 
 # Instantiate & precompile everywhere
 @everywhere begin
-    using Pkg; Pkg.activate(@__DIR__)
+    using Pkg; Pkg.activate(".")
     Pkg.instantiate(); Pkg.precompile
 end
 
 # Load environment
+@everywhere using DrWatson
 @everywhere begin
-    using DrWatson
     @quickactivate :NetworkMonitoring
 end
 
