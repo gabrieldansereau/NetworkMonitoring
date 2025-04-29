@@ -5,3 +5,4 @@ data/sim*
 # narval
 narval.sh
 jobs/out
+*hostfile

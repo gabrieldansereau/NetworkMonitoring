@@ -1,5 +1,5 @@
 using Distributed
-addprocs(60)
+addprocs(60; exeflags="--project")
 @everywhere using DrWatson
 
 @everywhere begin
