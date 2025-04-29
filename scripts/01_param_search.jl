@@ -1,8 +1,14 @@
 using Distributed
-addprocs(60; exeflags="--project")
-@everywhere using DrWatson
 
+# Instantiate & precompile everywhere
 @everywhere begin
+    using Pkg; Pkg.activate(@__DIR__)
+    Pkg.instantiate(); Pkg.precompile
+end
+
+# Load environment
+@everywhere begin
+    using DrWatson
     @quickactivate :NetworkMonitoring
 end
 
@@ -23,9 +29,14 @@ const dicts = dict_list(params)
 
 # Run for all combinations
 @showprogress @distributed for d in dicts
-    res = runsim(; output=output, d...)
-    d2 = merge(d, res)
-    tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
+    try
+        res = runsim(; output=output, d...)
+        d2 = merge(d, res)
+        tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
+        true
+    catch e
+        false
+    end
 end
 
 # Test load (with gitcommit)
