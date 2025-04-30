@@ -1,10 +1,9 @@
 #!/bin/bash
 #SBATCH --account=ctb-tpoisot
-#SBATCH --ntasks=64
-#SBATCH --cpus-per-task=1
+#SBATCH --ntasks=32
 #SBATCH --mem-per-cpu=20G
-#SBATCH --time=00:30:00
-#SBATCH --job-name=01_param_search
+#SBATCH --time=01:00:00
+#SBATCH --job-name=01
 #SBATCH --output=jobs/out/%x-%J.out
 
 module load julia/1.11.3
