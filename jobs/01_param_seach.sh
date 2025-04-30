@@ -3,7 +3,7 @@
 #SBATCH --ntasks=64
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=20G
-#SBATCH --time=01:00:00
+#SBATCH --time=00:30:00
 #SBATCH --job-name=01_param_search
 #SBATCH --output=jobs/out/%x-%J.out
 
