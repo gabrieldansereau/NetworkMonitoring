@@ -26,7 +26,7 @@ const dicts = dict_list(params)
 @showprogress @distributed for d in dicts
     res = runsim(; output=output, d...)
     d2 = merge(d, res)
-    tagsave(datadir("sim-$output-$sampler", savename(d, "jld2")), tostringdict(d2))
+    tagsave(datadir("sim-$output-random", savename(d, "jld2")), tostringdict(d2))
 end
 
 # Test load (with gitcommit)
@@ -37,7 +37,7 @@ end
 if output == :prop
 
     # Collect results
-    param_grid = collect_results(datadir("sim-$output"))
+    param_grid = collect_results(datadir("sim-$output-random"))
     select!(param_grid, Not(:path))
 
     # Sort results
