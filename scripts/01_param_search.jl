@@ -52,6 +52,6 @@ if output == :prop
     unique!(param_grid, filter(!startswith("prop"), names(param_grid)))
 
     # Export results
-    CSV.write(datadir("param_grid.csv"), param_grid)
+    CSV.write(datadir("param_grid-random.csv"), param_grid)
 
 end
