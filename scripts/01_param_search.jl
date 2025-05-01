@@ -33,7 +33,7 @@ function main()
     @showprogress @distributed for (i, d) in collect(enumerate(dicts))
         Random.seed!(i)
         try
-            res = runsim(; output=output, d...)
+            res = runsim(; output=output, sampler=sampler, d...)
             d2 = merge(d, res)
             tagsave(datadir("sim-$output-random", savename(d, "jld2")), tostringdict(d2))
             true
