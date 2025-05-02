@@ -138,4 +138,4 @@ fig = data(beta_res) *
         legend=(; framevisible=false),
         # figure=(; size=(700,450))
     )
-# save(plotsdir("betadiversity.png"), fig; px_per_unit=2.0)
+save(plotsdir("betadiversity.png"), fig; px_per_unit=2.0)
