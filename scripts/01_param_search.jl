@@ -25,6 +25,7 @@ const params = Dict(
     :refmethod => ["metawebify", "global"],
 )
 const output = :prop # :monitored or :prop
+const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
 const dicts = dict_list(params)
 
 # Run for all combinations
@@ -32,7 +33,7 @@ function main()
     @showprogress @distributed for (i, d) in collect(enumerate(dicts))
         Random.seed!(i)
         try
-            res = runsim(; output=output, d...)
+            res = runsim(; output=output, sampler=sampler, d...)
             d2 = merge(d, res)
             tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
             true

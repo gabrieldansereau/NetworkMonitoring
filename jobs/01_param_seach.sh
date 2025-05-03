@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=ctb-tpoisot
-#SBATCH --ntasks=32
+#SBATCH --ntasks=64
 #SBATCH --mem-per-cpu=20G
 #SBATCH --time=01:00:00
 #SBATCH --job-name=01
