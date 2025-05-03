@@ -25,7 +25,7 @@ const params = Dict(
     :refmethod => ["metawebify", "global"],
 )
 const output = :prop # :monitored or :prop
-const sampler = BON.SimpleRandom
+const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
 const dicts = dict_list(params)
 
 # Run for all combinations
@@ -35,7 +35,7 @@ function main()
         try
             res = runsim(; output=output, sampler=sampler, d...)
             d2 = merge(d, res)
-            tagsave(datadir("sim-$output-random", savename(d, "jld2")), tostringdict(d2))
+            tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
             true
         catch e
             false
@@ -52,7 +52,7 @@ main()
 if output == :prop
 
     # Collect results
-    param_grid = collect_results(datadir("sim-$output-random"))
+    param_grid = collect_results(datadir("sim-$output"))
     select!(param_grid, Not(:path))
 
     # Sort results
@@ -67,6 +67,6 @@ if output == :prop
     unique!(param_grid, filter(!startswith("prop"), names(param_grid)))
 
     # Export results
-    CSV.write(datadir("param_grid-random.csv"), param_grid)
+    CSV.write(datadir("param_grid.csv"), param_grid)
 
 end
