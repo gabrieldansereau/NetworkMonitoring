@@ -11,6 +11,7 @@ d = DefaultParams()
 
 # Generate networks using simulations
 nets_dict = generate_networks(d)
+nets_dict[:possible] = nets_dict[:pos]
 @unpack detected, realized, pos, metaweb, ranges = nets_dict
 
 ## Test focal monitoring for a single species
@@ -19,20 +20,27 @@ nets_dict = generate_networks(d)
 _deg, _sp = findmax(degree(metaweb.metaweb))
 
 # Focal monitoring
-function focal_monitoring(sp::Symbol; type::Symbol=:pos)
+function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100)
     net = nets_dict[type]
-    deg = degree(net.metaweb, sp)
-    monitored_deg = 0
+    if type == :detected
+        # fix for detected where the metaweb subfield is not reajusted to detected int
+        _mw = metawebify(net)
+        _no = parse(Int, replace(string(sp), "node_" => ""))
+        deg = sum(_mw[_no, :]) + sum(_mw[:, _no]) + sum(_mw[_no, _no])
+    else
+        deg = degree(net.metaweb, sp)
+    end
+    # monitored_deg = 0
     # nbon = 0
 
     monitored = DataFrame()
     # while monitored_deg < deg && nbon <= 100
-    for i in 1:100
+    for i in nbons
         nbon = i
         bon = generate_bon(; nbon=nbon)
 
         # _monitored = union(monitor(pos, bon)...)
-        monitored_int = monitor(interactions, net, bon; makeunique=true)
+        monitored_int = monitor(x -> interactions(render(Binary, x)), net, bon; makeunique=true)
         monitored_deg = sum(in.(sp, monitored_int))
 
         info = (sp = sp, type = type, nbon = nbon, deg = deg, monitored = monitored_deg)
@@ -41,19 +49,29 @@ function focal_monitoring(sp::Symbol; type::Symbol=:pos)
     end
     return monitored
 end
-monitored_sp = focal_monitoring(_sp; type=:pos)
+monitored_sp = focal_monitoring(_sp; type=:possible, nbons=1:100)
 
 # Visualize result
-lines(
-    monitored_sp.nbon, monitored_sp.monitored;
-    axis=(; xlabel="Sites in BON", ylabel="Monitored interactions")
-)
+begin
+    f, ax, l = lines(
+        monitored_sp.nbon, monitored_sp.monitored;
+        label="possible", color = Makie.wong_colors()[2],
+        axis=(; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:20:100)
+    )
+    hlines!(ax, monitored_sp.deg, linestyle=:dash, alpha = 0.5, color = Makie.wong_colors()[2])
+    hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
+    axislegend(position=:rb)
+    f
+end
+
 
 ## Repeat focal monitoring by network types
 
+Random.seed!(33)
+
 # Run for all types
-types = [:pos, :realized, :detected]
-monitored_vec = Vector{DataFrame}(undef, 3)
+types = [:possible, :realized, :detected]
+monitored_vec = Vector{DataFrame}(undef, length(types))
 for i in eachindex(types)
     monitored_vec[i] = focal_monitoring(_sp; type=types[i])
 end
@@ -62,23 +80,48 @@ monitored_types = reduce(vcat, monitored_vec)
 # Visualize
 begin
     fig = Figure()
-    ax = Axis(fig[1,1]; xticks=0:25:100)
+    ax = Axis(fig[1,1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:20:100)
     for (i, type) in enumerate(types)
         m = filter(:type => ==(type), monitored_types)
         lines!(m.nbon, m.monitored, label=String(type), color = Makie.wong_colors()[i+1])
         # hlines!(unique(m.deg), linestyle = :dash, color = Makie.wong_colors()[i+1])
     end
-    fig[1,2] = Legend(fig, ax, "Network Type", framevisible=false)
+    hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
+    axislegend(position=:rc)
     fig
 end
 save(plotsdir("focal_types.png"), fig)
 
+# Re-run for realized and detected
+types = [:realized, :detected]
+monitored_vec = Vector{DataFrame}(undef, length(types))
+for i in eachindex(types)
+    monitored_vec[i] = focal_monitoring(_sp; type=types[i], nbons=[1, 500:500:10_000...])
+end
+monitored_types = reduce(vcat, monitored_vec)
+
+# Visualize result
+begin
+    fig = Figure()
+    ax = Axis(fig[1,1], xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:1000:10_000)
+    for (i, type) in enumerate(unique(monitored_types.type))
+        m = filter(:type => ==(type), monitored_types)
+        lines!(m.nbon, m.monitored, label=string(type), color = Makie.wong_colors()[i+2])
+        hlines!(unique(m.deg), linestyle = :dash, color = Makie.wong_colors()[i+2])
+    end
+    hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
+    axislegend(position = :rb)
+    fig
+end
+save(plotsdir("focal_types2.png"), fig)
 
 ## Repeat with 4 species with different degrees
 
+Random.seed!(101)
+
 # Get species to test
 degrees = degree(metaweb.metaweb)
-spp = sort(collect(degrees), by=x -> x.second, rev=true)[[1, 25, 50, 75]]
+spp = sort(collect(degrees), by=x -> x.second, rev=true)[[1, 25, 50, 70]]
 
 # Repeat focal monitoring per species
 monitored_vec = Vector{DataFrame}(undef, 4)
@@ -91,8 +134,11 @@ monitored_spp = reduce(vcat, monitored_vec)
 # Visualize result
 begin
     fig = Figure(size=(600, 600))
-    ax1 = Axis(fig[1,1]; ylabel="Monitored interactions", xticks=0:25:100)
-    ax2 = Axis(fig[2,1], ylabel="Proportion monitored", xlabel="Number of sites in BON", xticks=0:25:100)
+    ax1 = Axis(fig[1,1]; ylabel="Monitored interactions", xticks=0:20:100)
+    ax2 = Axis(fig[2,1],
+        ylabel="Proportion monitored", xlabel="Number of sites in BON",
+        xticks=0:20:100, yticks=0:0.2:1.0
+    )
     for (i, sp) in enumerate(unique(monitored_spp.sp))
         m = filter(:sp => ==(sp), monitored_spp)
         # Monitored int
