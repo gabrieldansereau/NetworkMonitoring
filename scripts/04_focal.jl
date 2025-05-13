@@ -38,7 +38,7 @@ function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100, sampl
     for i in nbons
         nbon = i
         if sampler == :BalancedAcceptance
-        bon = generate_bon(; nbon=nbon)
+            bon = generate_bon(; nbon=nbon)
         else
             # Extract species range as layer
             sp_range = SDT.SDMLayer(
@@ -85,7 +85,7 @@ Random.seed!(33)
 types = [:possible, :realized, :detected]
 monitored_vec = Vector{DataFrame}(undef, length(types))
 @showprogress for i in eachindex(types)
-    monitored_vec[i] = focal_monitoring(_sp; type=types[i])
+    monitored_vec[i] = focal_monitoring(_sp; type=types[i], sampler=BON.WeightedBalancedAcceptance)
 end
 monitored_types = reduce(vcat, monitored_vec)
 
@@ -108,7 +108,7 @@ save(plotsdir("focal_types.png"), fig)
 types = [:realized, :detected]
 monitored_vec = Vector{DataFrame}(undef, length(types))
 @showprogress for i in eachindex(types)
-    monitored_vec[i] = focal_monitoring(_sp; type=types[i], nbons=[1, 500:500:10_000...])
+    monitored_vec[i] = focal_monitoring(_sp; type=types[i], nbons=[1, 500:500:10_000...], sampler=BON.WeightedBalancedAcceptance)
 end
 monitored_types = reduce(vcat, monitored_vec)
 
@@ -138,7 +138,7 @@ spp = sort(collect(degrees), by=x -> x.second, rev=true)[[1, 25, 50, 70]]
 # Repeat focal monitoring per species
 monitored_vec = Vector{DataFrame}(undef, 4)
 @showprogress for i in eachindex(spp)
-    monitored_vec[i] = focal_monitoring(spp[i].first; type=:pos)
+    monitored_vec[i] = focal_monitoring(spp[i].first; type=:pos, sampler=BON.WeightedBalancedAcceptance)
 end
 monitored_spp = reduce(vcat, monitored_vec)
 @rtransform!(monitored_spp, :proportion = :monitored / :deg)
