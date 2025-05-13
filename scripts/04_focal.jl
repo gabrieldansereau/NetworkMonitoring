@@ -20,7 +20,7 @@ nets_dict[:possible] = nets_dict[:pos]
 _deg, _sp = findmax(degree(metaweb.metaweb))
 
 # Focal monitoring
-function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100)
+function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100, sampler=:BalancedAcceptance)
     net = nets_dict[type]
     if type == :detected
         # fix for detected where the metaweb subfield is not reajusted to detected int
@@ -37,7 +37,18 @@ function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100)
     # while monitored_deg < deg && nbon <= 100
     for i in nbons
         nbon = i
+        if sampler == :BalancedAcceptance
         bon = generate_bon(; nbon=nbon)
+        else
+            # Extract species range as layer
+            sp_range = SDT.SDMLayer(
+                occurrence(ranges)[indexin([_sp], ranges.species)...];
+                x=(0.0, d.nsites), y=(0.0, d.nsites)
+            )
+
+            # Use WeightedBalancedAcceptance sampling
+            bon = BON.sample(sampler(nbon), sp_range)
+        end
 
         # _monitored = union(monitor(pos, bon)...)
         monitored_int = monitor(x -> interactions(render(Binary, x)), net, bon; makeunique=true)
@@ -50,6 +61,7 @@ function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100)
     return monitored
 end
 monitored_sp = focal_monitoring(_sp; type=:possible, nbons=1:100)
+monitored_sp = focal_monitoring(_sp; type=:possible, nbons=1:100, sampler=BON.WeightedBalancedAcceptance)
 
 # Visualize result
 begin
@@ -72,7 +84,7 @@ Random.seed!(33)
 # Run for all types
 types = [:possible, :realized, :detected]
 monitored_vec = Vector{DataFrame}(undef, length(types))
-for i in eachindex(types)
+@showprogress for i in eachindex(types)
     monitored_vec[i] = focal_monitoring(_sp; type=types[i])
 end
 monitored_types = reduce(vcat, monitored_vec)
@@ -95,7 +107,7 @@ save(plotsdir("focal_types.png"), fig)
 # Re-run for realized and detected
 types = [:realized, :detected]
 monitored_vec = Vector{DataFrame}(undef, length(types))
-for i in eachindex(types)
+@showprogress for i in eachindex(types)
     monitored_vec[i] = focal_monitoring(_sp; type=types[i], nbons=[1, 500:500:10_000...])
 end
 monitored_types = reduce(vcat, monitored_vec)
@@ -125,7 +137,7 @@ spp = sort(collect(degrees), by=x -> x.second, rev=true)[[1, 25, 50, 70]]
 
 # Repeat focal monitoring per species
 monitored_vec = Vector{DataFrame}(undef, 4)
-for i in eachindex(spp)
+@showprogress for i in eachindex(spp)
     monitored_vec[i] = focal_monitoring(spp[i].first; type=:pos)
 end
 monitored_spp = reduce(vcat, monitored_vec)
