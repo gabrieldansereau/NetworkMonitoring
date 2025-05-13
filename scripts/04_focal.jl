@@ -20,7 +20,9 @@ nets_dict[:possible] = nets_dict[:pos]
 _deg, _sp = findmax(degree(metaweb.metaweb))
 
 # Focal monitoring
-function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100, sampler=:BalancedAcceptance)
+function focal_monitoring(
+    sp::Symbol, layer=nothing; type::Symbol=:possible, nbons=1:100, sampler=BON.BalancedAcceptance
+)
     net = nets_dict[type]
     if type == :detected
         # fix for detected where the metaweb subfield is not reajusted to detected int
@@ -37,18 +39,16 @@ function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100, sampl
     # while monitored_deg < deg && nbon <= 100
     for i in nbons
         nbon = i
-        if sampler == :BalancedAcceptance
-            bon = generate_bon(; nbon=nbon)
-        else
-            # Extract species range as layer
-            sp_range = SDT.SDMLayer(
-                occurrence(ranges)[indexin([_sp], ranges.species)...];
-                x=(0.0, d.nsites), y=(0.0, d.nsites)
+        if isnothing(layer)
+            @unpack H_nlm, nsites = d
+            layer = SDT.SDMLayer(
+                MidpointDisplacement(H_nlm), (nsites, nsites);
+                x=(0.0, nsites), y=(0.0, nsites)
             )
-
-            # Use WeightedBalancedAcceptance sampling
-            bon = BON.sample(sampler(nbon), sp_range)
         end
+
+        # Define monitoring sites on layer given sampler
+        bon = BON.sample(sampler(nbon), layer)
 
         # _monitored = union(monitor(pos, bon)...)
         monitored_int = monitor(x -> interactions(render(Binary, x)), net, bon; makeunique=true)
@@ -166,13 +166,19 @@ save(plotsdir("focal_spp.png"), fig)
 
 ## Explore variations with different sampler
 
+# Extract species range
+_sp_range = SDT.SDMLayer(
+    occurrence(ranges)[indexin([_sp], ranges.species)...];
+    x=(0.0, d.nsites), y=(0.0, d.nsites)
+)
+
 # Run for all types
 begin
     Random.seed!(22)
     samplers = [BON.UncertaintySampling, BON.WeightedBalancedAcceptance, BON.BalancedAcceptance, BON.SimpleRandom]
     monitored_vec = Vector{DataFrame}(undef, length(samplers))
     @showprogress for i in eachindex(samplers)
-        monitored_vec[i] = focal_monitoring(_sp; type=:realized, sampler=samplers[i], nbons=1:5:500)
+        monitored_vec[i] = focal_monitoring(_sp, _sp_range; type=:realized, sampler=samplers[i], nbons=1:5:500)
         @rtransform!(monitored_vec[i], :sampler = samplers[i])
     end
     monitored_samplers = reduce(vcat, monitored_vec)
@@ -201,7 +207,7 @@ begin
     samplers = [BON.UncertaintySampling, BON.WeightedBalancedAcceptance, BON.BalancedAcceptance, BON.SimpleRandom]
     monitored_mat = Matrix{DataFrame}(undef, length(samplers), nrep)
     @showprogress for i in eachindex(samplers), j in 1:nrep
-        monitored_mat[i,j] = focal_monitoring(_sp; type=:realized, sampler=samplers[i], nbons=1:5:500)
+        monitored_mat[i,j] = focal_monitoring(_sp, _sp_range; type=:realized, sampler=samplers[i], nbons=1:5:500)
         @rtransform!(monitored_mat[i,j], :sampler = samplers[i])
     end
     monitored_samplers = reduce(vcat, vec(monitored_mat))
