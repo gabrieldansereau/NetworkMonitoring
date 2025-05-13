@@ -38,7 +38,7 @@ function focal_monitoring(sp::Symbol; type::Symbol=:possible, nbons=1:100, sampl
     for i in nbons
         nbon = i
         if sampler == :BalancedAcceptance
-        bon = generate_bon(; nbon=nbon)
+            bon = generate_bon(; nbon=nbon)
         else
             # Extract species range as layer
             sp_range = SDT.SDMLayer(
@@ -107,7 +107,7 @@ save(plotsdir("focal_types.png"), fig)
 # Re-run for realized and detected
 types = [:realized, :detected]
 monitored_vec = Vector{DataFrame}(undef, length(types))
-@showprogress for i in eachindex(types)
+for i in eachindex(types)
     monitored_vec[i] = focal_monitoring(_sp; type=types[i], nbons=[1, 500:500:10_000...])
 end
 monitored_types = reduce(vcat, monitored_vec)
@@ -163,3 +163,33 @@ begin
     fig
 end
 save(plotsdir("focal_spp.png"), fig)
+
+## Explore variations with different sampler
+
+# Run for all types
+begin
+    Random.seed!(22)
+    samplers = [BON.UncertaintySampling, BON.WeightedBalancedAcceptance, BON.BalancedAcceptance, BON.SimpleRandom]
+    monitored_vec = Vector{DataFrame}(undef, length(samplers))
+    @showprogress for i in eachindex(samplers)
+        monitored_vec[i] = focal_monitoring(_sp; type=:realized, sampler=samplers[i], nbons=1:5:500)
+        @rtransform!(monitored_vec[i], :sampler = samplers[i])
+    end
+    monitored_samplers = reduce(vcat, monitored_vec)
+end
+
+# Visualize
+labels = ["Uncertainty Sampling", "Weighted Balanced Acceptance", "Balanced Acceptance", "Simple Random"]
+begin
+    fig = Figure()
+    ax = Axis(fig[1,1]; xlabel="Sites in BON", ylabel="Monitored interactions")
+    for (i, sampler) in enumerate(samplers)
+        m = filter(:sampler => ==(sampler), monitored_samplers)
+        lines!(m.nbon, m.monitored, label=labels[i], color = Makie.wong_colors()[i+1])
+        # hlines!(unique(m.deg), linestyle = :dash, color = Makie.wong_colors()[i+1])
+    end
+    hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
+    Legend(fig[:, end+1], ax)
+    fig
+end
+save(plotsdir("focal_samplers.png"), fig)
