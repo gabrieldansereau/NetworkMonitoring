@@ -208,7 +208,7 @@ begin
     monitored_mat = Matrix{DataFrame}(undef, length(samplers), nrep)
     @showprogress for i in eachindex(samplers), j in 1:nrep
         monitored_mat[i,j] = focal_monitoring(_sp, _sp_range; type=:realized, sampler=samplers[i], nbons=1:5:500)
-        @rtransform!(monitored_mat[i,j], :sampler = samplers[i])
+        @rtransform!(monitored_mat[i,j], :sampler = string(samplers[i]))
     end
     monitored_samplers = reduce(vcat, vec(monitored_mat))
 end
@@ -237,3 +237,62 @@ begin
     fig
 end
 save(plotsdir("focal_samplers_bands.png"), fig)
+
+## Richness-focused sampling & suspicion monitoring
+
+# Extract richness layers
+richness_spp = SDT.SDMLayer(
+    sum(occurrence(ranges));
+    x=(0.0, d.nsites), y=(0.0, d.nsites)
+)
+richness_int = SDT.SDMLayer(
+    extract(SIN.links, realized);
+    x=(0.0, d.nsites), y=(0.0, d.nsites)
+)
+
+# Optimize with UncertaintySampling
+omnilabels = ["Richness focused", "Interaction focused"]
+begin
+    Random.seed!(22)
+    nrep = 5
+    omnis = [richness_spp, richness_int]
+    monitored_mat = Matrix{DataFrame}(undef, length(omnis), nrep)
+    @showprogress for (i, omni) in enumerate(omnis), j in 1:nrep
+        monitored_mat[i,j] = focal_monitoring(_sp, omni; type=:realized, sampler=BON.UncertaintySampling, nbons=1:5:500)
+        @rtransform!(monitored_mat[i,j], :sampler = omnilabels[i])
+    end
+    monitored_omni = reduce(vcat, vec(monitored_mat))
+end
+
+# Combine with Uncertainty Sampling on species layer
+monitored_samplers2 = filter(
+    :sampler => in(string.([BON.UncertaintySampling])),
+    monitored_samplers
+)
+append!(monitored_samplers2, monitored_omni)
+
+# Visualize
+labels = ["Uncertainty Sampling", omnilabels...]
+bands = @chain begin
+    monitored_samplers2
+    groupby([:sampler, :nbon])
+    @combine(
+        :low = minimum(:monitored),
+        :med = median(:monitored),
+        :upp = maximum(:monitored),
+    )
+end
+begin
+    fig = Figure()
+    ax = Axis(fig[1,1]; xlabel="Sites in BON", ylabel="Monitored interactions")
+    for (i, s) in enumerate(unique(bands.sampler))
+        b = filter(:sampler => ==(s), bands)
+        band!(b.nbon, b.low, b.upp; alpha=0.4, label=labels[i], color = Makie.wong_colors()[i+1])
+        lines!(b.nbon, b.med, label=labels[i], color = Makie.wong_colors()[i+1])
+    end
+    # hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
+    # Legend(fig[1, end+1], ax)
+    axislegend(position=:lt, merge=true)
+    fig
+end
+save(plotsdir("focal_samplers_richness.png"), fig)
