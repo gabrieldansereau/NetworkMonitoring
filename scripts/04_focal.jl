@@ -21,8 +21,14 @@ _deg, _sp = findmax(degree(metaweb.metaweb))
 
 # Focal monitoring
 function focal_monitoring(
-    sp::Symbol, layer=nothing;
-    nrep::Int=1, type::Symbol=:possible, nbons=1:100, sampler=BON.BalancedAcceptance, combined=false
+    nets_dict,
+    sp::Symbol,
+    layer=nothing;
+    nrep::Int=1,
+    type::Symbol=:possible,
+    nbons=1:100,
+    sampler=BON.BalancedAcceptance,
+    combined=false
 )
     net = nets_dict[type]
     if type == :detected
@@ -36,7 +42,15 @@ function focal_monitoring(
     # monitored_deg = 0
     # nbon = 0
 
-    monitored = DataFrame()
+    monitored_all = DataFrame()
+    # monitored_all = [DataFrame(
+    #     sp = [],
+    #     type = [],
+    #     nbon = [],
+    #     rep = [],
+    #     deg = [],
+    #     monitored = [],
+    # ) for i in 1:Threads.nthreads()]
     # while monitored_deg < deg && nbon <= 100
     @showprogress for rep in 1:nrep
         for i in nbons
@@ -58,9 +72,12 @@ function focal_monitoring(
 
             info = (sp = sp, type = type, nbon = nbon, rep = rep, deg = deg, monitored = monitored_deg)
             # @info info
-            push!(monitored, info)
+            # push!(monitored_all[Threads.threadid()], info)
+            push!(monitored_all, info)
         end
     end
+    # monitored = vcat(monitored_all...)
+    monitored = monitored_all
 
     if combined
         monitored = @chain monitored begin
@@ -77,7 +94,11 @@ function focal_monitoring(
 
     return monitored
 end
-monitored_sp = focal_monitoring(_sp; type=:possible, nbons=1:100)
+@time monitored_sp = focal_monitoring(nets_dict, _sp; nrep = 1, type=:possible, nbons=1:100)
+@time safesave("test.jld2", Dict("monitored_sp" => monitored_sp))
+@time wload("test.jld2")
+collect_results(".")
+
 monitored_sp = focal_monitoring(_sp; type=:possible, nbons=1:100, sampler=BON.WeightedBalancedAcceptance)
 
 # Visualize result
@@ -99,14 +120,20 @@ end
 Random.seed!(33)
 
 # Run for all types
-types = [:possible, :realized, :detected]
-monitored_vec = Vector{DataFrame}(undef, length(types))
-for i in eachindex(types)
-    @info "$i: $(types[i])"
-    monitored_vec[i] = focal_monitoring(_sp; type=types[i], nrep=5, combined=true)
+function runit()
+    types = [:possible, :realized]
+    Threads.@threads for i in eachindex(types)
+        monitored = focal_monitoring(nets_dict, _sp; type=types[i], nrep=1, combined=true)
+        wsave("test-$i.jld2", tostringdict(Dict("df" => monitored)))
+    end
+    all_dfs = collect_results(".")
+    df = reduce(vcat, all_dfs.df)
+    # @sync for i in eachindex(types)
+    #     Threads.@spawn monitored_vec[i] = focal_monitoring(nets_dict, _sp; type=types[i], nrep=1, combined=true)
+    # end
+    return df
 end
-monitored_types = reduce(vcat, monitored_vec)
-
+@time runit()
 # Interval bands
 labs = Dict(
     :possible => "possible",
