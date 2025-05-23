@@ -18,63 +18,84 @@ nets_dict[:possible] = nets_dict[:pos]
 ## Test focal monitoring for a single species
 
 # Get species with highest degree for test run
-_deg, _sp = findmax(degree(metaweb.metaweb))
+deg, sp = findmax(degree(metaweb.metaweb))
 
 # Focal monitoring
 function focal_monitoring(
+    nets_dict,
     sp::Symbol,
-    layer=nothing;
+    layer::Union{Nothing,SDT.SDMLayer}=nothing;
     nrep::Int=1,
-    type::Symbol=:possible,
-    nbons=1:100,
-    sampler=BON.BalancedAcceptance,
+    nbons::AbstractRange{Int64}=1:100,
+    type::Vector{Symbol}=[:possible],
+    sampler::Vector{UnionAll}=[BON.BalancedAcceptance],
     combined=false,
+    H_nlm=d.H_nlm,
+    nsites=d.nsites,
 )
-    net = nets_dict[type]
-    if type == :detected
-        # fix for detected where the metaweb subfield is not reajusted to detected int
-        _mw = metawebify(net)
-        _no = parse(Int, replace(string(sp), "node_" => ""))
-        deg = sum(_mw[_no, :]) + sum(_mw[:, _no]) + sum(_mw[_no, _no])
-    else
-        deg = degree(net.metaweb, sp)
-    end
-    # monitored_deg = 0
-    # nbon = 0
+    # Define options for simulations
+    options_dict = Dict(
+        :nrep => collect(1:nrep),
+        :nbon => collect(nbons),
+        :type => type,
+        :sampler => sampler,
+    )
+    options_list = dict_list(options_dict)
 
+    # Run all options
     monitored = DataFrame()
-    # while monitored_deg < deg && nbon <= 100
-    @showprogress for rep in 1:nrep
-        for i in nbons
-            nbon = i
-            if isnothing(layer)
-                @unpack H_nlm, nsites = d
-                layer = SDT.SDMLayer(
-                    MidpointDisplacement(H_nlm),
-                    (nsites, nsites);
-                    x=(0.0, nsites),
-                    y=(0.0, nsites),
-                )
-            end
+    @showprogress for opt in options_list
+        @unpack nrep, nbon, type, sampler = opt
 
-            # Define monitoring sites on layer given sampler
-            bon = BON.sample(sampler(nbon), layer)
+        # Select network object
+        net = nets_dict[type]
 
-            # _monitored = union(monitor(pos, bon)...)
-            monitored_int = monitor(
-                x -> interactions(render(Binary, x)), net, bon; makeunique=true
-            )
-            monitored_deg = sum(in.(sp, monitored_int))
-
-            info = (sp=sp, type=type, nbon=nbon, rep=rep, deg=deg, monitored=monitored_deg)
-            # @info info
-            push!(monitored, info)
+        # Get degree of focal species
+        if type == :detected
+            # fix for detected where the metaweb subfield is not reajusted to detected int
+            _mw = metawebify(net)
+            _no = parse(Int, replace(string(sp), "node_" => ""))
+            deg = sum(_mw[_no, :]) + sum(_mw[:, _no]) + sum(_mw[_no, _no])
+        else
+            deg = degree(net.metaweb, sp)
         end
+
+        # Create neutral layer for optimization if nore was provided
+        if isnothing(layer)
+            layer = SDT.SDMLayer(
+                MidpointDisplacement(H_nlm),
+                (nsites, nsites);
+                x=(0.0, nsites),
+                y=(0.0, nsites),
+            )
+        end
+
+        # Generate monitoring sites on layer given sampler
+        bon = BON.sample(sampler(nbon), layer)
+
+        # Compute degree for focal species across monitored sites
+        monitored_int = monitor(
+            x -> interactions(render(Binary, x)), net, bon; makeunique=true
+        )
+        monitored_deg = sum(in.(sp, monitored_int))
+
+        # Export results
+        info = (
+            sp=sp,
+            type=type,
+            sampler=sampler,
+            nbon=nbon,
+            rep=nrep,
+            deg=deg,
+            monitored=monitored_deg,
+        )
+        push!(monitored, info)
     end
 
+    # Combine results across replicates
     if combined
         monitored = @chain monitored begin
-            groupby([:sp, :type, :nbon])
+            groupby([:sp, :type, :sampler, :nbon])
             @combine(
                 :low = minimum(:monitored),
                 :med = median(:monitored),
@@ -87,10 +108,28 @@ function focal_monitoring(
 
     return monitored
 end
-monitored_sp = focal_monitoring(_sp; type=:possible, nbons=1:100)
-monitored_sp = focal_monitoring(
-    _sp; type=:possible, nbons=1:100, sampler=BON.WeightedBalancedAcceptance
-)
+function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
+    monitored_vec = Vector{DataFrame}(undef, length(spp))
+    for (i, sp) in enumerate(spp)
+        @info "Monitoring $sp ($i/$(length(spp))"
+        monitored_vec[i] = focal_monitoring(nets_dict, sp; kw...)
+    end
+    monitored = reduce(vcat, monitored_vec)
+    return monitored
+end
+function focal_monitoring(nets_dict, sp::Symbol, layers::Vector{SDT.SDMLayer}; kw...)
+    monitored_vec = Vector{DataFrame}(undef, length(layers))
+    for (i, layer) in enumerate(layers)
+        @info "Monitoring layer $i/$(length(layers))"
+        monitored_vec[i] = focal_monitoring(nets_dict, sp, layer; kw...)
+        @rtransform!(monitored_vec[i], :layer = i)
+    end
+    monitored = reduce(vcat, monitored_vec)
+    return monitored
+end
+
+# Test run
+monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 
 # Visualize result
 begin
@@ -102,7 +141,7 @@ begin
         axis=(; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:20:100),
     )
     hlines!(ax, monitored_sp.deg; linestyle=:dash, alpha=0.5, color=Makie.wong_colors()[2])
-    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    hlines!(ax, deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:rb)
     f
 end
@@ -113,18 +152,13 @@ Random.seed!(33)
 
 # Run for all types
 types = [:possible, :realized, :detected]
-monitored_vec = Vector{DataFrame}(undef, length(types))
-for i in eachindex(types)
-    @info "$i: $(types[i])"
-    monitored_vec[i] = focal_monitoring(_sp; type=types[i], nrep=5, combined=true)
-end
-monitored_types = reduce(vcat, monitored_vec)
+monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=5, combined=true)
 
 # Interval bands
 labs = Dict{Any,String}(
     :possible => "possible", :realized => "realized", :detected => "detected"
 )
-cols = Dict(
+cols = Dict{Any,Any}(
     :possible => Makie.wong_colors()[2],
     :realized => Makie.wong_colors()[3],
     :detected => Makie.wong_colors()[4],
@@ -149,15 +183,9 @@ save(plotsdir("focal_types.png"), fig)
 
 # Re-run for realized and detected
 types2 = [:realized, :detected]
-monitored_types2 = filter(:var => !(in(types2)), monitored_types)
-monitored_vec = Vector{DataFrame}(undef, length(types2))
-for i in eachindex(types2)
-    @info "$i: $(types[i])"
-    monitored_vec[i] = focal_monitoring(
-        _sp; type=types2[i], nbons=[1, 500:500:10_000...], nrep=5, combined=true
-    )
-end
-append!(monitored_types2, reduce(vcat, monitored_vec))
+monitored_types2 = focal_monitoring(
+    nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=5, combined=true
+)
 
 # Visualize result
 begin
@@ -189,13 +217,10 @@ Random.seed!(101)
 # Get species to test
 degrees = degree(metaweb.metaweb)
 spp = sort(collect(degrees); by=x -> x.second, rev=true)[[1, 25, 50, 70]]
+spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
-monitored_vec = Vector{DataFrame}(undef, length(spp))
-@showprogress for i in eachindex(spp)
-    monitored_vec[i] = focal_monitoring(spp[i].first; type=:possible, nrep=5, combined=true)
-end
-monitored_spp = reduce(vcat, monitored_vec)
+monitored_spp = focal_monitoring(nets_dict, spp; type=[:possible], nrep=5, combined=true)
 
 # Visualize result
 begin
@@ -210,33 +235,14 @@ begin
         yticks=0:0.2:1.0,
     )
     for (i, sp) in enumerate(spp)
-        sp = sp[1]
         b = filter(:sp => ==(sp), res)
         # Monitored int
-        band!(
-            ax1,
-            b.nbon,
-            b.low,
-            b.upp;
-            alpha=0.4,
-            label=string(sp),
-            colormap=:seaborn_colorblind,
-        )
-        lines!(ax1, b.nbon, b.med; label=string(sp), colormap=:seaborn_colorblind)
-        hlines!(
-            ax1, unique(b.deg); linestyle=:dash, alpha=0.5, colormap=:seaborn_colorblind
-        )
+        band!(ax1, b.nbon, b.low, b.upp; alpha=0.4, label=string(sp))
+        lines!(ax1, b.nbon, b.med; label=string(sp))
+        hlines!(ax1, unique(b.deg); linestyle=:dash, alpha=0.5)
         # Proportion
-        band!(
-            ax2,
-            b.nbon,
-            b.low ./ b.deg,
-            b.upp ./ b.deg;
-            alpha=0.4,
-            label=string(sp),
-            colormap=:seaborn_colorblind,
-        )
-        lines!(ax2, b.nbon, b.med ./ b.deg; label=string(sp), colormap=:seaborn_colorblind)
+        band!(ax2, b.nbon, b.low ./ b.deg, b.upp ./ b.deg; alpha=0.4, label=string(sp))
+        lines!(ax2, b.nbon, b.med ./ b.deg; label=string(sp))
     end
     fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
     fig
@@ -246,35 +252,25 @@ save(plotsdir("focal_spp.png"), fig)
 ## Explore variations with different sampler
 
 # Extract species range
-_sp_range = SDT.SDMLayer(
-    occurrence(ranges)[indexin([_sp], ranges.species)...];
+sp_range = SDT.SDMLayer(
+    occurrence(ranges)[indexin([sp], ranges.species)...];
     x=(0.0, d.nsites),
     y=(0.0, d.nsites),
 )
 
 # Run with replicates
-begin
-    Random.seed!(22)
-    nrep = 5
-    samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
-    monitored_mat = Matrix{DataFrame}(undef, length(samplers), nrep)
-    @showprogress for i in eachindex(samplers), j in 1:nrep
-        monitored_mat[i, j] = focal_monitoring(
-            _sp, _sp_range; type=:realized, sampler=samplers[i], nbons=1:5:500
-        )
-        @rtransform!(monitored_mat[i, j], :sampler = samplers[i])
-    end
-    monitored_samplers = reduce(vcat, vec(monitored_mat))
-end
-
-# Combine for interval bands
-bands = @chain begin
-    monitored_samplers
-    groupby([:sampler, :nbon])
-    @combine(
-        :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
-    )
-end
+Random.seed!(22)
+samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
+monitored_samplers = focal_monitoring(
+    nets_dict,
+    sp,
+    sp_range;
+    type=[:realized],
+    sampler=samplers,
+    nbons=1:5:500,
+    nrep=5,
+    combined=true,
+)
 
 # Define labels and colors
 if !(@isdefined labs)
@@ -292,7 +288,7 @@ cols[WeightedBalancedAcceptance] = Makie.wong_colors()[3];
 
 # Plot
 begin
-    res = bands
+    res = monitored_samplers
     fig = Figure()
     ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
     for s in unique(res.sampler)
@@ -300,7 +296,7 @@ begin
         band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
         lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
-    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    hlines!(ax, deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:lt, merge=true)
     fig
 end
@@ -316,10 +312,10 @@ richness_int = SDT.SDMLayer(
 
 # Extract richness of interacting species for focal species
 degree_possible = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), _sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
+    extract(x -> degree(render(Binary, x), sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
 )
 degree_realized = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), _sp), realized);
+    extract(x -> degree(render(Binary, x), sp), realized);
     x=(0.0, d.nsites),
     y=(0.0, d.nsites),
 )
@@ -327,34 +323,26 @@ degree_realized = SDT.SDMLayer(
 # Optimize with UncertaintySampling
 optim = [richness_spp, degree_realized]
 optimlabels = ["Species richness", "Realized interactions"]
-begin
-    Random.seed!(22)
-    nrep = 5
-    monitored_mat = Matrix{DataFrame}(undef, length(optim), nrep)
-    @showprogress for (i, omni) in enumerate(optim), j in 1:nrep
-        monitored_mat[i, j] = focal_monitoring(
-            _sp, omni; type=:realized, sampler=UncertaintySampling, nbons=1:5:500
-        )
-        @rtransform!(monitored_mat[i, j], :sampler = optimlabels[i])
-    end
-    monitored_optimized = reduce(vcat, vec(monitored_mat))
-end
+monitored_optimized = focal_monitoring(
+    nets_dict,
+    sp,
+    optim;
+    type=[:realized],
+    sampler=[UncertaintySampling],
+    nbons=1:5:500,
+    nrep=5,
+    combined=true,
+)
+@rtransform!(monitored_optimized, :sampler = optimlabels[:layer])
+select!(monitored_optimized, Not(:layer))
 
 # Combine with Uncertainty Sampling on species layer
 append!(
     monitored_optimized,
     filter(:sampler => ==(UncertaintySampling), monitored_samplers);
     promote=true,
+    cols=:subset,
 )
-
-# Combine for interval bands
-bands = @chain begin
-    monitored_optimized
-    groupby([:sampler, :nbon])
-    @combine(
-        :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
-    )
-end
 
 # Set labels and colors
 labs[UncertaintySampling] = "Focal species range"
@@ -365,7 +353,7 @@ end
 
 # Plot
 begin
-    res = bands
+    res = monitored_optimized
     fig = Figure()
     ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
     for s in unique(res.sampler)
@@ -373,7 +361,7 @@ begin
         band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
         lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
-    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    hlines!(ax, deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend("Optimized on"; position=:lt, merge=true)
     fig
 end
