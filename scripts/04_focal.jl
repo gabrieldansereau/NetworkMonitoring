@@ -330,13 +330,10 @@ begin
 end
 
 # Combine with Uncertainty Sampling on species layer
-monitored_samplers2 = filter(
-    :sampler => in(string.([UncertaintySampling])), monitored_samplers
-)
-append!(monitored_samplers2, monitored_omni)
+monitored_samplers2 = filter(:sampler => ==(UncertaintySampling), monitored_samplers)
+append!(monitored_samplers2, monitored_omni; promote=true)
 
-# Visualize
-labels = ["Uncertainty Sampling", omnilabels...]
+# Combine for interval bands
 bands = @chain begin
     monitored_samplers2
     groupby([:sampler, :nbon])
@@ -344,24 +341,23 @@ bands = @chain begin
         :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
     )
 end
+
+# Set labels and colors
+for (i, o) in enumerate(omnilabels)
+    labs[o] = o
+    cols[o] = Makie.wong_colors()[i + 4]
+end
+
+# Plot
 begin
     res = bands
     fig = Figure()
     ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
-    for (i, s) in enumerate(unique(res.sampler))
+    for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
-        band!(
-            b.nbon,
-            b.low,
-            b.upp;
-            alpha=0.4,
-            label=labels[i],
-            color=Makie.wong_colors()[i + 1],
-        )
-        lines!(b.nbon, b.med; label=labels[i], color=Makie.wong_colors()[i + 1])
+        band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
+        lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
-    # hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
-    # Legend(fig[1, end+1], ax)
     axislegend(; position=:lt, merge=true)
     fig
 end
