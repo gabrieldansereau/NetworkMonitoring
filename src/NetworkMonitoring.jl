@@ -23,7 +23,8 @@ using Reexport
     import SpeciesInteractionSamplers as SIS
 
     using BiodiversityObservationNetworks: GI.coordinates
-    using SpeciesDistributionToolkit: SimpleSDMLayers.__get_grid_coordinate_by_latlon as get_grid_coordinate_by_latlon
+    using SpeciesDistributionToolkit:
+        SimpleSDMLayers.__get_grid_coordinate_by_latlon as get_grid_coordinate_by_latlon
     using SpeciesInteractionNetworks: SpeciesInteractionNetworks as SIN, interactions
 end
 
