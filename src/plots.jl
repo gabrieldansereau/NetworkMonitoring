@@ -6,6 +6,6 @@ doesn't it make sense?
 """
 function heatmapcb(mat; label="", kw...)
     f, ax, p = heatmap(mat; kw...)
-    Colorbar(f[1,end+1], p; label=label)
-    f
+    Colorbar(f[1, end + 1], p; label=label)
+    return f
 end

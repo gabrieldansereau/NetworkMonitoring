@@ -9,14 +9,16 @@ sim_params = filter(!startswith("prop"), names(param_grid))
 simfiles = readdir(datadir("sim-monitored"); join=true)
 filter!(contains("global"), simfiles)
 nrows = length(simfiles)
-all_res_df = [DataFrame(
-    nbon=Int[],
-    nrep=Int[],
-    refmethod=String[],
-    βos_possible=Float64[],
-    βos_realized=Float64[],
-    βos_detected=Float64[],
-) for i in 1:Threads.nthreads()]
+all_res_df = [
+    DataFrame(;
+        nbon=Int[],
+        nrep=Int[],
+        refmethod=String[],
+        βos_possible=Float64[],
+        βos_realized=Float64[],
+        βos_detected=Float64[],
+    ) for i in 1:Threads.nthreads()
+]
 @showprogress Threads.@threads for i in eachindex(simfiles)
     f = simfiles[i]
 
@@ -27,7 +29,7 @@ all_res_df = [DataFrame(
     m = d["metaweb"]
 
     # Compute βOS
-    βres = Dict{String, Any}()
+    βres = Dict{String,Any}()
     for n in ["possible", "realized", "detected"]
         networks = d[n]
 

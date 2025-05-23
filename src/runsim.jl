@@ -1,17 +1,17 @@
 # Default parameters
 @kwdef struct DefaultParams
-    ns::Int=75
-    nsites::Int=100
-    C_exp::Float64=0.2
-    ra_sigma::Float64=1.2
-    ra_scaling::Float64=50.0
-    energy_NFL::Union{Float64, Int}=50_000
-    H_nlm::Float64=0.5
-    nbon::Int=50
-    refmethod::String="global"
-    output::Symbol=:prop
-    nrep=nothing
-    sampler=BON.BalancedAcceptance
+    ns::Int = 75
+    nsites::Int = 100
+    C_exp::Float64 = 0.2
+    ra_sigma::Float64 = 1.2
+    ra_scaling::Float64 = 50.0
+    energy_NFL::Union{Float64,Int} = 50_000
+    H_nlm::Float64 = 0.5
+    nbon::Int = 50
+    refmethod::String = "global"
+    output::Symbol = :prop
+    nrep = nothing
+    sampler = BON.BalancedAcceptance
 end
 
 ## Generate network & abundances
@@ -24,10 +24,10 @@ function generate_networks(d::DefaultParams)
     metaweb = generate(SIS.NicheModel(ns, C_exp))
 
     # Generate autocorrelated ranges
-    ranges = generate(AutocorrelatedRange(dims=(nsites, nsites)),ns)
+    ranges = generate(AutocorrelatedRange(; dims=(nsites, nsites)), ns)
 
     # Generate realized abundances
-    ra = generate(NormalizedLogNormal(σ=ra_sigma), metaweb)
+    ra = generate(NormalizedLogNormal(; σ=ra_sigma), metaweb)
 
     # Generate possible local networks
     pos = possible(metaweb, ranges)
@@ -59,8 +59,7 @@ function generate_bon(d::DefaultParams)
 
     # Generate uncertainty layer
     uncertainty = SDT.SDMLayer(
-        MidpointDisplacement(H_nlm), (nsites, nsites);
-        x=(0.0, nsites), y=(0.0, nsites)
+        MidpointDisplacement(H_nlm), (nsites, nsites); x=(0.0, nsites), y=(0.0, nsites)
     )
 
     # Use BalancedAcceptance sampling
@@ -75,19 +74,19 @@ generate_bon(; args...) = generate_bon(DefaultParams(; args...))
 # Species
 function evaluate_monitoring(
     occ::T, bon::BON.BiodiversityObservationNetwork
-) where T <: Occurrence
+) where {T<:Occurrence}
     # List monitored species
     monitored = monitor(x -> findall(isone, x), occ, bon; makeunique=true)
     monitored = NetworkMonitoring._getspecies(monitored, occ)
 
     # Evaluate proportion of monitored species
-    prop_monitored = length(monitored) / length(occ.species)
+    return prop_monitored = length(monitored) / length(occ.species)
 end
 
 # Interactions
 function evaluate_monitoring(
     m::T, bon::BON.BiodiversityObservationNetwork; ref=nothing
-) where T <: Metaweb
+) where {T<:Metaweb}
     # List monitored interactions
     monitored = monitor(x -> interactions(render(Binary, x)), m, bon; makeunique=true)
 

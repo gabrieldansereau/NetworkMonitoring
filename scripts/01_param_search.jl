@@ -2,8 +2,10 @@ using Distributed
 
 # Instantiate & precompile everywhere
 @everywhere begin
-    using Pkg; Pkg.activate(".")
-    Pkg.instantiate(); Pkg.precompile
+    using Pkg
+    Pkg.activate(".")
+    Pkg.instantiate()
+    Pkg.precompile()
 end
 
 # Load environment
@@ -20,9 +22,7 @@ const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 
 # Define parameters to explore
 const params = Dict(
-    :nbon => collect(1:100),
-    :nrep => collect(1:20),
-    :refmethod => ["metawebify", "global"],
+    :nbon => collect(1:100), :nrep => collect(1:20), :refmethod => ["metawebify", "global"]
 )
 const output = :prop # :monitored or :prop
 const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
@@ -58,8 +58,15 @@ if output == :prop
     # Sort results
     select!(
         param_grid,
-        [:nbon, :nrep, :refmethod,
-         :prop_monitored_sp, :prop_possible_int, :prop_realized_int, :prop_detected_int]
+        [
+            :nbon,
+            :nrep,
+            :refmethod,
+            :prop_monitored_sp,
+            :prop_possible_int,
+            :prop_realized_int,
+            :prop_detected_int,
+        ],
     )
     sort!(param_grid, [:refmethod, :nbon, :nrep])
 
@@ -68,5 +75,4 @@ if output == :prop
 
     # Export results
     CSV.write(datadir("param_grid.csv"), param_grid)
-
 end
