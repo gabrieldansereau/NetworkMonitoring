@@ -286,9 +286,9 @@ labs[SimpleRandom] = "Simple Random"
 if !(@isdefined cols)
     cols = Dict{Any,Any}()
 end
-cols[UncertaintySampling] = Makie.wong_colors()[2]
-cols[WeightedBalancedAcceptance] = Makie.wong_colors()[3]
-cols[SimpleRandom] = Makie.wong_colors()[4]
+cols[SimpleRandom] = Makie.wong_colors()[1];
+cols[UncertaintySampling] = Makie.wong_colors()[2];
+cols[WeightedBalancedAcceptance] = Makie.wong_colors()[3];
 
 # Plot
 begin
@@ -300,12 +300,13 @@ begin
         band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
         lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
+    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:lt, merge=true)
     fig
 end
 save(plotsdir("focal_samplers_bands.png"), fig)
 
-## Richness-focused sampling & suspicion monitoring
+## Richness-focused sampling
 
 # Extract richness layers
 richness_spp = SDT.SDMLayer(sum(occurrence(ranges)); x=(0.0, d.nsites), y=(0.0, d.nsites))
@@ -314,11 +315,11 @@ richness_int = SDT.SDMLayer(
 )
 
 # Optimize with UncertaintySampling
+omnis = [richness_spp, richness_int]
 omnilabels = ["Richness focused", "Interaction focused"]
 begin
     Random.seed!(22)
     nrep = 5
-    omnis = [richness_spp, richness_int]
     monitored_mat = Matrix{DataFrame}(undef, length(omnis), nrep)
     @showprogress for (i, omni) in enumerate(omnis), j in 1:nrep
         monitored_mat[i, j] = focal_monitoring(
@@ -343,9 +344,10 @@ bands = @chain begin
 end
 
 # Set labels and colors
+labs[UncertaintySampling] = "Focal species range"
 for (i, o) in enumerate(omnilabels)
     labs[o] = o
-    cols[o] = Makie.wong_colors()[i + 4]
+    cols[o] = Makie.wong_colors()[i + 3]
 end
 
 # Plot
@@ -358,7 +360,71 @@ begin
         band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
         lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
+    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:lt, merge=true)
     fig
 end
 save(plotsdir("focal_samplers_richness.png"), fig)
+
+## Degree-focused sampling
+
+# Extract richness of interacting species for focal species
+degree_possible = SDT.SDMLayer(
+    extract(x -> degree(render(Binary, x), _sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
+)
+degree_realized = SDT.SDMLayer(
+    extract(x -> degree(render(Binary, x), _sp), realized);
+    x=(0.0, d.nsites),
+    y=(0.0, d.nsites),
+)
+
+# Optimize with UncertaintySampling
+omnis = [monitored_int, monitored_int_realized]
+omnilabels = ["Richness of possible interactions", "Richness of realized interactions"]
+begin
+    Random.seed!(22)
+    nrep = 5
+    monitored_mat = Matrix{DataFrame}(undef, length(omnis), nrep)
+    @showprogress for (i, omni) in enumerate(omnis), j in 1:nrep
+        monitored_mat[i, j] = focal_monitoring(
+            _sp, omni; type=:realized, sampler=UncertaintySampling, nbons=1:5:500
+        )
+        @rtransform!(monitored_mat[i, j], :sampler = omnilabels[i])
+    end
+    monitored_omni = reduce(vcat, vec(monitored_mat))
+end
+
+# Combine with Uncertainty Sampling on species layer
+monitored_samplers3 = filter(:sampler => ==(UncertaintySampling), monitored_samplers)
+append!(monitored_samplers3, monitored_omni; promote=true)
+
+# Combine for interval bands
+bands = @chain begin
+    monitored_samplers3
+    groupby([:sampler, :nbon])
+    @combine(
+        :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
+    )
+end
+
+# Set labels and colors
+for (i, o) in enumerate(omnilabels)
+    labs[o] = o
+    cols[o] = Makie.wong_colors()[i + 5]
+end
+
+# Plot
+begin
+    res = bands
+    fig = Figure()
+    ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
+    for s in unique(res.sampler)
+        b = filter(:sampler => ==(s), res)
+        band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
+        lines!(b.nbon, b.med; label=labs[s], color=cols[s])
+    end
+    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(; position=:lt, merge=true)
+    fig
+end
+save(plotsdir("focal_samplers_richness3.png"), fig)
