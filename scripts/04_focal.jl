@@ -191,7 +191,7 @@ degrees = degree(metaweb.metaweb)
 spp = sort(collect(degrees); by=x -> x.second, rev=true)[[1, 25, 50, 70]]
 
 # Repeat focal monitoring per species
-monitored_vec = Vector{DataFrame}(undef, 4)
+monitored_vec = Vector{DataFrame}(undef, length(spp))
 @showprogress for i in eachindex(spp)
     monitored_vec[i] = focal_monitoring(spp[i].first; type=:possible, nrep=5, combined=true)
 end
@@ -304,7 +304,7 @@ begin
     axislegend(; position=:lt, merge=true)
     fig
 end
-save(plotsdir("focal_samplers_bands.png"), fig)
+save(plotsdir("focal_samplers.png"), fig)
 
 ## Richness-focused sampling
 
@@ -314,29 +314,42 @@ richness_int = SDT.SDMLayer(
     extract(SIN.links, realized); x=(0.0, d.nsites), y=(0.0, d.nsites)
 )
 
+# Extract richness of interacting species for focal species
+degree_possible = SDT.SDMLayer(
+    extract(x -> degree(render(Binary, x), _sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
+)
+degree_realized = SDT.SDMLayer(
+    extract(x -> degree(render(Binary, x), _sp), realized);
+    x=(0.0, d.nsites),
+    y=(0.0, d.nsites),
+)
+
 # Optimize with UncertaintySampling
-omnis = [richness_spp, richness_int]
-omnilabels = ["Richness focused", "Interaction focused"]
+optim = [richness_spp, degree_realized]
+optimlabels = ["Species richness", "Realized interactions"]
 begin
     Random.seed!(22)
     nrep = 5
-    monitored_mat = Matrix{DataFrame}(undef, length(omnis), nrep)
-    @showprogress for (i, omni) in enumerate(omnis), j in 1:nrep
+    monitored_mat = Matrix{DataFrame}(undef, length(optim), nrep)
+    @showprogress for (i, omni) in enumerate(optim), j in 1:nrep
         monitored_mat[i, j] = focal_monitoring(
             _sp, omni; type=:realized, sampler=UncertaintySampling, nbons=1:5:500
         )
-        @rtransform!(monitored_mat[i, j], :sampler = omnilabels[i])
+        @rtransform!(monitored_mat[i, j], :sampler = optimlabels[i])
     end
-    monitored_omni = reduce(vcat, vec(monitored_mat))
+    monitored_optimized = reduce(vcat, vec(monitored_mat))
 end
 
 # Combine with Uncertainty Sampling on species layer
-monitored_samplers2 = filter(:sampler => ==(UncertaintySampling), monitored_samplers)
-append!(monitored_samplers2, monitored_omni; promote=true)
+append!(
+    monitored_optimized,
+    filter(:sampler => ==(UncertaintySampling), monitored_samplers);
+    promote=true,
+)
 
 # Combine for interval bands
 bands = @chain begin
-    monitored_samplers2
+    monitored_optimized
     groupby([:sampler, :nbon])
     @combine(
         :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
@@ -345,7 +358,7 @@ end
 
 # Set labels and colors
 labs[UncertaintySampling] = "Focal species range"
-for (i, o) in enumerate(omnilabels)
+for (i, o) in enumerate(optimlabels)
     labs[o] = o
     cols[o] = Makie.wong_colors()[i + 3]
 end
@@ -361,70 +374,7 @@ begin
         lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
     hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(; position=:lt, merge=true)
+    axislegend("Optimized on"; position=:lt, merge=true)
     fig
 end
-save(plotsdir("focal_samplers_richness.png"), fig)
-
-## Degree-focused sampling
-
-# Extract richness of interacting species for focal species
-degree_possible = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), _sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
-)
-degree_realized = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), _sp), realized);
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Optimize with UncertaintySampling
-omnis = [monitored_int, monitored_int_realized]
-omnilabels = ["Richness of possible interactions", "Richness of realized interactions"]
-begin
-    Random.seed!(22)
-    nrep = 5
-    monitored_mat = Matrix{DataFrame}(undef, length(omnis), nrep)
-    @showprogress for (i, omni) in enumerate(omnis), j in 1:nrep
-        monitored_mat[i, j] = focal_monitoring(
-            _sp, omni; type=:realized, sampler=UncertaintySampling, nbons=1:5:500
-        )
-        @rtransform!(monitored_mat[i, j], :sampler = omnilabels[i])
-    end
-    monitored_omni = reduce(vcat, vec(monitored_mat))
-end
-
-# Combine with Uncertainty Sampling on species layer
-monitored_samplers3 = filter(:sampler => ==(UncertaintySampling), monitored_samplers)
-append!(monitored_samplers3, monitored_omni; promote=true)
-
-# Combine for interval bands
-bands = @chain begin
-    monitored_samplers3
-    groupby([:sampler, :nbon])
-    @combine(
-        :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
-    )
-end
-
-# Set labels and colors
-for (i, o) in enumerate(omnilabels)
-    labs[o] = o
-    cols[o] = Makie.wong_colors()[i + 5]
-end
-
-# Plot
-begin
-    res = bands
-    fig = Figure()
-    ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
-    for s in unique(res.sampler)
-        b = filter(:sampler => ==(s), res)
-        band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
-        lines!(b.nbon, b.med; label=labs[s], color=cols[s])
-    end
-    hlines!(ax, _deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(; position=:lt, merge=true)
-    fig
-end
-save(plotsdir("focal_samplers_richness3.png"), fig)
+save(plotsdir("focal_optimized.png"), fig)
