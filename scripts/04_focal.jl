@@ -1,6 +1,9 @@
 using DrWatson
 @quickactivate :NetworkMonitoring
 
+using BiodiversityObservationNetworks:
+    UncertaintySampling, BalancedAcceptance, WeightedBalancedAcceptance, SimpleRandom
+
 Random.seed!(42)
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
 
@@ -118,7 +121,9 @@ end
 monitored_types = reduce(vcat, monitored_vec)
 
 # Interval bands
-labs = Dict(:possible => "possible", :realized => "realized", :detected => "detected")
+labs = Dict{Any,String}(
+    :possible => "possible", :realized => "realized", :detected => "detected"
+)
 cols = Dict(
     :possible => Makie.wong_colors()[2],
     :realized => Makie.wong_colors()[3],
@@ -251,23 +256,18 @@ _sp_range = SDT.SDMLayer(
 begin
     Random.seed!(22)
     nrep = 5
-    samplers = [
-        BON.UncertaintySampling,
-        BON.WeightedBalancedAcceptance,
-        BON.BalancedAcceptance,
-        BON.SimpleRandom,
-    ]
+    samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
     monitored_mat = Matrix{DataFrame}(undef, length(samplers), nrep)
     @showprogress for i in eachindex(samplers), j in 1:nrep
         monitored_mat[i, j] = focal_monitoring(
             _sp, _sp_range; type=:realized, sampler=samplers[i], nbons=1:5:500
         )
-        @rtransform!(monitored_mat[i, j], :sampler = string(samplers[i]))
+        @rtransform!(monitored_mat[i, j], :sampler = samplers[i])
     end
     monitored_samplers = reduce(vcat, vec(monitored_mat))
 end
 
-# Interval bands
+# Combine for interval bands
 bands = @chain begin
     monitored_samplers
     groupby([:sampler, :nbon])
@@ -275,29 +275,31 @@ bands = @chain begin
         :low = minimum(:monitored), :med = median(:monitored), :upp = maximum(:monitored),
     )
 end
-labels = [
-    "Uncertainty Sampling",
-    "Weighted Balanced Acceptance",
-    "Balanced Acceptance",
-    "Simple Random",
-]
+
+# Define labels and colors
+if !(@isdefined labs)
+    labs = Dict{Any,String}()
+end
+labs[UncertaintySampling] = "Uncertainty Sampling"
+labs[WeightedBalancedAcceptance] = "Weighted Balanced Acceptance"
+labs[SimpleRandom] = "Simple Random"
+if !(@isdefined cols)
+    cols = Dict{Any,Any}()
+end
+cols[UncertaintySampling] = Makie.wong_colors()[2]
+cols[WeightedBalancedAcceptance] = Makie.wong_colors()[3]
+cols[SimpleRandom] = Makie.wong_colors()[4]
+
+# Plot
 begin
+    res = bands
     fig = Figure()
     ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
-    for (i, s) in enumerate(unique(bands.sampler))
-        b = filter(:sampler => ==(s), bands)
-        band!(
-            b.nbon,
-            b.low,
-            b.upp;
-            alpha=0.4,
-            label=labels[i],
-            color=Makie.wong_colors()[i + 1],
-        )
-        lines!(b.nbon, b.med; label=labels[i], color=Makie.wong_colors()[i + 1])
+    for s in unique(res.sampler)
+        b = filter(:sampler => ==(s), res)
+        band!(b.nbon, b.low, b.upp; alpha=0.4, label=labs[s], color=cols[s])
+        lines!(b.nbon, b.med; label=labs[s], color=cols[s])
     end
-    # hlines!(ax, _deg, linestyle=:dash, alpha = 0.5, color=:grey, label="metaweb")
-    # Legend(fig[1, end+1], ax)
     axislegend(; position=:lt, merge=true)
     fig
 end
@@ -320,7 +322,7 @@ begin
     monitored_mat = Matrix{DataFrame}(undef, length(omnis), nrep)
     @showprogress for (i, omni) in enumerate(omnis), j in 1:nrep
         monitored_mat[i, j] = focal_monitoring(
-            _sp, omni; type=:realized, sampler=BON.UncertaintySampling, nbons=1:5:500
+            _sp, omni; type=:realized, sampler=UncertaintySampling, nbons=1:5:500
         )
         @rtransform!(monitored_mat[i, j], :sampler = omnilabels[i])
     end
@@ -329,7 +331,7 @@ end
 
 # Combine with Uncertainty Sampling on species layer
 monitored_samplers2 = filter(
-    :sampler => in(string.([BON.UncertaintySampling])), monitored_samplers
+    :sampler => in(string.([UncertaintySampling])), monitored_samplers
 )
 append!(monitored_samplers2, monitored_omni)
 
@@ -343,10 +345,11 @@ bands = @chain begin
     )
 end
 begin
+    res = bands
     fig = Figure()
     ax = Axis(fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions")
-    for (i, s) in enumerate(unique(bands.sampler))
-        b = filter(:sampler => ==(s), bands)
+    for (i, s) in enumerate(unique(res.sampler))
+        b = filter(:sampler => ==(s), res)
         band!(
             b.nbon,
             b.low,
