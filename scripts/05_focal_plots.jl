@@ -88,12 +88,12 @@ begin
     res = monitored_spp
     spp = unique(res.sp)
     fig = Figure(; size=(600, 600))
-    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions", xticks=0:20:100)
+    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions")
     ax2 = Axis(
         fig[2, 1];
         ylabel="Proportion monitored",
         xlabel="Number of sites in BON",
-        xticks=0:20:100,
+        # xticks=0:20:100,
         yticks=0:0.2:1.0,
     )
     for (i, sp) in enumerate(spp)

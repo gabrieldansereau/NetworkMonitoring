@@ -149,18 +149,20 @@ monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 
 # ## Repeat with 4 species with different degrees
 
-# Random.seed!(101)
+Random.seed!(101)
 
-# # Get species to test
-# degrees = degree(metaweb.metaweb)
-# spp = sort(collect(degrees); by=x -> x.second, rev=true)[[1, 25, 50, 70]]
-# spp = [sp.first for sp in spp]
+# Get species to test
+degrees = degree(metaweb.metaweb)
+spp = sort(collect(degrees); by=x -> x.second, rev=true)[[1, 25, 50, 70]]
+spp = [sp.first for sp in spp]
 
-# # Repeat focal monitoring per species
-# monitored_spp = focal_monitoring(nets_dict, spp; type=[:possible], nrep=5, combined=true)
+# Repeat focal monitoring per species
+monitored_spp = focal_monitoring(
+    nets_dict, spp; type=[:realized], nrep=5, nbons=1:5:500, combined=true
+)
 
-# # Export
-# CSV.write(datadir("monitored_spp.csv"), monitored_spp)
+# Export
+CSV.write(datadir("monitored_spp.csv"), monitored_spp)
 
 ## Explore variations with different sampler
 
