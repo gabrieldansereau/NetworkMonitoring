@@ -189,6 +189,7 @@ monitored_samplers = focal_monitoring(
 
 # Export
 CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
+SDT.SimpleSDMLayers.save(datadir("layer_sp_range.tiff"), sp_range)
 
 ## Richness-focused sampling
 
@@ -233,3 +234,5 @@ end
 
 # Export
 CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
+SDT.SimpleSDMLayers.save(datadir("layer_richness_spp.tiff"), richness_spp)
+SDT.SimpleSDMLayers.save(datadir("layer_degree_realized.tiff"), degree_realized)
