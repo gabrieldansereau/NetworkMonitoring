@@ -22,7 +22,7 @@ const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 
 # Define parameters to explore
 const params = Dict(
-    :nbon => collect(1:100), :nrep => collect(1:20), :refmethod => ["metawebify", "global"]
+    :nbon => collect([1, 5:5:500...]), :nrep => collect(1:20), :refmethod => ["global"]
 )
 const output = :prop # :monitored or :prop
 const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
