@@ -93,23 +93,26 @@ begin
     res = monitored_spp
     spp = unique(res.sp)
     fig = Figure(; size=(600, 600))
-    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions")
+    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions", xticks=0:100:500, yticks=0:10:60)
     ax2 = Axis(
         fig[2, 1];
         ylabel="Proportion monitored",
         xlabel="Number of sites in BON",
-        # xticks=0:20:100,
+        xticks=0:100:500,
+        limits=((nothing, nothing), (0.0, 1.0)),
         yticks=0:0.2:1.0,
     )
     for (i, sp) in enumerate(spp)
         b = filter(:sp => ==(sp), res)
+        d = unique(b.deg)[1]
+        l = "sp$i: $d int"
         # Monitored int
-        band!(ax1, b.nbon, b.low, b.upp; alpha=0.4, label=sp)
-        lines!(ax1, b.nbon, b.med; label=sp)
-        hlines!(ax1, unique(b.deg); linestyle=:dash, alpha=0.5)
+        band!(ax1, b.nbon, b.low, b.upp; alpha=0.4, label=l)
+        lines!(ax1, b.nbon, b.med; label=l)
+        hlines!(ax1, d; linestyle=:dash, alpha=0.5)
         # Proportion
-        band!(ax2, b.nbon, b.low ./ b.deg, b.upp ./ b.deg; alpha=0.4, label=sp)
-        lines!(ax2, b.nbon, b.med ./ b.deg; label=sp)
+        band!(ax2, b.nbon, b.low ./ b.deg, b.upp ./ b.deg; alpha=0.4, label=l)
+        lines!(ax2, b.nbon, b.med ./ b.deg; label=l)
     end
     fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
     fig
