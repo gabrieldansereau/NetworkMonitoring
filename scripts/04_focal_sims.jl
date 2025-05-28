@@ -198,6 +198,7 @@ richness_spp = SDT.SDMLayer(sum(occurrence(ranges)); x=(0.0, d.nsites), y=(0.0, 
 richness_int = SDT.SDMLayer(
     extract(SIN.links, realized); x=(0.0, d.nsites), y=(0.0, d.nsites)
 )
+richness_pos = SDT.SDMLayer(extract(SIN.links, pos); x=(0.0, d.nsites), y=(0.0, d.nsites))
 
 # Extract richness of interacting species for focal species
 degree_possible = SDT.SDMLayer(
@@ -208,6 +209,11 @@ degree_realized = SDT.SDMLayer(
     x=(0.0, d.nsites),
     y=(0.0, d.nsites),
 )
+
+heatmapcb(richness_int)
+heatmapcb(degree_realized)
+hist(richness_pos)
+hist(filter(!iszero, values(degree_realized)))
 
 # Optimize with UncertaintySampling
 optim = [richness_spp, degree_realized]
@@ -235,4 +241,7 @@ end
 # Export
 CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
 SDT.SimpleSDMLayers.save(datadir("layer_richness_spp.tiff"), richness_spp)
+SDT.SimpleSDMLayers.save(datadir("layer_richness_int.tiff"), richness_int)
+SDT.SimpleSDMLayers.save(datadir("layer_richness_pos.tiff"), richness_pos)
 SDT.SimpleSDMLayers.save(datadir("layer_degree_realized.tiff"), degree_realized)
+SDT.SimpleSDMLayers.save(datadir("layer_degree_possible.tiff"), degree_possible)
