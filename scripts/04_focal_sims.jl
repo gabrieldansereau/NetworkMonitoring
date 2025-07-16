@@ -145,12 +145,12 @@ monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 
 # # Run for all types
 # types = [:possible, :realized, :detected]
-# monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=true)
+# monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=false)
 
 # # Re-run for realized and detected with more sites in BON
 # types2 = [:realized, :detected]
 # monitored_types2 = focal_monitoring(
-#     nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=true
+#     nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
 # )
 
 # # Export
@@ -168,7 +168,7 @@ spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
 monitored_spp = focal_monitoring(
-    nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=true
+    nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
 )
 
 # Export
@@ -194,7 +194,7 @@ monitored_samplers = focal_monitoring(
     sampler=samplers,
     nbons=1:5:500,
     nrep=NREP,
-    combined=true,
+    combined=false,
 )
 
 # Export
@@ -231,7 +231,7 @@ monitored_optimized = focal_monitoring(
     sampler=[UncertaintySampling],
     nbons=1:5:500,
     nrep=NREP,
-    combined=true,
+    combined=false,
 )
 @rtransform!(monitored_optimized, :sampler = optimlabels[:layer])
 
