@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --account=ctb-tpoisot
 #SBATCH --ntasks=1
-#SBATCH --mem=32G
-#SBATCH --time=04:00:00
+#SBATCH --mem=8G
+#SBATCH --time=02:30:00
 #SBATCH --job-name=04_focal
 #SBATCH --output=jobs/out/%x-%J.out
 

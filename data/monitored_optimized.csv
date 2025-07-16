@@ -1,301 +1,301 @@
 sp,var,sampler,nbon,low,med,upp,deg,layer
-node_55,realized,Species richness,1,0,0.0,0,57,1
-node_55,realized,Species richness,6,0,0.0,0,57,1
-node_55,realized,Species richness,11,0,0.0,1,57,1
-node_55,realized,Species richness,16,0,1.0,4,57,1
-node_55,realized,Species richness,21,0,1.0,3,57,1
+node_55,realized,Species richness,1,0,0.0,1,57,1
+node_55,realized,Species richness,6,0,0.0,5,57,1
+node_55,realized,Species richness,11,0,1.0,3,57,1
+node_55,realized,Species richness,16,0,1.0,7,57,1
+node_55,realized,Species richness,21,0,1.0,4,57,1
 node_55,realized,Species richness,26,0,2.0,6,57,1
-node_55,realized,Species richness,31,0,2.0,3,57,1
-node_55,realized,Species richness,36,0,3.0,3,57,1
-node_55,realized,Species richness,41,1,2.0,4,57,1
-node_55,realized,Species richness,46,1,2.0,3,57,1
-node_55,realized,Species richness,51,1,3.0,6,57,1
-node_55,realized,Species richness,56,2,4.0,6,57,1
-node_55,realized,Species richness,61,2,3.0,9,57,1
-node_55,realized,Species richness,66,2,4.0,8,57,1
-node_55,realized,Species richness,71,4,6.0,6,57,1
-node_55,realized,Species richness,76,3,5.0,8,57,1
-node_55,realized,Species richness,81,2,8.0,10,57,1
-node_55,realized,Species richness,86,5,6.0,10,57,1
-node_55,realized,Species richness,91,5,7.0,8,57,1
-node_55,realized,Species richness,96,2,5.0,8,57,1
-node_55,realized,Species richness,101,5,5.0,6,57,1
-node_55,realized,Species richness,106,5,6.0,10,57,1
-node_55,realized,Species richness,111,2,5.0,9,57,1
-node_55,realized,Species richness,116,6,7.0,14,57,1
-node_55,realized,Species richness,121,5,5.0,7,57,1
-node_55,realized,Species richness,126,4,6.0,9,57,1
-node_55,realized,Species richness,131,5,7.0,10,57,1
-node_55,realized,Species richness,136,7,9.0,11,57,1
-node_55,realized,Species richness,141,7,9.0,9,57,1
-node_55,realized,Species richness,146,4,8.0,14,57,1
-node_55,realized,Species richness,151,6,9.0,12,57,1
-node_55,realized,Species richness,156,9,10.0,13,57,1
-node_55,realized,Species richness,161,8,8.0,10,57,1
-node_55,realized,Species richness,166,5,8.0,10,57,1
-node_55,realized,Species richness,171,7,9.0,12,57,1
-node_55,realized,Species richness,176,8,13.0,19,57,1
-node_55,realized,Species richness,181,7,11.0,14,57,1
-node_55,realized,Species richness,186,8,12.0,15,57,1
-node_55,realized,Species richness,191,5,8.0,11,57,1
-node_55,realized,Species richness,196,9,14.0,16,57,1
-node_55,realized,Species richness,201,8,9.0,13,57,1
-node_55,realized,Species richness,206,7,12.0,14,57,1
-node_55,realized,Species richness,211,9,12.0,17,57,1
-node_55,realized,Species richness,216,10,15.0,21,57,1
-node_55,realized,Species richness,221,9,12.0,16,57,1
-node_55,realized,Species richness,226,9,13.0,15,57,1
-node_55,realized,Species richness,231,8,13.0,13,57,1
-node_55,realized,Species richness,236,10,11.0,14,57,1
-node_55,realized,Species richness,241,7,8.0,19,57,1
-node_55,realized,Species richness,246,10,14.0,14,57,1
-node_55,realized,Species richness,251,7,13.0,17,57,1
-node_55,realized,Species richness,256,9,11.0,14,57,1
-node_55,realized,Species richness,261,12,15.0,19,57,1
-node_55,realized,Species richness,266,13,15.0,17,57,1
-node_55,realized,Species richness,271,9,15.0,18,57,1
-node_55,realized,Species richness,276,8,10.0,14,57,1
-node_55,realized,Species richness,281,9,17.0,17,57,1
-node_55,realized,Species richness,286,11,15.0,17,57,1
-node_55,realized,Species richness,291,11,13.0,20,57,1
-node_55,realized,Species richness,296,15,16.0,19,57,1
-node_55,realized,Species richness,301,13,19.0,22,57,1
+node_55,realized,Species richness,31,0,2.0,6,57,1
+node_55,realized,Species richness,36,0,3.0,8,57,1
+node_55,realized,Species richness,41,0,2.0,10,57,1
+node_55,realized,Species richness,46,0,3.0,8,57,1
+node_55,realized,Species richness,51,0,3.0,10,57,1
+node_55,realized,Species richness,56,0,4.0,8,57,1
+node_55,realized,Species richness,61,0,4.0,9,57,1
+node_55,realized,Species richness,66,1,4.0,13,57,1
+node_55,realized,Species richness,71,1,4.0,12,57,1
+node_55,realized,Species richness,76,0,4.0,11,57,1
+node_55,realized,Species richness,81,0,5.0,11,57,1
+node_55,realized,Species richness,86,1,6.0,14,57,1
+node_55,realized,Species richness,91,1,5.0,13,57,1
+node_55,realized,Species richness,96,2,6.0,14,57,1
+node_55,realized,Species richness,101,1,6.0,12,57,1
+node_55,realized,Species richness,106,2,6.0,12,57,1
+node_55,realized,Species richness,111,1,7.0,16,57,1
+node_55,realized,Species richness,116,2,7.0,13,57,1
+node_55,realized,Species richness,121,2,7.0,13,57,1
+node_55,realized,Species richness,126,2,8.0,14,57,1
+node_55,realized,Species richness,131,2,7.5,14,57,1
+node_55,realized,Species richness,136,1,8.0,16,57,1
+node_55,realized,Species richness,141,3,9.0,16,57,1
+node_55,realized,Species richness,146,5,8.0,17,57,1
+node_55,realized,Species richness,151,3,8.0,15,57,1
+node_55,realized,Species richness,156,2,9.0,16,57,1
+node_55,realized,Species richness,161,3,10.0,17,57,1
+node_55,realized,Species richness,166,3,9.0,16,57,1
+node_55,realized,Species richness,171,4,10.0,18,57,1
+node_55,realized,Species richness,176,4,10.0,20,57,1
+node_55,realized,Species richness,181,5,10.0,18,57,1
+node_55,realized,Species richness,186,3,10.5,18,57,1
+node_55,realized,Species richness,191,5,11.0,17,57,1
+node_55,realized,Species richness,196,3,11.0,18,57,1
+node_55,realized,Species richness,201,4,12.0,17,57,1
+node_55,realized,Species richness,206,3,11.0,18,57,1
+node_55,realized,Species richness,211,4,11.5,19,57,1
+node_55,realized,Species richness,216,4,12.0,19,57,1
+node_55,realized,Species richness,221,7,12.0,21,57,1
+node_55,realized,Species richness,226,6,12.0,21,57,1
+node_55,realized,Species richness,231,7,12.0,22,57,1
+node_55,realized,Species richness,236,7,13.0,19,57,1
+node_55,realized,Species richness,241,6,12.0,20,57,1
+node_55,realized,Species richness,246,6,13.0,20,57,1
+node_55,realized,Species richness,251,4,13.0,23,57,1
+node_55,realized,Species richness,256,5,14.0,23,57,1
+node_55,realized,Species richness,261,5,13.0,22,57,1
+node_55,realized,Species richness,266,7,14.0,23,57,1
+node_55,realized,Species richness,271,7,14.0,22,57,1
+node_55,realized,Species richness,276,6,14.0,22,57,1
+node_55,realized,Species richness,281,7,14.0,23,57,1
+node_55,realized,Species richness,286,8,14.0,22,57,1
+node_55,realized,Species richness,291,8,15.0,21,57,1
+node_55,realized,Species richness,296,7,15.0,22,57,1
+node_55,realized,Species richness,301,8,15.0,24,57,1
 node_55,realized,Species richness,306,10,16.0,23,57,1
-node_55,realized,Species richness,311,14,15.0,18,57,1
-node_55,realized,Species richness,316,15,16.0,22,57,1
-node_55,realized,Species richness,321,11,18.0,23,57,1
-node_55,realized,Species richness,326,12,16.0,20,57,1
-node_55,realized,Species richness,331,12,18.0,20,57,1
-node_55,realized,Species richness,336,13,18.0,18,57,1
-node_55,realized,Species richness,341,14,14.0,20,57,1
-node_55,realized,Species richness,346,14,17.0,19,57,1
-node_55,realized,Species richness,351,12,15.0,21,57,1
-node_55,realized,Species richness,356,14,18.0,22,57,1
-node_55,realized,Species richness,361,12,15.0,17,57,1
-node_55,realized,Species richness,366,14,16.0,22,57,1
-node_55,realized,Species richness,371,9,16.0,19,57,1
-node_55,realized,Species richness,376,14,19.0,24,57,1
-node_55,realized,Species richness,381,13,15.0,21,57,1
-node_55,realized,Species richness,386,18,20.0,24,57,1
-node_55,realized,Species richness,391,18,19.0,23,57,1
-node_55,realized,Species richness,396,16,17.0,23,57,1
-node_55,realized,Species richness,401,10,17.0,24,57,1
-node_55,realized,Species richness,406,14,15.0,23,57,1
-node_55,realized,Species richness,411,13,17.0,24,57,1
-node_55,realized,Species richness,416,11,20.0,29,57,1
-node_55,realized,Species richness,421,16,21.0,27,57,1
-node_55,realized,Species richness,426,18,21.0,24,57,1
-node_55,realized,Species richness,431,17,22.0,28,57,1
-node_55,realized,Species richness,436,18,21.0,23,57,1
-node_55,realized,Species richness,441,20,24.0,26,57,1
-node_55,realized,Species richness,446,16,17.0,20,57,1
-node_55,realized,Species richness,451,15,20.0,22,57,1
-node_55,realized,Species richness,456,20,23.0,26,57,1
-node_55,realized,Species richness,461,14,20.0,21,57,1
-node_55,realized,Species richness,466,14,20.0,23,57,1
-node_55,realized,Species richness,471,14,17.0,25,57,1
-node_55,realized,Species richness,476,19,20.0,21,57,1
-node_55,realized,Species richness,481,21,22.0,27,57,1
-node_55,realized,Species richness,486,17,22.0,24,57,1
-node_55,realized,Species richness,491,16,22.0,28,57,1
-node_55,realized,Species richness,496,20,24.0,26,57,1
-node_55,realized,Realized interactions,1,1,1.0,1,57,2
-node_55,realized,Realized interactions,6,4,6.0,9,57,2
-node_55,realized,Realized interactions,11,9,11.0,12,57,2
-node_55,realized,Realized interactions,16,11,13.0,17,57,2
-node_55,realized,Realized interactions,21,15,17.0,20,57,2
-node_55,realized,Realized interactions,26,18,21.0,26,57,2
-node_55,realized,Realized interactions,31,21,23.0,24,57,2
-node_55,realized,Realized interactions,36,21,23.0,24,57,2
-node_55,realized,Realized interactions,41,24,29.0,30,57,2
-node_55,realized,Realized interactions,46,26,29.0,30,57,2
-node_55,realized,Realized interactions,51,25,27.0,35,57,2
-node_55,realized,Realized interactions,56,30,31.0,37,57,2
-node_55,realized,Realized interactions,61,33,33.0,34,57,2
-node_55,realized,Realized interactions,66,31,34.0,35,57,2
-node_55,realized,Realized interactions,71,34,36.0,41,57,2
-node_55,realized,Realized interactions,76,33,35.0,36,57,2
-node_55,realized,Realized interactions,81,34,37.0,40,57,2
-node_55,realized,Realized interactions,86,33,38.0,40,57,2
-node_55,realized,Realized interactions,91,35,35.0,45,57,2
-node_55,realized,Realized interactions,96,33,39.0,42,57,2
-node_55,realized,Realized interactions,101,35,37.0,40,57,2
-node_55,realized,Realized interactions,106,35,39.0,41,57,2
-node_55,realized,Realized interactions,111,36,40.0,42,57,2
-node_55,realized,Realized interactions,116,38,39.0,40,57,2
-node_55,realized,Realized interactions,121,38,40.0,47,57,2
-node_55,realized,Realized interactions,126,40,41.0,43,57,2
-node_55,realized,Realized interactions,131,39,41.0,45,57,2
-node_55,realized,Realized interactions,136,39,42.0,43,57,2
-node_55,realized,Realized interactions,141,40,41.0,45,57,2
-node_55,realized,Realized interactions,146,41,43.0,45,57,2
-node_55,realized,Realized interactions,151,40,41.0,46,57,2
-node_55,realized,Realized interactions,156,37,41.0,44,57,2
-node_55,realized,Realized interactions,161,43,43.0,45,57,2
-node_55,realized,Realized interactions,166,42,42.0,46,57,2
-node_55,realized,Realized interactions,171,42,43.0,46,57,2
-node_55,realized,Realized interactions,176,42,45.0,49,57,2
-node_55,realized,Realized interactions,181,41,46.0,48,57,2
-node_55,realized,Realized interactions,186,41,42.0,45,57,2
-node_55,realized,Realized interactions,191,43,47.0,48,57,2
-node_55,realized,Realized interactions,196,44,45.0,49,57,2
-node_55,realized,Realized interactions,201,43,46.0,47,57,2
-node_55,realized,Realized interactions,206,45,49.0,50,57,2
-node_55,realized,Realized interactions,211,47,47.0,49,57,2
-node_55,realized,Realized interactions,216,44,46.0,49,57,2
-node_55,realized,Realized interactions,221,44,45.0,48,57,2
-node_55,realized,Realized interactions,226,42,44.0,49,57,2
-node_55,realized,Realized interactions,231,45,46.0,48,57,2
-node_55,realized,Realized interactions,236,45,47.0,50,57,2
-node_55,realized,Realized interactions,241,43,48.0,50,57,2
-node_55,realized,Realized interactions,246,46,49.0,50,57,2
-node_55,realized,Realized interactions,251,46,47.0,50,57,2
-node_55,realized,Realized interactions,256,46,50.0,51,57,2
-node_55,realized,Realized interactions,261,44,48.0,49,57,2
-node_55,realized,Realized interactions,266,45,48.0,52,57,2
-node_55,realized,Realized interactions,271,43,47.0,49,57,2
-node_55,realized,Realized interactions,276,46,50.0,50,57,2
-node_55,realized,Realized interactions,281,44,48.0,51,57,2
-node_55,realized,Realized interactions,286,46,48.0,51,57,2
-node_55,realized,Realized interactions,291,47,48.0,52,57,2
-node_55,realized,Realized interactions,296,46,48.0,53,57,2
-node_55,realized,Realized interactions,301,47,49.0,53,57,2
-node_55,realized,Realized interactions,306,49,50.0,53,57,2
-node_55,realized,Realized interactions,311,49,51.0,51,57,2
-node_55,realized,Realized interactions,316,45,47.0,51,57,2
-node_55,realized,Realized interactions,321,48,51.0,52,57,2
-node_55,realized,Realized interactions,326,46,50.0,52,57,2
-node_55,realized,Realized interactions,331,47,49.0,54,57,2
-node_55,realized,Realized interactions,336,48,50.0,50,57,2
-node_55,realized,Realized interactions,341,48,49.0,53,57,2
-node_55,realized,Realized interactions,346,45,51.0,55,57,2
-node_55,realized,Realized interactions,351,48,50.0,53,57,2
-node_55,realized,Realized interactions,356,50,51.0,52,57,2
-node_55,realized,Realized interactions,361,47,49.0,51,57,2
-node_55,realized,Realized interactions,366,49,50.0,52,57,2
-node_55,realized,Realized interactions,371,48,51.0,55,57,2
-node_55,realized,Realized interactions,376,47,51.0,54,57,2
-node_55,realized,Realized interactions,381,50,52.0,53,57,2
-node_55,realized,Realized interactions,386,48,51.0,54,57,2
-node_55,realized,Realized interactions,391,50,51.0,54,57,2
-node_55,realized,Realized interactions,396,49,51.0,51,57,2
-node_55,realized,Realized interactions,401,48,50.0,53,57,2
-node_55,realized,Realized interactions,406,49,53.0,55,57,2
-node_55,realized,Realized interactions,411,50,51.0,53,57,2
-node_55,realized,Realized interactions,416,47,51.0,52,57,2
-node_55,realized,Realized interactions,421,49,52.0,53,57,2
-node_55,realized,Realized interactions,426,50,51.0,55,57,2
-node_55,realized,Realized interactions,431,51,52.0,54,57,2
-node_55,realized,Realized interactions,436,50,53.0,55,57,2
-node_55,realized,Realized interactions,441,49,50.0,54,57,2
-node_55,realized,Realized interactions,446,52,52.0,55,57,2
-node_55,realized,Realized interactions,451,52,53.0,54,57,2
-node_55,realized,Realized interactions,456,50,53.0,54,57,2
-node_55,realized,Realized interactions,461,51,52.0,52,57,2
-node_55,realized,Realized interactions,466,48,53.0,54,57,2
-node_55,realized,Realized interactions,471,50,52.0,54,57,2
-node_55,realized,Realized interactions,476,50,51.0,55,57,2
-node_55,realized,Realized interactions,481,52,53.0,55,57,2
-node_55,realized,Realized interactions,486,51,52.0,55,57,2
-node_55,realized,Realized interactions,491,51,53.0,55,57,2
-node_55,realized,Realized interactions,496,52,54.0,55,57,2
-node_55,realized,Focal species range,1,0,0.0,0,57,
-node_55,realized,Focal species range,6,0,1.0,1,57,
-node_55,realized,Focal species range,11,0,1.0,3,57,
-node_55,realized,Focal species range,16,0,3.0,4,57,
-node_55,realized,Focal species range,21,1,3.0,9,57,
-node_55,realized,Focal species range,26,3,4.0,8,57,
-node_55,realized,Focal species range,31,2,4.0,6,57,
-node_55,realized,Focal species range,36,4,5.0,6,57,
-node_55,realized,Focal species range,41,4,6.0,11,57,
-node_55,realized,Focal species range,46,4,6.0,7,57,
-node_55,realized,Focal species range,51,6,7.0,13,57,
-node_55,realized,Focal species range,56,4,6.0,7,57,
-node_55,realized,Focal species range,61,8,9.0,11,57,
-node_55,realized,Focal species range,66,5,7.0,11,57,
-node_55,realized,Focal species range,71,7,8.0,15,57,
-node_55,realized,Focal species range,76,6,9.0,13,57,
-node_55,realized,Focal species range,81,6,13.0,15,57,
-node_55,realized,Focal species range,86,7,13.0,16,57,
-node_55,realized,Focal species range,91,7,13.0,14,57,
-node_55,realized,Focal species range,96,11,14.0,17,57,
-node_55,realized,Focal species range,101,6,13.0,16,57,
-node_55,realized,Focal species range,106,11,14.0,19,57,
-node_55,realized,Focal species range,111,10,11.0,15,57,
-node_55,realized,Focal species range,116,11,13.0,15,57,
-node_55,realized,Focal species range,121,12,14.0,21,57,
-node_55,realized,Focal species range,126,12,20.0,21,57,
-node_55,realized,Focal species range,131,11,14.0,21,57,
-node_55,realized,Focal species range,136,12,14.0,19,57,
-node_55,realized,Focal species range,141,11,14.0,19,57,
-node_55,realized,Focal species range,146,12,15.0,24,57,
-node_55,realized,Focal species range,151,13,17.0,19,57,
-node_55,realized,Focal species range,156,14,17.0,21,57,
-node_55,realized,Focal species range,161,18,20.0,25,57,
-node_55,realized,Focal species range,166,18,19.0,22,57,
-node_55,realized,Focal species range,171,18,20.0,23,57,
-node_55,realized,Focal species range,176,17,19.0,23,57,
-node_55,realized,Focal species range,181,17,19.0,21,57,
-node_55,realized,Focal species range,186,11,17.0,28,57,
-node_55,realized,Focal species range,191,16,21.0,25,57,
-node_55,realized,Focal species range,196,17,23.0,24,57,
-node_55,realized,Focal species range,201,15,18.0,24,57,
-node_55,realized,Focal species range,206,20,24.0,26,57,
-node_55,realized,Focal species range,211,18,22.0,24,57,
-node_55,realized,Focal species range,216,18,20.0,25,57,
-node_55,realized,Focal species range,221,17,22.0,25,57,
-node_55,realized,Focal species range,226,20,25.0,30,57,
-node_55,realized,Focal species range,231,21,26.0,32,57,
-node_55,realized,Focal species range,236,17,22.0,27,57,
-node_55,realized,Focal species range,241,20,23.0,29,57,
-node_55,realized,Focal species range,246,19,22.0,27,57,
-node_55,realized,Focal species range,251,20,24.0,25,57,
-node_55,realized,Focal species range,256,21,27.0,30,57,
-node_55,realized,Focal species range,261,21,25.0,29,57,
-node_55,realized,Focal species range,266,19,21.0,26,57,
-node_55,realized,Focal species range,271,20,25.0,28,57,
-node_55,realized,Focal species range,276,22,25.0,33,57,
-node_55,realized,Focal species range,281,22,27.0,30,57,
-node_55,realized,Focal species range,286,23,29.0,33,57,
-node_55,realized,Focal species range,291,20,24.0,35,57,
-node_55,realized,Focal species range,296,24,27.0,29,57,
-node_55,realized,Focal species range,301,25,27.0,31,57,
-node_55,realized,Focal species range,306,22,28.0,30,57,
-node_55,realized,Focal species range,311,28,30.0,32,57,
-node_55,realized,Focal species range,316,25,28.0,32,57,
-node_55,realized,Focal species range,321,25,29.0,31,57,
-node_55,realized,Focal species range,326,24,28.0,35,57,
-node_55,realized,Focal species range,331,22,30.0,31,57,
-node_55,realized,Focal species range,336,24,28.0,33,57,
-node_55,realized,Focal species range,341,28,29.0,33,57,
-node_55,realized,Focal species range,346,26,31.0,36,57,
-node_55,realized,Focal species range,351,24,26.0,30,57,
-node_55,realized,Focal species range,356,26,30.0,32,57,
-node_55,realized,Focal species range,361,23,33.0,36,57,
-node_55,realized,Focal species range,366,25,27.0,38,57,
-node_55,realized,Focal species range,371,28,30.0,32,57,
-node_55,realized,Focal species range,376,27,31.0,35,57,
-node_55,realized,Focal species range,381,23,30.0,35,57,
-node_55,realized,Focal species range,386,26,32.0,34,57,
-node_55,realized,Focal species range,391,29,30.0,32,57,
-node_55,realized,Focal species range,396,26,28.0,31,57,
-node_55,realized,Focal species range,401,29,31.0,34,57,
-node_55,realized,Focal species range,406,29,32.0,36,57,
-node_55,realized,Focal species range,411,27,33.0,37,57,
-node_55,realized,Focal species range,416,26,30.0,32,57,
-node_55,realized,Focal species range,421,24,30.0,33,57,
-node_55,realized,Focal species range,426,24,30.0,33,57,
-node_55,realized,Focal species range,431,28,30.0,41,57,
-node_55,realized,Focal species range,436,28,32.0,36,57,
-node_55,realized,Focal species range,441,31,32.0,37,57,
-node_55,realized,Focal species range,446,26,32.0,34,57,
-node_55,realized,Focal species range,451,29,34.0,35,57,
-node_55,realized,Focal species range,456,29,31.0,33,57,
-node_55,realized,Focal species range,461,29,32.0,35,57,
-node_55,realized,Focal species range,466,29,31.0,37,57,
-node_55,realized,Focal species range,471,30,34.0,35,57,
-node_55,realized,Focal species range,476,29,31.0,40,57,
-node_55,realized,Focal species range,481,26,31.0,35,57,
-node_55,realized,Focal species range,486,31,33.0,37,57,
-node_55,realized,Focal species range,491,30,36.0,36,57,
-node_55,realized,Focal species range,496,31,33.0,38,57,
+node_55,realized,Species richness,311,7,16.0,24,57,1
+node_55,realized,Species richness,316,9,16.0,24,57,1
+node_55,realized,Species richness,321,8,16.0,23,57,1
+node_55,realized,Species richness,326,8,16.0,25,57,1
+node_55,realized,Species richness,331,9,16.0,23,57,1
+node_55,realized,Species richness,336,8,17.0,25,57,1
+node_55,realized,Species richness,341,8,17.0,25,57,1
+node_55,realized,Species richness,346,7,17.0,26,57,1
+node_55,realized,Species richness,351,10,17.0,25,57,1
+node_55,realized,Species richness,356,8,18.0,24,57,1
+node_55,realized,Species richness,361,9,17.0,27,57,1
+node_55,realized,Species richness,366,9,17.0,24,57,1
+node_55,realized,Species richness,371,10,17.0,27,57,1
+node_55,realized,Species richness,376,11,17.0,25,57,1
+node_55,realized,Species richness,381,11,18.0,27,57,1
+node_55,realized,Species richness,386,12,18.0,26,57,1
+node_55,realized,Species richness,391,9,19.0,26,57,1
+node_55,realized,Species richness,396,11,19.0,28,57,1
+node_55,realized,Species richness,401,9,20.0,27,57,1
+node_55,realized,Species richness,406,10,19.0,27,57,1
+node_55,realized,Species richness,411,11,19.0,28,57,1
+node_55,realized,Species richness,416,11,19.0,28,57,1
+node_55,realized,Species richness,421,12,19.0,29,57,1
+node_55,realized,Species richness,426,11,19.0,30,57,1
+node_55,realized,Species richness,431,11,19.0,28,57,1
+node_55,realized,Species richness,436,12,20.0,27,57,1
+node_55,realized,Species richness,441,12,20.0,28,57,1
+node_55,realized,Species richness,446,10,20.0,27,57,1
+node_55,realized,Species richness,451,14,20.0,29,57,1
+node_55,realized,Species richness,456,12,20.0,30,57,1
+node_55,realized,Species richness,461,11,21.0,29,57,1
+node_55,realized,Species richness,466,13,20.5,29,57,1
+node_55,realized,Species richness,471,14,21.0,29,57,1
+node_55,realized,Species richness,476,12,21.0,30,57,1
+node_55,realized,Species richness,481,12,20.0,30,57,1
+node_55,realized,Species richness,486,10,21.0,30,57,1
+node_55,realized,Species richness,491,14,21.0,31,57,1
+node_55,realized,Species richness,496,11,22.0,30,57,1
+node_55,realized,Realized interactions,1,1,1.0,3,57,2
+node_55,realized,Realized interactions,6,5,6.0,9,57,2
+node_55,realized,Realized interactions,11,6,12.0,20,57,2
+node_55,realized,Realized interactions,16,11,14.0,21,57,2
+node_55,realized,Realized interactions,21,12,18.0,27,57,2
+node_55,realized,Realized interactions,26,14,20.0,26,57,2
+node_55,realized,Realized interactions,31,18,23.0,29,57,2
+node_55,realized,Realized interactions,36,19,25.0,30,57,2
+node_55,realized,Realized interactions,41,21,26.0,32,57,2
+node_55,realized,Realized interactions,46,21,28.0,33,57,2
+node_55,realized,Realized interactions,51,23,30.0,37,57,2
+node_55,realized,Realized interactions,56,25,31.0,37,57,2
+node_55,realized,Realized interactions,61,27,33.0,37,57,2
+node_55,realized,Realized interactions,66,27,33.0,38,57,2
+node_55,realized,Realized interactions,71,29,35.0,42,57,2
+node_55,realized,Realized interactions,76,28,35.0,43,57,2
+node_55,realized,Realized interactions,81,31,35.5,41,57,2
+node_55,realized,Realized interactions,86,30,37.0,43,57,2
+node_55,realized,Realized interactions,91,32,37.0,42,57,2
+node_55,realized,Realized interactions,96,31,37.5,43,57,2
+node_55,realized,Realized interactions,101,33,39.0,44,57,2
+node_55,realized,Realized interactions,106,33,39.0,46,57,2
+node_55,realized,Realized interactions,111,32,39.5,44,57,2
+node_55,realized,Realized interactions,116,33,40.0,45,57,2
+node_55,realized,Realized interactions,121,36,40.0,46,57,2
+node_55,realized,Realized interactions,126,36,41.0,47,57,2
+node_55,realized,Realized interactions,131,36,41.5,48,57,2
+node_55,realized,Realized interactions,136,37,42.0,49,57,2
+node_55,realized,Realized interactions,141,35,42.0,48,57,2
+node_55,realized,Realized interactions,146,37,43.0,47,57,2
+node_55,realized,Realized interactions,151,36,43.0,50,57,2
+node_55,realized,Realized interactions,156,36,44.0,49,57,2
+node_55,realized,Realized interactions,161,37,43.0,49,57,2
+node_55,realized,Realized interactions,166,37,43.0,49,57,2
+node_55,realized,Realized interactions,171,39,44.0,51,57,2
+node_55,realized,Realized interactions,176,38,45.0,51,57,2
+node_55,realized,Realized interactions,181,38,45.0,51,57,2
+node_55,realized,Realized interactions,186,39,45.0,51,57,2
+node_55,realized,Realized interactions,191,40,45.0,51,57,2
+node_55,realized,Realized interactions,196,41,45.0,52,57,2
+node_55,realized,Realized interactions,201,40,46.0,52,57,2
+node_55,realized,Realized interactions,206,40,46.0,50,57,2
+node_55,realized,Realized interactions,211,41,46.0,53,57,2
+node_55,realized,Realized interactions,216,41,47.0,52,57,2
+node_55,realized,Realized interactions,221,41,47.0,53,57,2
+node_55,realized,Realized interactions,226,40,47.0,53,57,2
+node_55,realized,Realized interactions,231,38,47.0,52,57,2
+node_55,realized,Realized interactions,236,40,48.0,53,57,2
+node_55,realized,Realized interactions,241,43,48.0,51,57,2
+node_55,realized,Realized interactions,246,43,47.0,52,57,2
+node_55,realized,Realized interactions,251,42,48.0,52,57,2
+node_55,realized,Realized interactions,256,39,48.0,54,57,2
+node_55,realized,Realized interactions,261,43,48.0,53,57,2
+node_55,realized,Realized interactions,266,41,48.0,55,57,2
+node_55,realized,Realized interactions,271,41,48.5,54,57,2
+node_55,realized,Realized interactions,276,44,48.5,54,57,2
+node_55,realized,Realized interactions,281,43,49.0,54,57,2
+node_55,realized,Realized interactions,286,44,49.0,55,57,2
+node_55,realized,Realized interactions,291,44,49.0,54,57,2
+node_55,realized,Realized interactions,296,44,49.0,54,57,2
+node_55,realized,Realized interactions,301,44,49.0,54,57,2
+node_55,realized,Realized interactions,306,44,49.0,55,57,2
+node_55,realized,Realized interactions,311,44,50.0,53,57,2
+node_55,realized,Realized interactions,316,43,49.0,54,57,2
+node_55,realized,Realized interactions,321,45,50.0,56,57,2
+node_55,realized,Realized interactions,326,44,50.0,54,57,2
+node_55,realized,Realized interactions,331,45,50.0,54,57,2
+node_55,realized,Realized interactions,336,44,50.0,55,57,2
+node_55,realized,Realized interactions,341,45,50.0,55,57,2
+node_55,realized,Realized interactions,346,46,51.0,55,57,2
+node_55,realized,Realized interactions,351,45,50.0,55,57,2
+node_55,realized,Realized interactions,356,46,50.5,55,57,2
+node_55,realized,Realized interactions,361,46,50.0,56,57,2
+node_55,realized,Realized interactions,366,46,51.0,56,57,2
+node_55,realized,Realized interactions,371,45,51.0,55,57,2
+node_55,realized,Realized interactions,376,45,51.0,56,57,2
+node_55,realized,Realized interactions,381,46,52.0,56,57,2
+node_55,realized,Realized interactions,386,45,51.0,56,57,2
+node_55,realized,Realized interactions,391,46,52.0,56,57,2
+node_55,realized,Realized interactions,396,44,52.0,57,57,2
+node_55,realized,Realized interactions,401,47,51.0,55,57,2
+node_55,realized,Realized interactions,406,47,51.0,56,57,2
+node_55,realized,Realized interactions,411,48,52.0,56,57,2
+node_55,realized,Realized interactions,416,48,52.0,55,57,2
+node_55,realized,Realized interactions,421,47,52.0,56,57,2
+node_55,realized,Realized interactions,426,48,52.0,56,57,2
+node_55,realized,Realized interactions,431,47,52.0,56,57,2
+node_55,realized,Realized interactions,436,46,52.0,56,57,2
+node_55,realized,Realized interactions,441,47,52.0,56,57,2
+node_55,realized,Realized interactions,446,47,52.0,55,57,2
+node_55,realized,Realized interactions,451,48,52.0,56,57,2
+node_55,realized,Realized interactions,456,47,52.0,57,57,2
+node_55,realized,Realized interactions,461,47,52.0,56,57,2
+node_55,realized,Realized interactions,466,48,52.0,56,57,2
+node_55,realized,Realized interactions,471,49,53.0,56,57,2
+node_55,realized,Realized interactions,476,47,52.0,56,57,2
+node_55,realized,Realized interactions,481,50,52.5,56,57,2
+node_55,realized,Realized interactions,486,47,53.0,56,57,2
+node_55,realized,Realized interactions,491,48,52.0,56,57,2
+node_55,realized,Realized interactions,496,49,53.0,57,57,2
+node_55,realized,Focal species range,1,0,0.0,2,57,
+node_55,realized,Focal species range,6,0,1.0,3,57,
+node_55,realized,Focal species range,11,0,2.0,7,57,
+node_55,realized,Focal species range,16,0,2.0,7,57,
+node_55,realized,Focal species range,21,0,3.0,9,57,
+node_55,realized,Focal species range,26,0,4.0,8,57,
+node_55,realized,Focal species range,31,0,4.0,10,57,
+node_55,realized,Focal species range,36,1,6.0,10,57,
+node_55,realized,Focal species range,41,2,6.0,13,57,
+node_55,realized,Focal species range,46,4,7.0,13,57,
+node_55,realized,Focal species range,51,3,7.0,15,57,
+node_55,realized,Focal species range,56,3,9.0,16,57,
+node_55,realized,Focal species range,61,2,8.0,18,57,
+node_55,realized,Focal species range,66,4,10.0,16,57,
+node_55,realized,Focal species range,71,2,10.0,18,57,
+node_55,realized,Focal species range,76,4,10.5,17,57,
+node_55,realized,Focal species range,81,5,11.0,17,57,
+node_55,realized,Focal species range,86,5,11.0,19,57,
+node_55,realized,Focal species range,91,5,13.0,19,57,
+node_55,realized,Focal species range,96,5,12.0,22,57,
+node_55,realized,Focal species range,101,6,13.0,20,57,
+node_55,realized,Focal species range,106,7,13.5,21,57,
+node_55,realized,Focal species range,111,8,14.0,21,57,
+node_55,realized,Focal species range,116,7,14.0,22,57,
+node_55,realized,Focal species range,121,7,14.0,26,57,
+node_55,realized,Focal species range,126,8,15.0,21,57,
+node_55,realized,Focal species range,131,9,15.0,23,57,
+node_55,realized,Focal species range,136,9,16.0,22,57,
+node_55,realized,Focal species range,141,11,17.0,27,57,
+node_55,realized,Focal species range,146,10,17.0,29,57,
+node_55,realized,Focal species range,151,10,17.0,27,57,
+node_55,realized,Focal species range,156,12,18.0,29,57,
+node_55,realized,Focal species range,161,9,18.0,27,57,
+node_55,realized,Focal species range,166,13,19.0,26,57,
+node_55,realized,Focal species range,171,12,19.0,25,57,
+node_55,realized,Focal species range,176,12,20.0,27,57,
+node_55,realized,Focal species range,181,11,19.0,27,57,
+node_55,realized,Focal species range,186,10,19.0,28,57,
+node_55,realized,Focal species range,191,14,20.0,27,57,
+node_55,realized,Focal species range,196,13,21.0,31,57,
+node_55,realized,Focal species range,201,13,21.0,29,57,
+node_55,realized,Focal species range,206,13,22.0,28,57,
+node_55,realized,Focal species range,211,13,22.0,30,57,
+node_55,realized,Focal species range,216,16,22.0,28,57,
+node_55,realized,Focal species range,221,13,22.0,34,57,
+node_55,realized,Focal species range,226,15,22.5,31,57,
+node_55,realized,Focal species range,231,16,23.0,32,57,
+node_55,realized,Focal species range,236,15,23.0,31,57,
+node_55,realized,Focal species range,241,17,24.0,31,57,
+node_55,realized,Focal species range,246,16,23.5,31,57,
+node_55,realized,Focal species range,251,15,25.0,32,57,
+node_55,realized,Focal species range,256,16,24.0,33,57,
+node_55,realized,Focal species range,261,18,25.0,33,57,
+node_55,realized,Focal species range,266,19,25.0,34,57,
+node_55,realized,Focal species range,271,16,25.0,33,57,
+node_55,realized,Focal species range,276,19,26.0,35,57,
+node_55,realized,Focal species range,281,18,26.0,33,57,
+node_55,realized,Focal species range,286,18,26.0,37,57,
+node_55,realized,Focal species range,291,18,26.0,35,57,
+node_55,realized,Focal species range,296,15,26.0,37,57,
+node_55,realized,Focal species range,301,20,28.0,35,57,
+node_55,realized,Focal species range,306,19,27.0,36,57,
+node_55,realized,Focal species range,311,16,28.0,35,57,
+node_55,realized,Focal species range,316,20,27.0,35,57,
+node_55,realized,Focal species range,321,22,28.0,35,57,
+node_55,realized,Focal species range,326,19,28.0,35,57,
+node_55,realized,Focal species range,331,21,28.0,37,57,
+node_55,realized,Focal species range,336,21,29.0,39,57,
+node_55,realized,Focal species range,341,20,29.0,38,57,
+node_55,realized,Focal species range,346,22,28.0,36,57,
+node_55,realized,Focal species range,351,20,29.0,35,57,
+node_55,realized,Focal species range,356,21,29.0,37,57,
+node_55,realized,Focal species range,361,22,29.5,36,57,
+node_55,realized,Focal species range,366,21,29.0,38,57,
+node_55,realized,Focal species range,371,20,30.0,39,57,
+node_55,realized,Focal species range,376,22,30.0,36,57,
+node_55,realized,Focal species range,381,20,30.0,38,57,
+node_55,realized,Focal species range,386,24,30.0,39,57,
+node_55,realized,Focal species range,391,22,30.0,37,57,
+node_55,realized,Focal species range,396,23,30.0,37,57,
+node_55,realized,Focal species range,401,23,31.0,37,57,
+node_55,realized,Focal species range,406,23,31.0,40,57,
+node_55,realized,Focal species range,411,26,31.0,39,57,
+node_55,realized,Focal species range,416,25,31.0,41,57,
+node_55,realized,Focal species range,421,24,32.0,38,57,
+node_55,realized,Focal species range,426,24,32.0,41,57,
+node_55,realized,Focal species range,431,23,31.0,41,57,
+node_55,realized,Focal species range,436,25,32.0,40,57,
+node_55,realized,Focal species range,441,24,32.0,37,57,
+node_55,realized,Focal species range,446,26,32.0,39,57,
+node_55,realized,Focal species range,451,26,32.0,39,57,
+node_55,realized,Focal species range,456,26,32.0,38,57,
+node_55,realized,Focal species range,461,27,33.0,41,57,
+node_55,realized,Focal species range,466,27,32.0,40,57,
+node_55,realized,Focal species range,471,27,33.0,43,57,
+node_55,realized,Focal species range,476,26,33.0,41,57,
+node_55,realized,Focal species range,481,26,33.0,39,57,
+node_55,realized,Focal species range,486,27,33.0,42,57,
+node_55,realized,Focal species range,491,25,33.0,41,57,
+node_55,realized,Focal species range,496,25,34.0,42,57,
