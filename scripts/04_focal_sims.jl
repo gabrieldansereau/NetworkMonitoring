@@ -4,7 +4,7 @@ using DrWatson
 using BiodiversityObservationNetworks:
     UncertaintySampling, BalancedAcceptance, WeightedBalancedAcceptance, SimpleRandom
 
-# Set parameters
+# Set default parameters for network simulations
 d = DefaultParams()
 
 # Generate networks using simulations
@@ -17,6 +17,16 @@ nets_dict[:possible] = nets_dict[:pos]
 
 # Get species with highest degree for test run
 deg, sp = findmax(degree(metaweb.metaweb))
+
+# Set number of replicates for short interactive run
+if !(@isdefined NREP)
+    const NREP = 5
+end
+# For longer, non-interactive runs, set the number of replicates with:
+# julia --project -e 'const NREP = 100; include("scripts/04_focal_sims.jl")'
+
+# Set progress bar display time from environment variable on cluster
+const DT = parse(Float64, get(ENV, "PROGRESS_BARS_DT", "0.1"))
 
 # Focal monitoring
 function focal_monitoring(
@@ -42,7 +52,7 @@ function focal_monitoring(
 
     # Run all options
     monitored = DataFrame()
-    @showprogress for opt in options_list
+    @showprogress dt = DT for opt in options_list
         @unpack nrep, nbon, type, sampler = opt
 
         # Select network object
@@ -135,12 +145,12 @@ monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 
 # # Run for all types
 # types = [:possible, :realized, :detected]
-# monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=5, combined=true)
+# monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=true)
 
 # # Re-run for realized and detected with more sites in BON
 # types2 = [:realized, :detected]
 # monitored_types2 = focal_monitoring(
-#     nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=5, combined=true
+#     nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=true
 # )
 
 # # Export
@@ -158,7 +168,7 @@ spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
 monitored_spp = focal_monitoring(
-    nets_dict, spp; type=[:realized], nrep=5, nbons=1:5:500, combined=true
+    nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=true
 )
 
 # Export
@@ -183,7 +193,7 @@ monitored_samplers = focal_monitoring(
     type=[:realized],
     sampler=samplers,
     nbons=1:5:500,
-    nrep=5,
+    nrep=NREP,
     combined=true,
 )
 
@@ -210,11 +220,6 @@ degree_realized = SDT.SDMLayer(
     y=(0.0, d.nsites),
 )
 
-heatmapcb(richness_int)
-heatmapcb(degree_realized)
-hist(richness_pos)
-hist(filter(!iszero, values(degree_realized)))
-
 # Optimize with UncertaintySampling
 optim = [richness_spp, degree_realized]
 optimlabels = ["Species richness", "Realized interactions"]
@@ -225,7 +230,7 @@ monitored_optimized = focal_monitoring(
     type=[:realized],
     sampler=[UncertaintySampling],
     nbons=1:5:500,
-    nrep=5,
+    nrep=NREP,
     combined=true,
 )
 @rtransform!(monitored_optimized, :sampler = optimlabels[:layer])
