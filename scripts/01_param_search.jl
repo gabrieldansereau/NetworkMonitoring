@@ -38,7 +38,9 @@ function main()
         try
             res = runsim(; output=output, sampler=sampler, d...)
             d2 = merge(d, res)
-            tagsave(datadir("sim-$output", savename(d, "jld2")), tostringdict(d2))
+            tagsave(
+                datadir("sim-$output", savename(d, "jld2")), tostringdict(d2); warn=false
+            )
             true
         catch e
             false
