@@ -22,15 +22,18 @@ const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 
 # Define parameters to explore
 const params = Dict(
-    :nbon => collect(1:100), :nrep => collect(1:20), :refmethod => ["metawebify", "global"]
+    :nbon => collect(1:100), :nrep => collect(1:100), :refmethod => ["metawebify", "global"]
 )
 const output = :prop # :monitored or :prop
 const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
 const dicts = dict_list(params)
 
+# Set progress bar display time from environment variable on cluster
+const DT = parse(Float64, get(ENV, "PROGRESS_BARS_DT", "0.1"))
+
 # Run for all combinations
 function main()
-    @showprogress @distributed for (i, d) in collect(enumerate(dicts))
+    @showprogress dt = DT @distributed for (i, d) in collect(enumerate(dicts))
         Random.seed!(i)
         try
             res = runsim(; output=output, sampler=sampler, d...)
