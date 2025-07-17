@@ -79,6 +79,50 @@ begin
     axislegend(; position=:rc, merge=true)
     fig
 end
+
+begin
+    fig =
+        data(monitored_types) *
+        visual(LinesFill) *
+        mapping(:nbon => "Sites in BON", :med; lower=:low, upper=:upp, color=:var)
+    hline =
+        mapping(maximum(monitored_types.deg)) *
+        visual(HLines; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    draw(
+        fig + hline;
+        axis=(; xticks=0:25:100, ylabel="Monitored Interactions"),
+        legend=(; framevisible=false),
+    )
+end
+
+maxdeg = maximum(monitored_types.deg)
+begin
+    vis = visual(LinesFill) * mapping(:nbon => "Sites in BON", :med; lower=:low, upper=:upp)
+    hline =
+        mapping(maxdeg) *
+        visual(HLines; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    fig = data(monitored_types) * mapping(; color=:var) * vis
+    plt_options = (
+        axis=(; xticks=0:25:100, ylabel="Monitored Interactions"),
+        legend=(; framevisible=false),
+    )
+    draw(fig + hline; plt_options...)
+end
+
+begin
+    fig = data(monitored_spp) * mapping(; color=:sp) * vis
+    figgrid = draw(fig + hline; plt_options...)
+    figgrid.grid[1].axis.xticks = 0:100:500
+    figgrid
+end
+
+begin
+    fig = data(monitored_samplers) * mapping(; color=:sampler) * vis
+    figgrid = draw(fig + hline; plt_options...)
+    figgrid.grid[1].axis.xticks = 0:100:500
+    figgrid
+end
+
 save(plotsdir("focal_types.png"), fig)
 
 # Visualize result
