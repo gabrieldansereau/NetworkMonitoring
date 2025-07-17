@@ -8,9 +8,27 @@ update_theme!(; CairoMakie=(; px_per_unit=2.0))
 # Load all results
 monitored_types = CSV.read(datadir("monitored_types.csv"), DataFrame)
 monitored_types2 = CSV.read(datadir("monitored_types2.csv"), DataFrame)
-monitored_spp = CSV.read(datadir("monitored_spp.csv"), DataFrame)
-monitored_samplers = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
-monitored_optimized = CSV.read(datadir("monitored_optimized.csv"), DataFrame)
+monitored_spp_all = CSV.read(datadir("monitored_spp.csv"), DataFrame)
+monitored_samplers_all = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
+monitored_optimized_all = CSV.read(datadir("monitored_optimized.csv"), DataFrame)
+
+# Summmarize results not combined previously
+function summarize_monitored(df)
+    monitored = @chain df begin
+        groupby([:sp, :type, :sampler, :nbon])
+        @combine(
+            :low = minimum(:monitored),
+            :med = median(:monitored),
+            :upp = maximum(:monitored),
+            :deg = maximum(:deg)
+        )
+        rename(:type => :var)
+    end
+    return monitored
+end
+monitored_spp = summarize_monitored(monitored_spp_all)
+monitored_samplers = summarize_monitored(monitored_samplers_all)
+monitored_optimized = summarize_monitored(monitored_optimized_all)
 
 # Get species with highest degree
 sp = monitored_types.sp[1]
