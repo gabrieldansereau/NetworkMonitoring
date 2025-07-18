@@ -42,7 +42,7 @@ function load_and_prep(file)
 end
 param_stack = load_and_prep(datadir("param_grid.csv"))
 
-# Proportion results plot
+# Proportion results scatterplot
 fig =
     data(param_stack) *
     visual(
@@ -63,6 +63,37 @@ fig =
         figure=(; size=(700, 450)),
     )
 save(plotsdir("nbon.png"), fig)
+
+# Summarize results across replicates
+param_combined = @chain param_stack begin
+    groupby([:nbon, :variable, :refmethod])
+    @combine(
+        :low = quantile(:prop, 0.05), :med = median(:prop), :upp = quantile(:prop, 0.95),
+    )
+end
+
+# Proportion results as linesfill plot (median line & bands for intervals)
+fig =
+    data(param_combined) *
+    visual(LinesFill; fillalpha=0.15) *
+    mapping(
+        :nbon => "Number of sites in BON",
+        :med;
+        lower=:low,
+        upper=:upp,
+        color=:variable => presorted => "Sampled element",
+        layout=:refmethod => renamer(
+            "global" => "Global reference", "metawebify" => "Per-element reference"
+        ),
+    ) |>
+    x -> draw(
+        x,
+        scales(; Y=(; label="Proportion of sampled elements"));
+        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
+        legend=(; framevisible=false),
+        figure=(; size=(700, 450)),
+    )
+save(plotsdir("nbon_bands.png"), fig)
 
 ## Random sampling comparison
 
