@@ -67,7 +67,9 @@ save(plotsdir("nbon.png"), fig)
 # Summarize results across replicates
 param_combined = @chain param_stack begin
     groupby([:nbon, :variable, :refmethod])
-    @combine(:low = minimum(:prop), :med = median(:prop), :upp = maximum(:prop),)
+    @combine(
+        :low = quantile(:prop, 0.05), :med = median(:prop), :upp = quantile(:prop, 0.95),
+    )
 end
 
 # Proportion results as linesfill plot (median line & bands for intervals)

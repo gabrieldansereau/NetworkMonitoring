@@ -17,9 +17,9 @@ function summarize_monitored(df)
     monitored = @chain df begin
         groupby([:sp, :type, :sampler, :nbon])
         @combine(
-            :low = minimum(:monitored),
+            :low = quantile(:monitored, 0.05),
             :med = median(:monitored),
-            :upp = maximum(:monitored),
+            :upp = quantile(:monitored, 0.95),
             :deg = maximum(:deg)
         )
         rename(:type => :var)
