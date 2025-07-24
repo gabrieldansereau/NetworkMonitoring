@@ -122,7 +122,7 @@ begin
     bons["SimpleRandom"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
 end
 
-# Plot
+# All medians but only for uncertainty sampler
 begin
     res = filter(:sampler => ==("UncertaintySampling"), sims_samplers)
     fig = Figure()
@@ -170,9 +170,9 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_samplers_one.png"), fig)
+save(plotsdir("focal_array", "focal_array_samplers_one.png"), fig)
 
-# Plot
+# All medians without bands for samplers
 begin
     res = sims_samplers
     fig = Figure()
@@ -220,8 +220,9 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_all_meds.png"), fig)
+save(plotsdir("focal_array", "focal_array_all_meds.png"), fig)
 
+# Summary attempt - Median line, mean of percentile diff from simulation median
 begin
     res = monitored_samplers
     fig = Figure()
@@ -266,8 +267,9 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_samplers_med_mean.png"), fig)
+save(plotsdir("focal_array", "focal_array_samplers_med_mean.png"), fig)
 
+# Summary attempt - Median line, median of percentile diff from simulation median
 begin
     res = monitored_samplers
     fig = Figure()
@@ -320,7 +322,7 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_samplers_med_med.png"), fig)
+save(plotsdir("focal_array", "focal_array_samplers_med_med.png"), fig)
 
 ## Optimized sampling
 
@@ -348,7 +350,7 @@ _order = Dict(
 )
 sort!(monitored_optimized, order(:sampler; by=x -> _order[x]))
 
-# Plot
+# Realized interactions - All medians
 begin
     res = filter(:sampler => ==("Realized interactions"), sims_optimized)
     fig = Figure()
@@ -397,8 +399,9 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_optimized_one.png"), fig)
+save(plotsdir("focal_array", "focal_array_optimized_one.png"), fig)
 
+# Optimized summary attempt - Median line, mean of percentile diff from simulation median
 begin
     res = monitored_optimized
     fig = Figure()
@@ -444,8 +447,9 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_optimized_med_mean.png"), fig)
+save(plotsdir("focal_array", "focal_array_optimized_med_mean.png"), fig)
 
+# Summary attempt - Median line, median of percentile diff from simulation median
 begin
     res = monitored_optimized
     fig = Figure()
@@ -499,7 +503,7 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_optimized_med_med.png"), fig)
+save(plotsdir("focal_array", "focal_array_optimized_med_med.png"), fig)
 
 ## One True Median
 
@@ -603,7 +607,7 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_onetruemedian_samplers.png"), fig)
+save(plotsdir("focal_array", "focal_array_onetruemedian_samplers.png"), fig)
 
 # Plot
 begin
@@ -651,4 +655,4 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_array_onetruemedian_optimized.png"), fig)
+save(plotsdir("focal_array", "focal_array_onetruemedian_optimized.png"), fig)
