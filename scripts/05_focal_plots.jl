@@ -5,12 +5,16 @@ update_theme!(; CairoMakie=(; px_per_unit=2.0))
 
 ## Load focal species results
 
+# Use job id to vary parameters
+id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
+idp = lpad(id, 2, "0")
+
 # Load all results
 monitored_types = CSV.read(datadir("monitored_types.csv"), DataFrame)
 monitored_types2 = CSV.read(datadir("monitored_types2.csv"), DataFrame)
-monitored_spp_all = CSV.read(datadir("monitored_spp.csv"), DataFrame)
-monitored_samplers_all = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
-monitored_optimized_all = CSV.read(datadir("monitored_optimized.csv"), DataFrame)
+monitored_spp_all = CSV.read(datadir("monitored_spp-$idp.csv"), DataFrame)
+monitored_samplers_all = CSV.read(datadir("monitored_samplers-$idp.csv"), DataFrame)
+monitored_optimized_all = CSV.read(datadir("monitored_optimized-$idp.csv"), DataFrame)
 
 # Summmarize results not combined previously
 function summarize_monitored(df)
@@ -35,9 +39,9 @@ sp = monitored_types.sp[1]
 deg = maximum(monitored_types.deg)
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir("layer_sp_range.tiff"))
-richness_spp = SDT.SDMLayer(datadir("layer_richness_spp.tiff"))
-degree_realized = SDT.SDMLayer(datadir("layer_degree_realized.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir("layer_sp_range-$idp.tiff"))
+richness_spp = SDT.SDMLayer(datadir("layer_richness_spp-$idp.tiff"))
+degree_realized = SDT.SDMLayer(datadir("layer_degree_realized-$idp.tiff"))
 
 ## Define labels and colors for all plots
 
