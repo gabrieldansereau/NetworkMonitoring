@@ -500,3 +500,155 @@ begin
     fig
 end
 save(plotsdir("focal_array_optimized_med_med.png"), fig)
+
+## One True Median
+
+# One median to rule them all
+function findmed(a)
+    _, idx = findmin(x -> abs(x - median(a)), a)
+    return (a[idx], idx)
+end
+
+# Get simulation with median end result for Uncertainty Sampling / Focal species range
+# as it is used across both figures
+medsim = let df = sims_samplers
+    _maxbon = maximum(df.nbon)
+    _lastbons = @rsubset(df, :nbon == _maxbon, :sampler == "UncertaintySampling")
+    _, _idx = findmed(_lastbons.med)
+    _sim = _lastbons[_idx, "sim"]
+end
+
+# Collect results for One True Median simulation
+onetruemed_samplers = @rsubset(sims_samplers, :sim == medsim)
+onetruemed_optimized = @rsubset(sims_optimized, :sim == medsim)
+focal_sp_range = SDT.SDMLayer(datadir("layer_sp_range-$medsim.tiff"))
+richness_spp = SDT.SDMLayer(datadir("layer_richness_spp-$medsim.tiff"))
+degree_realized = SDT.SDMLayer(datadir("layer_degree_realized-$medsim.tiff"))
+
+# Re-generate BON examples
+begin
+    Random.seed!(42)
+    bons = Dict()
+    bons["UncertaintySampling"] = BON.sample(BON.UncertaintySampling(100), focal_sp_range)
+    bons["WeightedBalancedAcceptance"] = BON.sample(
+        BON.WeightedBalancedAcceptance(100), focal_sp_range
+    )
+    bons["SimpleRandom"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
+end
+begin
+    Random.seed!(33)
+    bons["Focal species range"] = bons["UncertaintySampling"]
+    bons["Species richness"] = BON.sample(BON.UncertaintySampling(100), richness_spp)
+    bons["Realized interactions"] = BON.sample(
+        BON.UncertaintySampling(100), degree_realized
+    )
+end
+
+# Collect layers
+begin
+    layers = Dict()
+    layers["Focal species range"] = focal_sp_range
+    layers["Species richness"] = richness_spp
+    layers["Realized interactions"] = degree_realized
+end
+
+# Reorder elements for display
+_order = Dict(
+    "Realized interactions" => 1, "Focal species range" => 2, "Species richness" => 3
+)
+sort!(onetruemed_optimized, order(:sampler; by=x -> _order[x]))
+
+# Plot samplers
+begin
+    res = onetruemed_samplers
+    fig = Figure()
+    # Create layouts
+    ga = GridLayout(fig[:, 1:3])
+    gb = GridLayout(fig[:, end + 1])
+    # Create axes
+    ax = Axis(
+        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+    )
+    ax1 = Axis(
+        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax2 = Axis(
+        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax3 = Axis(
+        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    # Remove decorations for heatmaps
+    hidedecorations!(ax1; label=false)
+    hidedecorations!(ax2; label=false)
+    hidedecorations!(ax3; label=false)
+    # Sampling results
+    for s in unique(res.sampler)
+        b = filter(:sampler => ==(s), res)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
+        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+    end
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(ax; position=:lt, merge=true, labelsize=14)
+    # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
+    # Heatmaps & BON example
+    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
+        heatmap!(a, focal_sp_range)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        a.ylabel = s
+    end
+    # Subpanel labels
+    Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
+    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+    # Show figure
+    fig
+end
+save(plotsdir("focal_array_onetruemedian_samplers.png"), fig)
+
+# Plot
+begin
+    res = onetruemed_optimized
+    fig = Figure()
+    # Create layouts
+    ga = GridLayout(fig[:, 1:3])
+    gb = GridLayout(fig[:, end + 1])
+    # Create axes
+    ax = Axis(
+        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+    )
+    ax1 = Axis(
+        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax2 = Axis(
+        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax3 = Axis(
+        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    # Remove decorations for heatmaps
+    hidedecorations!(ax1; label=false)
+    hidedecorations!(ax2; label=false)
+    hidedecorations!(ax3; label=false)
+    # Sampling results
+    for s in unique(res.sampler)
+        b = filter(:sampler => ==(s), res)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
+        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+    end
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(ax; position=:lt, merge=true, labelsize=14)
+    # Heatmaps & BON example
+    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
+        heatmap!(a, layers[s])
+        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        a.ylabel = s
+    end
+    # Subpanel labels
+    Label(
+        ga[1, :, Top()], "Optimization layer efficiency"; padding=(0, 0, 5, 0), font=:bold
+    )
+    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+    # Show figure
+    fig
+end
+save(plotsdir("focal_array_onetruemedian_optimized.png"), fig)
