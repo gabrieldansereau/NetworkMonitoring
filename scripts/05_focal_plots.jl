@@ -21,9 +21,9 @@ function summarize_monitored(df)
     monitored = @chain df begin
         groupby([:sp, :type, :sampler, :nbon])
         @combine(
-            :low = quantile(:monitored, 0.05),
-            :med = median(:monitored),
-            :upp = quantile(:monitored, 0.95),
+            :low = quantile(:monitored, 0.05) ./ :deg,
+            :med = median(:monitored) ./ :deg,
+            :upp = quantile(:monitored, 0.95) ./ :deg,
             :deg = maximum(:deg)
         )
         rename(:type => :var)
@@ -129,12 +129,12 @@ begin
         d = unique(b.deg)[1]
         l = "sp$i: $d int"
         # Monitored int
-        band!(ax1, b.nbon, b.low, b.upp; alpha=0.4, label=l)
-        lines!(ax1, b.nbon, b.med; label=l)
+        band!(ax1, b.nbon, b.low .* b.deg, b.upp .* b.deg; alpha=0.4, label=l)
+        lines!(ax1, b.nbon, b.med .* b.deg; label=l)
         hlines!(ax1, d; linestyle=:dash, alpha=0.5)
         # Proportion
-        band!(ax2, b.nbon, b.low ./ b.deg, b.upp ./ b.deg; alpha=0.4, label=l)
-        lines!(ax2, b.nbon, b.med ./ b.deg; label=l)
+        band!(ax2, b.nbon, b.low, b.upp; alpha=0.4, label=l)
+        lines!(ax2, b.nbon, b.med; label=l)
     end
     fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
     fig
@@ -184,7 +184,7 @@ begin
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
         lines!(ax, b.nbon, b.med; label=s, color=cols[s])
     end
-    hlines!(ax, deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
@@ -257,7 +257,7 @@ begin
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
         lines!(ax, b.nbon, b.med; label=s, color=cols[s])
     end
-    hlines!(ax, deg; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
