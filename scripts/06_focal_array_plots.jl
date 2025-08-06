@@ -3,15 +3,7 @@ using DrWatson
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
 
-## Load focal species results
-
-# Use job id to vary parameters
-id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
-idp = lpad(id, 2, "0")
-
-# Load all results
-monitored_samplers_all = CSV.read(datadir("monitored_samplers-$idp.csv"), DataFrame)
-monitored_optimized_all = CSV.read(datadir("monitored_optimized-$idp.csv"), DataFrame)
+## Load all simulations
 
 # Summmarize results not combined previously
 function summarize_monitored(df)
@@ -24,23 +16,9 @@ function summarize_monitored(df)
             :deg = maximum(:deg)
         )
         @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg,)
-        rename(:type => :var)
     end
     return monitored
 end
-monitored_samplers = summarize_monitored(monitored_samplers_all)
-monitored_optimized = summarize_monitored(monitored_optimized_all)
-
-# Get species with highest degree
-sp = monitored_samplers.sp[1]
-deg = maximum(monitored_samplers.deg)
-
-# Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir("layer_sp_range-$idp.tiff"))
-richness_spp = SDT.SDMLayer(datadir("layer_richness_spp-$idp.tiff"))
-degree_realized = SDT.SDMLayer(datadir("layer_degree_realized-$idp.tiff"))
-
-## Load all simulations
 
 # Use job id to vary parameters
 ids = 1:10
@@ -49,8 +27,12 @@ sims_optimized = DataFrame()
 for id in ids
     # Load all results
     idp = lpad(id, 2, "0")
-    monitored_samplers_all = CSV.read(datadir("monitored_samplers-$idp.csv"), DataFrame)
-    monitored_optimized_all = CSV.read(datadir("monitored_optimized-$idp.csv"), DataFrame)
+    monitored_samplers_all = CSV.read(
+        datadir("focal_array", "monitored_samplers-$idp.csv"), DataFrame
+    )
+    monitored_optimized_all = CSV.read(
+        datadir("focal_array", "monitored_optimized-$idp.csv"), DataFrame
+    )
 
     # Summmarize results not combined previously
     monitored_samplers = summarize_monitored(monitored_samplers_all)
@@ -66,6 +48,10 @@ for id in ids
 end
 sims_samplers
 sims_optimized
+
+# Export
+CSV.write(datadir("sims_samplers.csv"), sims_samplers)
+CSV.write(datadir("sims_optimized.csv"), sims_optimized)
 
 # Re-summarize
 monitored_samplers = @chain sims_samplers begin
@@ -110,6 +96,11 @@ cols = Dict{Any,Any}(
 )
 
 ## Explore variations with different sampler
+
+# Load one set of focal layers for illustration
+focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-01.tiff"))
+richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-01.tiff"))
+degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-01.tiff"))
 
 # Generate BON examples
 begin
@@ -525,9 +516,9 @@ end
 # Collect results for One True Median simulation
 onetruemed_samplers = @rsubset(sims_samplers, :sim == medsim)
 onetruemed_optimized = @rsubset(sims_optimized, :sim == medsim)
-focal_sp_range = SDT.SDMLayer(datadir("layer_sp_range-$medsim.tiff"))
-richness_spp = SDT.SDMLayer(datadir("layer_richness_spp-$medsim.tiff"))
-degree_realized = SDT.SDMLayer(datadir("layer_degree_realized-$medsim.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$medsim.tiff"))
+richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-$medsim.tiff"))
+degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-$medsim.tiff"))
 
 # Re-generate BON examples
 begin

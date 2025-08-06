@@ -2,7 +2,7 @@ Manifest.toml
 scripts/_*
 plots/_*
 *_xtra*
-data/sim*
+data/sim-*
 data/layer*
 data/focal_array
 
