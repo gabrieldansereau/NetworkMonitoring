@@ -22,6 +22,16 @@ nets_dict = generate_networks(d)
 nets_dict[:possible] = nets_dict[:pos]
 @unpack detected, realized, pos, metaweb, ranges = nets_dict
 
+# Generate probabilistic ranges
+# We need to run operations in the same order
+begin
+    Random.seed!(id * 42)
+    _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
+    probranges = generate(
+        AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites)), d.ns
+    )
+end
+
 ## Test focal monitoring for a single species
 
 # Get species with highest degree for test run
@@ -77,7 +87,7 @@ function focal_monitoring(
             deg = degree(net.metaweb, sp)
         end
 
-        # Create neutral layer for optimization if nore was provided
+        # Create neutral layer for optimization if none was provided
         if isnothing(layer)
             layer = SDT.SDMLayer(
                 MidpointDisplacement(H_nlm),
