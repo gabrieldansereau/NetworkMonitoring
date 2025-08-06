@@ -25,9 +25,6 @@ end
 
 ## Efficiency
 
-# Simplify data
-X = Matrix(select(sims_set, [:sim, :nbon, :med]))
-
 # Saturation equation
 saturation(a) = (x) -> x ./ (a .+ x)
 
@@ -45,10 +42,10 @@ end
 begin
     f = Figure()
     ax = Axis(f[1, 1])
-    for iter in unique(X[:, 1])
-        X₁ = X[X[:, 1] .== iter, :][:, 2:3]
-        x = X₁[:, 1]
-        y = X₁[:, 2]
+    for iter in unique(sims_set.sim)
+        X₁ = @rsubset(sims_set, :sim == iter)
+        x = X₁.nbon
+        y = X₁.med
         eff = efficiency(x, y)
         scatter!(ax, x, y; color=:lightgrey)
         lines!(ax, x, saturation(eff)(x); color=:black, linestyle=:dash)
