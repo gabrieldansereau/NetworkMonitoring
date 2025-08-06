@@ -1,9 +1,11 @@
 Manifest.toml
 scripts/_*
 plots/_*
+*_xtra*
 data/sim*
 data/layer*
 data/monitored*
+data/focal_array
 
 # narval
 narval.sh

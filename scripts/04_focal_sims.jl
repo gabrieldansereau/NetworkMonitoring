@@ -158,8 +158,8 @@ monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 # )
 
 # # Export
-# CSV.write(datadir("monitored_types-$idp.csv"), monitored_types)
-# CSV.write(datadir("monitored_types2-$idp.csv"), monitored_types2)
+# CSV.write(datadir("focal_array", "monitored_types-$idp.csv"), monitored_types)
+# CSV.write(datadir("focal_array", "monitored_types2-$idp.csv"), monitored_types2)
 
 # ## Repeat with 4 species with different degrees
 
@@ -176,7 +176,7 @@ monitored_spp = focal_monitoring(
 )
 
 # Export
-CSV.write(datadir("monitored_spp-$idp.csv"), monitored_spp)
+CSV.write(datadir("focal_array", "monitored_spp-$idp.csv"), monitored_spp)
 
 ## Explore variations with different sampler
 
@@ -202,8 +202,8 @@ monitored_samplers = focal_monitoring(
 )
 
 # Export
-CSV.write(datadir("monitored_samplers-$idp.csv"), monitored_samplers)
-SDT.SimpleSDMLayers.save(datadir("layer_sp_range-$idp.tiff"), sp_range)
+CSV.write(datadir("focal_array", "monitored_samplers-$idp.csv"), monitored_samplers)
+SDT.SimpleSDMLayers.save(datadir("focal_array", "layer_sp_range-$idp.tiff"), sp_range)
 
 ## Richness-focused sampling
 
@@ -248,9 +248,19 @@ monitored_optimized = focal_monitoring(
 end
 
 # Export
-CSV.write(datadir("monitored_optimized-$idp.csv"), monitored_optimized)
-SDT.SimpleSDMLayers.save(datadir("layer_richness_spp-$idp.tiff"), richness_spp)
-SDT.SimpleSDMLayers.save(datadir("layer_richness_int-$idp.tiff"), richness_int)
-SDT.SimpleSDMLayers.save(datadir("layer_richness_pos-$idp.tiff"), richness_pos)
-SDT.SimpleSDMLayers.save(datadir("layer_degree_realized-$idp.tiff"), degree_realized)
-SDT.SimpleSDMLayers.save(datadir("layer_degree_possible-$idp.tiff"), degree_possible)
+CSV.write(datadir("focal_array", "monitored_optimized-$idp.csv"), monitored_optimized)
+SDT.SimpleSDMLayers.save(
+    datadir("focal_array", "layer_richness_spp-$idp.tiff"), richness_spp
+)
+SDT.SimpleSDMLayers.save(
+    datadir("focal_array", "layer_richness_int-$idp.tiff"), richness_int
+)
+SDT.SimpleSDMLayers.save(
+    datadir("focal_array", "layer_richness_pos-$idp.tiff"), richness_pos
+)
+SDT.SimpleSDMLayers.save(
+    datadir("focal_array", "layer_degree_realized-$idp.tiff"), degree_realized
+)
+SDT.SimpleSDMLayers.save(
+    datadir("focal_array", "layer_degree_possible-$idp.tiff"), degree_possible
+)
