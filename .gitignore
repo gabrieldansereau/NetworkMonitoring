@@ -2,6 +2,8 @@ Manifest.toml
 scripts/_*
 plots/_*
 data/sim*
+data/layer*
+data/monitored*
 
 # narval
 narval.sh
