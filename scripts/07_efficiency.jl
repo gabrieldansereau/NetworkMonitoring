@@ -1,5 +1,13 @@
+# using DrWatson
+# @quickactivate :NetworkMonitoring
+
+using AlgebraOfGraphics
+using CairoMakie
+using CSV
+using DataFramesMeta
 using DrWatson
-@quickactivate :NetworkMonitoring
+using Statistics
+import SpeciesDistributionToolkit as SDT
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
 
@@ -52,3 +60,45 @@ begin
     end
     f
 end
+
+# Example
+sim1 = @rsubset(sims_set, :sim == 1)
+x = sim1.nbon
+y = sim1.med
+eff = efficiency(x, y)
+saturation(eff)(x)
+
+## Occupancy
+
+# Load layer for exploration
+_l = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-01.tiff"))
+heatmap(_l)
+
+# Get layer occupancy
+occupancy(_l) = length(findall(isone, _l)) / length(_l)
+occupancy(_l)
+
+# Occupancy across multiple layers
+occup = zeros(10)
+for i in 1:10
+    idp = lpad(i, 2, "0")
+    l = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$idp.tiff"))
+    occup[i] = occupancy(l)
+end
+occup
+
+# Corresponding sampling efficiency
+effs = zeros(10)
+for i in 1:10
+    X₁ = @rsubset(sims_set, :sim == i)
+    x = X₁.nbon
+    y = X₁.med
+    effs[i] = efficiency(x, y)
+end
+effs
+
+# Visualize
+scatter(occup, effs)
+
+# AOG
+mapping(occup, effs) * visual(Scatter) |> draw
