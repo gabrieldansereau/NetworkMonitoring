@@ -173,3 +173,63 @@ begin
     draw!(f[2, 1], f2, scales(; Color=(; palette=cols)))
     f
 end
+
+## Within-simulation variation
+
+# Load one simulation example
+monitored_samplers = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
+@rsubset!(monitored_samplers, :sampler == "UncertaintySampling")
+
+# Visualize
+let b = monitored_samplers
+    eff = efficiency(b.nbon, b.med)
+    band(b.nbon, b.low, b.upp; alpha=0.4, color=Makie.wong_colors()[2])
+    scatter!(b.nbon, b.med; color=Makie.wong_colors()[2])
+    lines!(b.nbon, saturation(eff)(b.nbon); color=:black, linestyle=:dash)
+    current_figure()
+end
+
+# Load pre-summary results
+sim1_samplers = @chain begin
+    CSV.read(datadir("focal_array", "monitored_samplers-01.csv"), DataFrame)
+    @rsubset(:sampler == "UncertaintySampling")
+    @rtransform(:monitored = :monitored / :deg)
+end
+
+# Visualize
+fig = let bs = sim1_samplers, b = monitored_samplers
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="Number of sites", ylabel="Monitored proportion")
+    for i in 1:100
+        bi = @rsubset(bs, :rep == i)
+        # lines!(bi.nbon, bi.monitored; color=:grey, linewidth=0.5)
+        eff = efficiency(bi.nbon, bi.monitored; A=LinRange(-12.0, 12.0, 5000))
+        lines!(
+            bi.nbon,
+            saturation(eff)(b.nbon);
+            color=:grey,
+            linestyle=:solid,
+            label="individual saturation curves",
+        )
+    end
+    eff = efficiency(b.nbon, b.med)
+    band!(
+        b.nbon,
+        b.low,
+        b.upp;
+        alpha=0.4,
+        color=Makie.wong_colors()[2],
+        label="90% percentile",
+    )
+    scatter!(b.nbon, b.med; color=Makie.wong_colors()[2], label="median points")
+    lines!(
+        b.nbon,
+        saturation(eff)(b.nbon);
+        color=:black,
+        linestyle=:dash,
+        label="saturation from median",
+    )
+    axislegend(; position=:rb, unique=true)
+    current_figure()
+end
+save(plotsdir("saturation_within_example.png"), fig)
