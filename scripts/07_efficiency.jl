@@ -6,6 +6,7 @@ using CairoMakie
 using CSV
 using DataFramesMeta
 using DrWatson
+using Random
 using Statistics
 import SpeciesDistributionToolkit as SDT
 
@@ -102,3 +103,73 @@ scatter(occup, effs)
 
 # AOG
 mapping(occup, effs) * visual(Scatter) |> draw
+mapping(occup, effs) * AlgebraOfGraphics.density() |> draw
+mapping(occup, effs) * AlgebraOfGraphics.density() * visual(Contour) |> draw
+
+## Scale up comparison
+
+# Calculate efficiency & assign occupancy
+effs_samplers = @chain sims_samplers begin
+    @groupby(:sim, :sampler)
+    @combine(:eff = efficiency(:nbon, :med))
+    @transform(:occ = occup[:sim], :set = "Samplers")
+end
+effs_optimized = @chain sims_optimized begin
+    @groupby(:sim, :sampler)
+    @combine(:eff = efficiency(:nbon, :med))
+    @transform(:occ = occup[:sim], :set = "Layers")
+end
+
+# Define color sets
+cols = [
+    # Interaction types
+    "possible" => Makie.wong_colors()[2],
+    "realized" => Makie.wong_colors()[3],
+    "detected" => Makie.wong_colors()[4],
+    # Samplers
+    "UncertaintySampling" => Makie.wong_colors()[2],
+    "WeightedBalancedAcceptance" => Makie.wong_colors()[3],
+    "SimpleRandom" => Makie.wong_colors()[1],
+    # Layers
+    "Focal species range" => Makie.wong_colors()[2],
+    "Species richness" => Makie.wong_colors()[4],
+    "Realized interactions" => Makie.wong_colors()[5],
+]
+
+# Scatter & smooth
+efflog = :eff => log => "log(eff)"
+layout = mapping(:occ, efflog; color=:sampler) * (visual(Scatter) + smooth())
+fig =
+    data(effs_samplers) * layout |>
+    x -> draw(x, scales(; Color=(; palette=cols)); legend=(; position=:bottom))
+fig =
+    data(effs_optimized) * layout |>
+    x -> draw(x, scales(; Color=(; palette=cols)); legend=(; position=:bottom))
+
+# Heatmaps
+layout =
+    mapping(:occ, efflog; row=:sampler) * (AlgebraOfGraphics.density() + visual(Scatter))
+f1 = data(effs_samplers) * layout
+f2 = data(effs_optimized) * layout
+draw(f1)
+draw(f2)
+begin
+    f = Figure()
+    draw!(f[1, 1], f1)
+    draw!(f[1, 2], f2)
+    f
+end
+
+# Violin
+begin
+    Random.seed!(42) # for jitter
+    layer =
+        mapping(:sampler, efflog; color=:sampler) *
+        visual(RainClouds; markersize=10, jitter_width=0.1, plot_boxplots=false)
+    f1 = data(effs_samplers) * layer
+    f2 = data(effs_optimized) * layer
+    f = Figure()
+    draw!(f[1, 1], f1, scales(; Color=(; palette=cols)))
+    draw!(f[2, 1], f2, scales(; Color=(; palette=cols)))
+    f
+end
