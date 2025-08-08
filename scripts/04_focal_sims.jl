@@ -249,18 +249,18 @@ end
 
 # Export
 CSV.write(datadir("focal_array", "monitored_optimized-$idp.csv"), monitored_optimized)
-SDT.SimpleSDMLayers.save(
-    datadir("focal_array", "layer_richness_spp-$idp.tiff"), richness_spp
-)
-SDT.SimpleSDMLayers.save(
-    datadir("focal_array", "layer_richness_int-$idp.tiff"), richness_int
-)
-SDT.SimpleSDMLayers.save(
-    datadir("focal_array", "layer_richness_pos-$idp.tiff"), richness_pos
-)
-SDT.SimpleSDMLayers.save(
-    datadir("focal_array", "layer_degree_realized-$idp.tiff"), degree_realized
-)
-SDT.SimpleSDMLayers.save(
-    datadir("focal_array", "layer_degree_possible-$idp.tiff"), degree_possible
-)
+# SDT.SimpleSDMLayers.save(
+#     datadir("focal_array", "layer_richness_spp-$idp.tiff"), richness_spp
+# )
+# SDT.SimpleSDMLayers.save(
+#     datadir("focal_array", "layer_richness_int-$idp.tiff"), richness_int
+# )
+# SDT.SimpleSDMLayers.save(
+#     datadir("focal_array", "layer_richness_pos-$idp.tiff"), richness_pos
+# )
+# SDT.SimpleSDMLayers.save(
+#     datadir("focal_array", "layer_degree_realized-$idp.tiff"), degree_realized
+# )
+# SDT.SimpleSDMLayers.save(
+#     datadir("focal_array", "layer_degree_possible-$idp.tiff"), degree_possible
+# )
