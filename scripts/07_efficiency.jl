@@ -34,6 +34,7 @@ files = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))
 ids = sort(parse.(Int, replace.(files, "monitored_samplers-" => "", ".csv" => "")))
 sims_samplers = DataFrame()
 sims_optimized = DataFrame()
+sims_species = DataFrame()
 for id in ids
     # Load all results
     idp = lpad(id, 2, "0")
@@ -43,25 +44,33 @@ for id in ids
     monitored_optimized_all = CSV.read(
         datadir("efficiency", "monitored_optimized-$idp.csv"), DataFrame
     )
+    monitored_species_all = CSV.read(
+        datadir("efficiency", "monitored_spp-$idp.csv"), DataFrame
+    )
 
     # Summmarize results not combined previously
     monitored_samplers = summarize_monitored(monitored_samplers_all)
     monitored_optimized = summarize_monitored(monitored_optimized_all)
+    monitored_species = summarize_monitored(monitored_species_all)
 
     # Add sim id
     @select!(monitored_samplers, :sim = id, All())
     @select!(monitored_optimized, :sim = id, All())
+    @select!(monitored_species, :sim = id, All())
 
     # Collect
     append!(sims_samplers, monitored_samplers)
     append!(sims_optimized, monitored_optimized)
+    append!(sims_species, monitored_species)
 end
 sims_samplers
 sims_optimized
+sims_species
 
 # Export
 CSV.write(datadir("sims_efficiency_samplers.csv"), sims_samplers)
 CSV.write(datadir("sims_efficiency_optimized.csv"), sims_optimized)
+CSV.write(datadir("sims_efficiency_species.csv"), sims_species)
 
 ## Efficiency
 
@@ -125,6 +134,12 @@ effs_optimized = @chain sims_optimized begin
     leftjoin(occupdf; on=:sim)
     @transform(:set = "Layers")
 end
+effs_species = @chain sims_species begin
+    @groupby(:sim, :sampler, :deg)
+    @combine(:eff = efficiency(:nbon, :med))
+    leftjoin(occupdf; on=:sim)
+    @transform(:set = "Layers")
+end
 
 # Define color sets
 cols = [
@@ -164,6 +179,9 @@ fig = let
     f
 end
 save(plotsdir("saturation_occupancy_scatter.png"), fig)
+
+fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
+save(plotsdir("saturation_occupancy_degree.png"), fig)
 
 # Heatmaps
 layout =
