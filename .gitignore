@@ -5,6 +5,7 @@ plots/_*
 data/sim-*
 data/layer*
 data/focal_array
+data/efficiency/
 
 # narval
 narval.sh

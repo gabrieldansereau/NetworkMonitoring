@@ -12,25 +12,56 @@ import SpeciesDistributionToolkit as SDT
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
 
-## Load simulations
+## Summarize efficiency simulations
 
-# Load summarized simulation results
-sims_samplers = CSV.read(datadir("sims_samplers.csv"), DataFrame)
-sims_optimized = CSV.read(datadir("sims_optimized.csv"), DataFrame)
-
-# Select UncertaintySampling only as example
-sims_set = @rsubset(sims_samplers, :sampler == "UncertaintySampling")
-
-# Visualize
-begin
-    fig = Figure()
-    ax = Axis(fig[1, 1]; xlabel="Sites", ylabel="Proportion")
-    for r in unique(sims_set.sim)
-        _sim = @rsubset(sims_set, :sim == r)
-        scatter!(ax, _sim.nbon, _sim.med; color=Makie.wong_colors()[2])
+# Summmarize results not combined previously
+function summarize_monitored(df)
+    monitored = @chain df begin
+        groupby([:sp, :type, :sampler, :nbon])
+        @combine(
+            :low = quantile(:monitored, 0.05),
+            :med = median(:monitored),
+            :upp = quantile(:monitored, 0.95),
+            :deg = maximum(:deg)
+        )
+        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg,)
     end
-    fig
+    return monitored
 end
+
+# Use job id to vary parameters
+files = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))
+ids = sort(parse.(Int, replace.(files, "monitored_samplers-" => "", ".csv" => "")))
+sims_samplers = DataFrame()
+sims_optimized = DataFrame()
+for id in ids
+    # Load all results
+    idp = lpad(id, 2, "0")
+    monitored_samplers_all = CSV.read(
+        datadir("efficiency", "monitored_samplers-$idp.csv"), DataFrame
+    )
+    monitored_optimized_all = CSV.read(
+        datadir("efficiency", "monitored_optimized-$idp.csv"), DataFrame
+    )
+
+    # Summmarize results not combined previously
+    monitored_samplers = summarize_monitored(monitored_samplers_all)
+    monitored_optimized = summarize_monitored(monitored_optimized_all)
+
+    # Add sim id
+    @select!(monitored_samplers, :sim = id, All())
+    @select!(monitored_optimized, :sim = id, All())
+
+    # Collect
+    append!(sims_samplers, monitored_samplers)
+    append!(sims_optimized, monitored_optimized)
+end
+sims_samplers
+sims_optimized
+
+# Export
+CSV.write(datadir("sims_efficiency_samplers.csv"), sims_samplers)
+CSV.write(datadir("sims_efficiency_optimized.csv"), sims_optimized)
 
 ## Efficiency
 
@@ -47,6 +78,10 @@ function efficiency(x, y; A=LinRange(-12.0, 12.0, 500))
     return exp(A[last(findmin(err))])
 end
 
+# Select UncertaintySampling only as example
+sims_set = @rsubset(sims_samplers, :sampler == "UncertaintySampling")
+@rsubset!(sims_set, :sim <= 10)
+
 # Visualize
 begin
     f = Figure()
@@ -62,62 +97,33 @@ begin
     f
 end
 
-# Example
-sim1 = @rsubset(sims_set, :sim == 1)
-x = sim1.nbon
-y = sim1.med
-eff = efficiency(x, y)
-saturation(eff)(x)
-
 ## Occupancy
 
-# Load layer for exploration
-_l = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-01.tiff"))
-heatmap(_l)
-
 # Get layer occupancy
-occupancy(_l) = length(findall(isone, _l)) / length(_l)
-occupancy(_l)
+occupancy(l) = length(findall(isone, l)) / length(l)
 
-# Occupancy across multiple layers
-occup = zeros(10)
-for i in 1:10
+# Calculate occupancy
+ids = sort(unique(sims_samplers.sim))
+occup = zeros(length(ids))
+for i in ids
     idp = lpad(i, 2, "0")
-    l = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$idp.tiff"))
+    l = SDT.SDMLayer(datadir("efficiency", "layer_sp_range-$idp.tiff"))
     occup[i] = occupancy(l)
 end
-occup
-
-# Corresponding sampling efficiency
-effs = zeros(10)
-for i in 1:10
-    X₁ = @rsubset(sims_set, :sim == i)
-    x = X₁.nbon
-    y = X₁.med
-    effs[i] = efficiency(x, y)
-end
-effs
-
-# Visualize
-scatter(occup, effs)
-
-# AOG
-mapping(occup, effs) * visual(Scatter) |> draw
-mapping(occup, effs) * AlgebraOfGraphics.density() |> draw
-mapping(occup, effs) * AlgebraOfGraphics.density() * visual(Contour) |> draw
-
-## Scale up comparison
+occupdf = DataFrame(; sim=ids, occ=occup)
 
 # Calculate efficiency & assign occupancy
 effs_samplers = @chain sims_samplers begin
     @groupby(:sim, :sampler)
     @combine(:eff = efficiency(:nbon, :med))
+    leftjoin(occupdf; on=:sim)
     @transform(:occ = occup[:sim], :set = "Samplers")
 end
 effs_optimized = @chain sims_optimized begin
     @groupby(:sim, :sampler)
     @combine(:eff = efficiency(:nbon, :med))
-    @transform(:occ = occup[:sim], :set = "Layers")
+    leftjoin(occupdf; on=:sim)
+    @transform(:set = "Layers")
 end
 
 # Define color sets
@@ -137,14 +143,27 @@ cols = [
 ]
 
 # Scatter & smooth
-efflog = :eff => log => "log(eff)"
-layout = mapping(:occ, efflog; color=:sampler) * (visual(Scatter) + smooth())
-fig =
-    data(effs_samplers) * layout |>
-    x -> draw(x, scales(; Color=(; palette=cols)); legend=(; position=:bottom))
-fig =
-    data(effs_optimized) * layout |>
-    x -> draw(x, scales(; Color=(; palette=cols)); legend=(; position=:bottom))
+begin
+    occ = :occ => "occupancy"
+    efflog = :eff => log => "log(efficiency)"
+    layout = mapping(occ, efflog; color=:sampler) * (visual(Scatter) + smooth())
+    scale = scales(; Color=(; palette=cols))
+    legend = (; position=:bottom)
+    f1 = data(effs_samplers) * layout
+    f2 = data(effs_optimized) * layout * mapping(; color=:sampler => "optimization layer")
+end
+draw(f1, scale; legend=legend)
+draw(f2, scale; legend=legend)
+
+fig = let
+    f = Figure(; size=(800, 450))
+    fg1 = draw!(f[1, 1], f1, scale)
+    legend!(f[2, 1], fg1; position=:bottom, tellheight=true, tellwidth=false)
+    fg2 = draw!(f[1, 2], f2, scale)
+    legend!(f[2, 2], fg2; position=:bottom, tellheight=true, tellwidth=false)
+    f
+end
+save(plotsdir("saturation_occupancy_scatter.png"), fig)
 
 # Heatmaps
 layout =
@@ -165,14 +184,15 @@ begin
     Random.seed!(42) # for jitter
     layer =
         mapping(:sampler, efflog; color=:sampler) *
-        visual(RainClouds; markersize=10, jitter_width=0.1, plot_boxplots=false)
+        visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
-    f = Figure()
+    f = Figure(; size=(700, 700))
     draw!(f[1, 1], f1, scales(; Color=(; palette=cols)))
     draw!(f[2, 1], f2, scales(; Color=(; palette=cols)))
     f
 end
+save(plotsdir("saturation_efficiency_distribution.png"), f)
 
 ## Within-simulation variation
 
