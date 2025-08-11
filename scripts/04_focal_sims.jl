@@ -167,7 +167,8 @@ Random.seed!(id * 101)
 
 # Get species to test
 degrees = degree(metaweb.metaweb)
-spp = sort(collect(degrees); by=x -> x.second, rev=true)[[1, 25, 50, 70]]
+idx = [1, 25, 50, 70]
+spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
 spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
@@ -175,8 +176,19 @@ monitored_spp = focal_monitoring(
     nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
 )
 
+# Extract species ranges
+speciesranges = [
+    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
+]
+
+# Get layer occupancy
+occupancy(l) = length(findall(isone, l)) / length(l)
+occupancies = occupancy.(speciesranges)
+monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
+
 # Export
 CSV.write(datadir("focal_array", "monitored_spp-$idp.csv"), monitored_spp)
+CSV.write(datadir("focal_array", "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
 
 ## Explore variations with different sampler
 

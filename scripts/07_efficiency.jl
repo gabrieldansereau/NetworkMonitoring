@@ -53,6 +53,12 @@ for id in ids
     monitored_optimized = summarize_monitored(monitored_optimized_all)
     monitored_species = summarize_monitored(monitored_species_all)
 
+    # Add species rank
+    monitored_species_occ = CSV.read(
+        datadir("efficiency", "monitored_spp_occ-$idp.csv"), DataFrame
+    )
+    leftjoin!(monitored_species, monitored_species_occ; on=:sp)
+
     # Add sim id
     @select!(monitored_samplers, :sim = id, All())
     @select!(monitored_optimized, :sim = id, All())
@@ -135,10 +141,9 @@ effs_optimized = @chain sims_optimized begin
     @transform(:set = "Layers")
 end
 effs_species = @chain sims_species begin
-    @groupby(:sim, :sampler, :deg)
+    @groupby(:sim, :sampler, :sp, :deg, :rank, :occ)
     @combine(:eff = efficiency(:nbon, :med))
-    leftjoin(occupdf; on=:sim)
-    @transform(:set = "Layers")
+    @transform(:set = "Species")
 end
 
 # Define color sets
@@ -182,6 +187,16 @@ save(plotsdir("saturation_occupancy_scatter.png"), fig)
 
 fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
 save(plotsdir("saturation_occupancy_degree.png"), fig)
+
+ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
+fig = draw(
+    data(effs_species) *
+    layout *
+    mapping(; color=:rank => ranknames => "Within-simulation Degree Percentile Rank"),
+    scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
+    legend=legend,
+)
+save(plotsdir("saturation_occupancy_degree_ranked.png"), fig)
 
 # Heatmaps
 layout =
