@@ -259,7 +259,7 @@ within_combined = @chain vcat(effs_samplers, effs_optimized) begin
         :ΔUS_SR = :UncertaintySampling - :SimpleRandom,
         :ΔUS_WBA = :UncertaintySampling - :WeightedBalancedAcceptance,
         :ΔWBA_SR = :WeightedBalancedAcceptance - :SimpleRandom,
-:ΔRI_SR = $("Realized interactions") - $("Species richness"),
+        :ΔRI_SR = $("Realized interactions") - $("Species richness"),
         :ΔRI_FR = $("Realized interactions") - $("Focal species range"),
         :ΔFR_SR = $("Focal species range") - $("Species richness"),
     )
@@ -291,6 +291,64 @@ let
     f
 end
 save(plotsdir("saturation_comparison.png"), current_figure())
+
+# Pairwise scatter plot comparison
+let df = effs_combined
+    df_wide = unstack(df, :sampler, :eff)
+    effmin = nothing
+    effmax = maximum(df.eff)
+    base = data(df_wide) * visual(Scatter)
+    ax = (; aspect=1, limits=((effmin, effmax), (effmin, effmax)))
+    m1 = mapping(:UncertaintySampling, :WeightedBalancedAcceptance)
+    m2 = mapping(:UncertaintySampling, :SimpleRandom)
+    m3 = mapping(:WeightedBalancedAcceptance, :SimpleRandom)
+    m4 = mapping("Focal species range", "Realized interactions")
+    m5 = mapping("Focal species range", "Species richness")
+    m6 = mapping("Species richness", "Realized interactions")
+    diag = mapping(0, 1) * visual(ABLines; linestyle=:dash, color=:grey)
+    f = Figure(; size=(800, 600))
+    fg1 = draw!(f[1, 1], base * m1 + diag; axis=ax)
+    fg2 = draw!(f[1, 2], base * m2 + diag; axis=ax)
+    fg3 = draw!(f[1, 3], base * m3 + diag; axis=ax)
+    fg4 = draw!(f[2, 1], base * m4 + diag; axis=ax)
+    fg5 = draw!(f[2, 2], base * m5 + diag; axis=ax)
+    fg6 = draw!(f[2, 3], base * m6 + diag; axis=ax)
+    linkaxes!(fg1..., fg2..., fg3...)
+    linkaxes!(fg4..., fg5..., fg6...)
+    Label(f[1, 1, TopLeft()], "Samplers"; font=:bold, padding=(0, 0, 10, 0))
+    Label(f[2, 1, TopLeft()], "Layers"; font=:bold, padding=(0, 0, 10, 0))
+    f
+end
+save(plotsdir("saturation_comparison_pairwise_scatter.png"), current_figure())
+
+# Same with log
+let df = effs_combined
+    df_wide = unstack(df, :sampler, :eff)
+    effmin = log(minimum(df.eff))
+    effmax = log(maximum(df.eff))
+    base = data(df_wide) * visual(Scatter)
+    ax = (; aspect=1, limits=((effmin, effmax), (effmin, effmax)))
+    m1 = mapping(:UncertaintySampling => log, :WeightedBalancedAcceptance => log)
+    m2 = mapping(:UncertaintySampling => log, :SimpleRandom => log)
+    m3 = mapping(:WeightedBalancedAcceptance => log, :SimpleRandom => log)
+    m4 = mapping("Realized interactions" => log, "Focal species range" => log)
+    m5 = mapping("Focal species range" => log, "Species richness" => log)
+    m6 = mapping("Realized interactions" => log, "Species richness" => log)
+    diag = mapping(0, 1) * visual(ABLines; linestyle=:dash, color=:grey)
+    f = Figure(; size=(800, 600))
+    fg1 = draw!(f[1, 1], base * m1 + diag; axis=ax)
+    fg2 = draw!(f[1, 2], base * m2 + diag; axis=ax)
+    fg3 = draw!(f[1, 3], base * m3 + diag; axis=ax)
+    fg4 = draw!(f[2, 1], base * m4 + diag; axis=ax)
+    fg5 = draw!(f[2, 2], base * m5 + diag; axis=ax)
+    fg6 = draw!(f[2, 3], base * m6 + diag; axis=ax)
+    linkaxes!(fg1..., fg2..., fg3...)
+    linkaxes!(fg4..., fg5..., fg6...)
+    Label(f[1, 1, TopLeft()], "Samplers"; font=:bold, padding=(0, 0, 10, 0))
+    Label(f[2, 1, TopLeft()], "Layers"; font=:bold, padding=(0, 0, 10, 0))
+    f
+end
+save(plotsdir("saturation_comparison_pairwise_scatter_log.png"), current_figure())
 
 ## Within-simulation variation
 
