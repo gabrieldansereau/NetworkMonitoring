@@ -169,7 +169,7 @@ sortedlayout = [sortedsamplers..., sortedlayers...]
 begin
     occ = :occ => "occupancy"
     efflog = :eff => log => "log(efficiency)"
-    layout = mapping(occ, efflog; color=:sampler) * (visual(Scatter) + smooth())
+    layout = mapping(occ, efflog; color=:sampler) * (visual(Scatter) + linear())
     scale = scales(; Color=(; palette=cols))
     legend = (; position=:bottom)
     f1 = data(effs_samplers) * layout
@@ -183,6 +183,8 @@ fig = draw(
     figure=(; size=(800, 450)),
 )
 save(plotsdir("saturation_occupancy_scatter_facets.png"), fig)
+
+# Same with independent subfigures
 fig = let
     f = Figure(; size=(800, 450))
     fg1 = draw!(f[1, 1], f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale)
@@ -190,6 +192,8 @@ fig = let
     linkyaxes!(fg1..., fg2...)
     f
 end
+
+# Group columns in single panel
 fig = let
     f = Figure(; size=(800, 450))
     fg1 = draw!(f[1, 1], f1, scale)
@@ -201,9 +205,11 @@ fig = let
 end
 save(plotsdir("saturation_occupancy_scatter.png"), fig)
 
+# Species degree & occupancy
 fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
 save(plotsdir("saturation_occupancy_degree.png"), fig)
 
+# Species rank instead of degree
 ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
 fig = draw(
     data(effs_species) *
