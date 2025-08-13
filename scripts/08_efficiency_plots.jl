@@ -115,54 +115,87 @@ save(plotsdir("saturation_occupancy_degree_ranked.png"), fig)
 
 ## Within-simulation comparison
 
+# NDI
+ndi(x, y) = (x - y) / (x + y)
+
 # Separate results per simulation
 effs_combined = vcat(effs_samplers, effs_optimized)
-within_combined = @chain vcat(effs_samplers, effs_optimized) begin
-    unstack(:sampler, :eff)
-    @rtransform(
-        :ΔUS_SR = :UncertaintySampling - :SimpleRandom,
-        :ΔUS_WBA = :UncertaintySampling - :WeightedBalancedAcceptance,
-        :ΔWBA_SR = :WeightedBalancedAcceptance - :SimpleRandom,
-        :ΔRI_SR = $("Realized interactions") - $("Species richness"),
-        :ΔRI_FR = $("Realized interactions") - $("Focal species range"),
-        :ΔFR_SR = $("Focal species range") - $("Species richness"),
-    )
-    select(:sim, :set, :occ, r"Δ")
-    stack(r"Δ")
-    dropmissing()
+function comparewithin(effs_combined; f=(x, y) -> -(x, y))
+    within_combined = @chain effs_combined begin
+        unstack(:sampler, :eff)
+        @rtransform(
+            :ΔUS_SR = f(:UncertaintySampling, :SimpleRandom),
+            :ΔUS_WBA = f(:UncertaintySampling, :WeightedBalancedAcceptance),
+            :ΔWBA_SR = f(:WeightedBalancedAcceptance, :SimpleRandom),
+            :ΔRI_SR = f($("Realized interactions"), $("Species richness")),
+            :ΔRI_FR = f($("Realized interactions"), $("Focal species range")),
+            :ΔFR_SR = f($("Focal species range"), $("Species richness")),
+        )
+        select(:sim, :set, :occ, r"Δ")
+        stack(r"Δ")
+        dropmissing()
+    end
+    return within_combined
 end
+within_combined = comparewithin(effs_combined)
+within_combined_ndi = comparewithin(effs_combined; f=ndi)
+within_combined_log = comparewithin(effs_combined; f=(x, y) -> log(x) - log(y))
 
 # Visualize
-let
-    Random.seed!(42)
-    d1 = @rsubset(within_combined, :set == "Samplers")
-    d2 = @rsubset(within_combined, :set == "Layers")
-    layout =
-    # mapping(:variable, :value => "Δefficiency"; color=:occ) *
-        mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0)) *
-        visual(
-            RainClouds;
-            markersize=7,
-            jitter_width=0.15,
-            plot_boxplots=false,
-            clouds=nothing,
-            orientation=:horizontal,
-        )
+begin
+    m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
+    rains = visual(
+        RainClouds;
+        markersize=7,
+        jitter_width=0.15,
+        plot_boxplots=false,
+        clouds=nothing,
+        orientation=:horizontal,
+    )
     vline = mapping([0]) * visual(VLines; linestyle=:dash)
+end
+let d = within_combined
+    Random.seed!(42)
+    d1 = @rsubset(d, :set == "Samplers")
+    d2 = @rsubset(d, :set == "Layers")
     f = Figure()
-    fg1 = draw!(f[1, 1], data(d1) * layout + vline; axis=(; title="Samplers"))
-    fg2 = draw!(f[2, 1], data(d2) * layout + vline; axis=(; title="Layers"))
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
+    fg2 = draw!(f[2, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
     linkxaxes!(fg1..., fg2...)
     f
 end
 save(plotsdir("saturation_comparison.png"), current_figure())
 
+let d = within_combined_log
+    Random.seed!(42)
+    d1 = @rsubset(d, :set == "Samplers")
+    d2 = @rsubset(d, :set == "Layers")
+    m = mapping(:variable, :value => "efficiency (log)"; color=:value => (x -> x >= 0.0))
+    f = Figure()
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
+    fg2 = draw!(f[2, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
+    linkxaxes!(fg1..., fg2...)
+    f
+end
+save(plotsdir("saturation_comparison_log.png"), current_figure())
+
+let d = within_combined_ndi
+    Random.seed!(42)
+    d1 = @rsubset(d, :set == "Samplers")
+    d2 = @rsubset(d, :set == "Layers")
+    m = mapping(:variable, :value => "NDI efficiency"; color=:value => (x -> x >= 0.0))
+    f = Figure()
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
+    fg2 = draw!(f[2, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
+    linkxaxes!(fg1..., fg2...)
+    f
+end
+save(plotsdir("saturation_comparison_ndi.png"), current_figure())
+
 @chain begin
     groupby(within_combined, [:set, :variable])
     @combine(:prop = sum((:value .>= 0) ./ length(:value)))
 end
-
-@rsubset(within_combined, :variable == "ΔUS_WBA", :value >= 0.0)
 
 # Pairwise scatter plot comparison
 let df = effs_combined
