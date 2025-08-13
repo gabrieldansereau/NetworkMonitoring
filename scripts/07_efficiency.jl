@@ -251,36 +251,39 @@ save(plotsdir("saturation_efficiency_distribution.png"), f)
 
 ## Within-simulation comparison
 
-@chain effs_samplers begin
-    @groupby(:sim)
-    # @combine(:delta1 = :)
-end
-
 # Separate results per simulation
-unstack(effs_samplers, :sampler, :eff)
-
-# Why is occupancy the same for sim 1-2??
-effs_samplers[1:6, :]
-effs_samplers[(end - 5):end, :] # not quite the same
-occup # already here...
-
-# But it's not the case in the species sims...
-effs_species[[1, 5], :]
-
-# Which sims are duplicated?
-check = @chain begin
-    effs_samplers
-    unique(:sim)
-    # leftjoin(sims_species, on=:sim)
-    @select(:sim, :occ_samplers = :occ)
-    leftjoin(
-        @select(@rsubset(effs_species, :rank == 1), :sim, :occ_species = :occ); on=:sim
+within_samplers = @chain effs_samplers begin
+    unstack(:sampler, :eff)
+    @rtransform(
+        :ΔUS_SR = :UncertaintySampling - :SimpleRandom,
+        :ΔUS_WBA = :UncertaintySampling - :WeightedBalancedAcceptance,
+        :ΔWBA_SR = :WeightedBalancedAcceptance - :SimpleRandom,
     )
-    @rtransform(:same = :occ_samplers == :occ_species)
-    @rsubset(:same == false)
+    select(:sim, :set, :occ, r"Δ")
+    stack(Not([:sim, :set, :occ]))
 end
-# The ones that were missing earlier...
-# Must have forgotten to copy over from Narval
+within_samplers = @chain effs_optimized begin
+    unstack(:sampler, :eff)
+    @rtransform(
+        :ΔSR_RI = $("Species richness") - $("Realized interactions"),
+        :ΔUS_RI = $("Focal species range") - $("Realized interactions"),
+        :ΔUS_SR = $("Focal species range") - $("Species richness"),
+    )
+    select(:sim, :set, :occ, r"Δ")
+    stack(Not([:sim, :set, :occ]))
+end
+
+# Visualize
+begin
+    fig =
+        data(within_samplers) *
+        # mapping(:variable, :value => "Δefficiency"; color=:occ) *
+        mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0)) *
+        visual(
+            RainClouds; markersize=7, jitter_width=0.15, plot_boxplots=false, clouds=nothing
+        )
+    draw(fig + data((; y=[0])) * mapping(:y) * visual(HLines; linestyle=:dash))
+end
 
 ## Within-simulation variation
 
