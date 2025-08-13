@@ -268,27 +268,10 @@ within_combined = @chain vcat(effs_samplers, effs_optimized) begin
     dropmissing()
 end
 
-# Repeat on log scale
-within_combined_log = @chain effs_combined begin
-    unstack(:sampler, :eff)
-    @rtransform(
-        :ΔUS_SR = log(:UncertaintySampling) - log(:SimpleRandom),
-        :ΔUS_WBA = log(:UncertaintySampling) - log(:WeightedBalancedAcceptance),
-        :ΔWBA_SR = log(:WeightedBalancedAcceptance) - log(:SimpleRandom),
-        :ΔRI_SR = log($("Realized interactions")) - log($("Species richness")),
-        :ΔRI_FR = log($("Realized interactions")) - log($("Focal species range")),
-        :ΔFR_SR = log($("Focal species range")) - log($("Species richness")),
-    )
-    select(:sim, :set, :occ, r"Δ")
-    stack(r"Δ")
-    dropmissing()
-end
-
 # Visualize
 let
-    d = within_combined_log
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
+    d1 = @rsubset(within_combined, :set == "Samplers")
+    d2 = @rsubset(within_combined, :set == "Layers")
     layout =
     # mapping(:variable, :value => "Δefficiency"; color=:occ) *
         mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0)) *
@@ -304,10 +287,10 @@ let
     f = Figure()
     fg1 = draw!(f[1, 1], data(d1) * layout + vline; axis=(; title="Samplers"))
     fg2 = draw!(f[2, 1], data(d2) * layout + vline; axis=(; title="Layers"))
-#     linkxaxes!(fg1..., fg2...)
+    linkxaxes!(fg1..., fg2...)
     f
 end
-save(plotsdir("_xtras", "saturation_comparison_log_free.png"), current_figure())
+save(plotsdir("saturation_comparison.png"), current_figure())
 
 ## Within-simulation variation
 
