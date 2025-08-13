@@ -84,7 +84,7 @@ CSV.write(datadir("sims_efficiency_species.csv"), sims_species)
 saturation(a) = (x) -> x ./ (a .+ x)
 
 # Efficiency grid search
-function efficiency(x, y; A=LinRange(-12.0, 12.0, 500))
+function efficiency(x, y; A=LinRange(-12.0, 12.0, 10_000))
     err = zeros(length(A))
     for i in eachindex(A)
         f = saturation(exp(A[i]))
