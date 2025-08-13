@@ -134,6 +134,7 @@ end
 
 # Visualize
 let
+    Random.seed!(42)
     d1 = @rsubset(within_combined, :set == "Samplers")
     d2 = @rsubset(within_combined, :set == "Layers")
     layout =
