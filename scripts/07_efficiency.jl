@@ -163,6 +163,9 @@ cols = [
 ]
 
 # Scatter & smooth
+sortedsamplers = ["UncertaintySampling", "WeightedBalancedAcceptance", "SimpleRandom"]
+sortedlayers = ["Focal species range", "Species richness", "Realized interactions"]
+sortedlayout = [sortedsamplers..., sortedlayers...]
 begin
     occ = :occ => "occupancy"
     efflog = :eff => log => "log(efficiency)"
@@ -172,15 +175,28 @@ begin
     f1 = data(effs_samplers) * layout
     f2 = data(effs_optimized) * layout * mapping(; color=:sampler => "optimization layer")
 end
-draw(f1, scale; legend=legend)
-draw(f2, scale; legend=legend)
-
+draw(f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale; legend=legend)
+draw(f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale; legend=legend)
+fig = draw(
+    (f1 + f2) * mapping(; layout=:sampler => sorter(sortedlayout)),
+    scales(; Color=(; palette=cols, legend=false));
+    figure=(; size=(800, 450)),
+)
+save(plotsdir("saturation_occupancy_scatter_facets.png"), fig)
+fig = let
+    f = Figure(; size=(800, 450))
+    fg1 = draw!(f[1, 1], f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale)
+    fg2 = draw!(f[2, 1], f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale)
+    linkyaxes!(fg1..., fg2...)
+    f
+end
 fig = let
     f = Figure(; size=(800, 450))
     fg1 = draw!(f[1, 1], f1, scale)
     legend!(f[2, 1], fg1; position=:bottom, tellheight=true, tellwidth=false)
     fg2 = draw!(f[1, 2], f2, scale)
     legend!(f[2, 2], fg2; position=:bottom, tellheight=true, tellwidth=false)
+    linkyaxes!(fg1..., fg2...)
     f
 end
 save(plotsdir("saturation_occupancy_scatter.png"), fig)
