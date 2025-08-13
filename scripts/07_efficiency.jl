@@ -252,38 +252,45 @@ save(plotsdir("saturation_efficiency_distribution.png"), f)
 ## Within-simulation comparison
 
 # Separate results per simulation
-within_samplers = @chain effs_samplers begin
+effs_combined = vcat(effs_samplers, effs_optimized)
+within_combined = @chain vcat(effs_samplers, effs_optimized) begin
     unstack(:sampler, :eff)
     @rtransform(
         :ΔUS_SR = :UncertaintySampling - :SimpleRandom,
         :ΔUS_WBA = :UncertaintySampling - :WeightedBalancedAcceptance,
         :ΔWBA_SR = :WeightedBalancedAcceptance - :SimpleRandom,
+:ΔRI_SR = $("Realized interactions") - $("Species richness"),
+        :ΔRI_FR = $("Realized interactions") - $("Focal species range"),
+        :ΔFR_SR = $("Focal species range") - $("Species richness"),
     )
     select(:sim, :set, :occ, r"Δ")
-    stack(Not([:sim, :set, :occ]))
-end
-within_samplers = @chain effs_optimized begin
-    unstack(:sampler, :eff)
-    @rtransform(
-        :ΔSR_RI = $("Species richness") - $("Realized interactions"),
-        :ΔUS_RI = $("Focal species range") - $("Realized interactions"),
-        :ΔUS_SR = $("Focal species range") - $("Species richness"),
-    )
-    select(:sim, :set, :occ, r"Δ")
-    stack(Not([:sim, :set, :occ]))
+    stack(r"Δ")
+    dropmissing()
 end
 
 # Visualize
-begin
-    fig =
-        data(within_samplers) *
-        # mapping(:variable, :value => "Δefficiency"; color=:occ) *
+let
+    d1 = @rsubset(within_combined, :set == "Samplers")
+    d2 = @rsubset(within_combined, :set == "Layers")
+    layout =
+    # mapping(:variable, :value => "Δefficiency"; color=:occ) *
         mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0)) *
         visual(
-            RainClouds; markersize=7, jitter_width=0.15, plot_boxplots=false, clouds=nothing
+            RainClouds;
+            markersize=7,
+            jitter_width=0.15,
+            plot_boxplots=false,
+            clouds=nothing,
+            orientation=:horizontal,
         )
-    draw(fig + data((; y=[0])) * mapping(:y) * visual(HLines; linestyle=:dash))
+    vline = mapping([0]) * visual(VLines; linestyle=:dash)
+    f = Figure()
+    fg1 = draw!(f[1, 1], data(d1) * layout + vline; axis=(; title="Samplers"))
+    fg2 = draw!(f[2, 1], data(d2) * layout + vline; axis=(; title="Layers"))
+    linkxaxes!(fg1..., fg2...)
+    f
 end
+save(plotsdir("saturation_comparison.png"), current_figure())
 
 ## Within-simulation variation
 
