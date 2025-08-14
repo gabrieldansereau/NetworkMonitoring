@@ -7,6 +7,11 @@ using BiodiversityObservationNetworks:
 # Set default parameters for network simulations
 d = DefaultParams()
 
+# Set directory to export results
+if !(@isdefined OUTDIR)
+    const OUTDIR = "focal_array" # focal_array or efficiency
+end
+
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
 idp = lpad(id, 2, "0")
@@ -158,8 +163,8 @@ monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 # )
 
 # # Export
-# CSV.write(datadir("monitored_types-$idp.csv"), monitored_types)
-# CSV.write(datadir("monitored_types2-$idp.csv"), monitored_types2)
+# CSV.write(datadir(OUTDIR, "monitored_types-$idp.csv"), monitored_types)
+# CSV.write(datadir(OUTDIR, "monitored_types2-$idp.csv"), monitored_types2)
 
 # ## Repeat with 4 species with different degrees
 
@@ -167,7 +172,8 @@ Random.seed!(id * 101)
 
 # Get species to test
 degrees = degree(metaweb.metaweb)
-spp = sort(collect(degrees); by=x -> x.second, rev=true)[[1, 25, 50, 70]]
+idx = [1, 25, 50, 70]
+spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
 spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
@@ -175,8 +181,19 @@ monitored_spp = focal_monitoring(
     nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
 )
 
+# Extract species ranges
+speciesranges = [
+    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
+]
+
+# Get layer occupancy
+occupancy(l) = length(findall(isone, l)) / length(l)
+occupancies = occupancy.(speciesranges)
+monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
+
 # Export
-CSV.write(datadir("monitored_spp-$idp.csv"), monitored_spp)
+CSV.write(datadir(OUTDIR, "monitored_spp-$idp.csv"), monitored_spp)
+CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
 
 ## Explore variations with different sampler
 
@@ -202,8 +219,8 @@ monitored_samplers = focal_monitoring(
 )
 
 # Export
-CSV.write(datadir("monitored_samplers-$idp.csv"), monitored_samplers)
-SDT.SimpleSDMLayers.save(datadir("layer_sp_range-$idp.tiff"), sp_range)
+CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
+SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_range-$idp.tiff"), sp_range)
 
 ## Richness-focused sampling
 
@@ -248,9 +265,17 @@ monitored_optimized = focal_monitoring(
 end
 
 # Export
-CSV.write(datadir("monitored_optimized-$idp.csv"), monitored_optimized)
-SDT.SimpleSDMLayers.save(datadir("layer_richness_spp-$idp.tiff"), richness_spp)
-SDT.SimpleSDMLayers.save(datadir("layer_richness_int-$idp.tiff"), richness_int)
-SDT.SimpleSDMLayers.save(datadir("layer_richness_pos-$idp.tiff"), richness_pos)
-SDT.SimpleSDMLayers.save(datadir("layer_degree_realized-$idp.tiff"), degree_realized)
-SDT.SimpleSDMLayers.save(datadir("layer_degree_possible-$idp.tiff"), degree_possible)
+CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
+
+# Export individual layers only for focal array simulations
+if OUTDIR == "focal_array"
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"), richness_spp)
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_int-$idp.tiff"), richness_int)
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_pos-$idp.tiff"), richness_pos)
+    SDT.SimpleSDMLayers.save(
+        datadir(OUTDIR, "layer_degree_realized-$idp.tiff"), degree_realized
+    )
+    SDT.SimpleSDMLayers.save(
+        datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
+    )
+end

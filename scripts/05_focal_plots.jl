@@ -10,23 +10,28 @@ id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
 idp = lpad(id, 2, "0")
 
 # Load all results
-monitored_types = CSV.read(datadir("monitored_types.csv"), DataFrame)
-monitored_types2 = CSV.read(datadir("monitored_types2.csv"), DataFrame)
-monitored_spp_all = CSV.read(datadir("monitored_spp-$idp.csv"), DataFrame)
-monitored_samplers_all = CSV.read(datadir("monitored_samplers-$idp.csv"), DataFrame)
-monitored_optimized_all = CSV.read(datadir("monitored_optimized-$idp.csv"), DataFrame)
+monitored_types = CSV.read(datadir("focal_array", "monitored_types-01.csv"), DataFrame)
+monitored_types2 = CSV.read(datadir("focal_array", "monitored_types2-01.csv"), DataFrame)
+monitored_spp_all = CSV.read(datadir("focal_array", "monitored_spp-$idp.csv"), DataFrame)
+monitored_samplers_all = CSV.read(
+    datadir("focal_array", "monitored_samplers-$idp.csv"), DataFrame
+)
+monitored_optimized_all = CSV.read(
+    datadir("focal_array", "monitored_optimized-$idp.csv"), DataFrame
+)
 
 # Summmarize results not combined previously
 function summarize_monitored(df)
     monitored = @chain df begin
         groupby([:sp, :type, :sampler, :nbon])
         @combine(
-            :low = quantile(:monitored, 0.05) ./ :deg,
-            :med = median(:monitored) ./ :deg,
-            :upp = quantile(:monitored, 0.95) ./ :deg,
+            :low = quantile(:monitored, 0.05),
+            :med = median(:monitored),
+            :upp = quantile(:monitored, 0.95),
             :deg = maximum(:deg)
         )
-        rename(:type => :var)
+        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg)
+        @select(:sim = idp, All())
     end
     return monitored
 end
@@ -34,14 +39,21 @@ monitored_spp = summarize_monitored(monitored_spp_all)
 monitored_samplers = summarize_monitored(monitored_samplers_all)
 monitored_optimized = summarize_monitored(monitored_optimized_all)
 
+# Export summarized layers (only for first simulation as example)
+if id == 1
+    CSV.write(datadir("monitored_spp.csv"), monitored_spp)
+    CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
+    CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
+end
+
 # Get species with highest degree
 sp = monitored_types.sp[1]
 deg = maximum(monitored_types.deg)
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir("layer_sp_range-$idp.tiff"))
-richness_spp = SDT.SDMLayer(datadir("layer_richness_spp-$idp.tiff"))
-degree_realized = SDT.SDMLayer(datadir("layer_degree_realized-$idp.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$idp.tiff"))
+richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-$idp.tiff"))
+degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-$idp.tiff"))
 
 ## Define labels and colors for all plots
 
