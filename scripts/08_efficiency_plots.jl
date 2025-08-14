@@ -52,7 +52,7 @@ begin
     draw!(f[2, 1], f2, scales(; Color=(; palette=cols)))
     f
 end
-save(plotsdir("saturation_efficiency_distribution.png"), f)
+save(plotsdir("efficiency_distribution.png"), f)
 
 # Efficiency given species degree
 begin
@@ -76,7 +76,7 @@ begin
     legend!(f[2, 2], fg2)
     f
 end
-save(plotsdir("saturation_efficiency_distribution_species.png"), f)
+save(plotsdir("efficiency_distribution_species.png"), f)
 
 ## Efficiency & Occupancy
 
@@ -99,7 +99,7 @@ fig = draw(
     scales(; Color=(; palette=cols, legend=false));
     figure=(; size=(800, 450)),
 )
-save(plotsdir("saturation_occupancy_scatter_facets.png"), fig)
+save(plotsdir("efficiency_occupancy_scatter_facets.png"), fig)
 
 # Same with independent subfigures
 fig = let
@@ -120,11 +120,11 @@ fig = let
     linkyaxes!(fg1..., fg2...)
     f
 end
-save(plotsdir("saturation_occupancy_scatter.png"), fig)
+save(plotsdir("_xtras/", "efficiency_occupancy_scatter.png"), fig)
 
 # Species degree & efficiency-occupancy
 fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
-save(plotsdir("saturation_occupancy_degree.png"), fig)
+save(plotsdir("efficiency_occupancy_degree.png"), fig)
 
 # Species rank instead of degree
 ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
@@ -135,7 +135,7 @@ fig = draw(
     scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
     legend=legend,
 )
-save(plotsdir("saturation_occupancy_degree_ranked.png"), fig)
+save(plotsdir("efficiency_occupancy_degree_ranked.png"), fig)
 
 # Same with facets
 fig = draw(
@@ -144,7 +144,7 @@ fig = draw(
     figure=(; size=(500, 450)),
     legend=legend,
 )
-save(plotsdir("saturation_occupancy_degree_ranked_facets.png"), fig)
+save(plotsdir("efficiency_occupancy_degree_ranked_facets.png"), fig)
 
 ## Within-simulation comparison
 
@@ -197,7 +197,7 @@ let d = within_combined
     linkxaxes!(fg1..., fg2...)
     f
 end
-save(plotsdir("saturation_comparison.png"), current_figure())
+save(plotsdir("efficiency_comparison.png"), current_figure())
 
 let d = within_combined_log
     Random.seed!(42)
@@ -210,7 +210,7 @@ let d = within_combined_log
     linkxaxes!(fg1..., fg2...)
     f
 end
-save(plotsdir("saturation_comparison_log.png"), current_figure())
+save(plotsdir("efficiency_comparison_log.png"), current_figure())
 
 let d = within_combined_ndi
     Random.seed!(42)
@@ -223,7 +223,7 @@ let d = within_combined_ndi
     linkxaxes!(fg1..., fg2...)
     f
 end
-save(plotsdir("saturation_comparison_ndi.png"), current_figure())
+save(plotsdir("efficiency_comparison_ndi.png"), current_figure())
 
 @chain begin
     groupby(within_combined, [:set, :variable])
@@ -257,7 +257,7 @@ let df = effs_combined
     Label(f[2, 1, TopLeft()], "Layers"; font=:bold, padding=(0, 0, 10, 0))
     f
 end
-save(plotsdir("saturation_comparison_pairwise_scatter.png"), current_figure())
+save(plotsdir("efficiency_comparison_pairwise_scatter.png"), current_figure())
 
 # Same with log
 let df = effs_combined
@@ -286,4 +286,4 @@ let df = effs_combined
     Label(f[2, 1, TopLeft()], "Layers"; font=:bold, padding=(0, 0, 10, 0))
     f
 end
-save(plotsdir("saturation_comparison_pairwise_scatter_log.png"), current_figure())
+save(plotsdir("efficiency_comparison_pairwise_scatter_log.png"), current_figure())

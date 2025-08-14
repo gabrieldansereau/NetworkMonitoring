@@ -209,4 +209,4 @@ fig = let bs = sim1_samplers, b = monitored_samplers
     axislegend(; position=:rb, unique=true)
     current_figure()
 end
-save(plotsdir("saturation_within_example.png"), fig)
+save(plotsdir("efficiency_within_example.png"), fig)
