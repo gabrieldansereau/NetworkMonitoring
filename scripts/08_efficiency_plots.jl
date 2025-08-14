@@ -113,6 +113,20 @@ fig = draw(
 )
 save(plotsdir("saturation_occupancy_degree_ranked.png"), fig)
 
+# Same with facets
+fig = draw(
+    data(effs_species) *
+    layout *
+    mapping(;
+        color=:rank => ranknames => "Within-simulation Degree Percentile Rank",
+        layout=:rank => ranknames,
+    ),
+    scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
+    figure=(; size=(500, 450)),
+    legend=legend,
+)
+save(plotsdir("saturation_occupancy_degree_ranked_facets.png"), fig)
+
 ## Within-simulation comparison
 
 # NDI
