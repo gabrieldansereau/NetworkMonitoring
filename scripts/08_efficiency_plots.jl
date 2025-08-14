@@ -54,6 +54,30 @@ begin
 end
 save(plotsdir("saturation_efficiency_distribution.png"), f)
 
+# Efficiency given species degree
+begin
+    Random.seed!(42)
+    ranks = :rank => ranknames => "Within-simulation Degree Percentile Rank"
+    f = Figure(; size=(650, 650))
+    fg1 = draw!(
+        f[1, 1:2],
+        data(effs_species) *
+        mapping(ranks, efflog; color=ranks) *
+        visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false),
+        scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true)))),
+    )
+    fg2 = draw!(
+        f[2, 1],
+        data(effs_species) *
+        mapping(:deg => "Degree", efflog; color=:rank => ranknames => "Percentile rank") *
+        visual(Scatter),
+        scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true)))),
+    )
+    legend!(f[2, 2], fg2)
+    f
+end
+save(plotsdir("saturation_efficiency_distribution_species.png"), f)
+
 ## Efficiency & Occupancy
 
 # Scatter & smooth
@@ -115,12 +139,7 @@ save(plotsdir("saturation_occupancy_degree_ranked.png"), fig)
 
 # Same with facets
 fig = draw(
-    data(effs_species) *
-    layout *
-    mapping(;
-        color=:rank => ranknames => "Within-simulation Degree Percentile Rank",
-        layout=:rank => ranknames,
-    ),
+    data(effs_species) * layout * mapping(; color=ranks, layout=ranks),
     scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
     figure=(; size=(500, 450)),
     legend=legend,
