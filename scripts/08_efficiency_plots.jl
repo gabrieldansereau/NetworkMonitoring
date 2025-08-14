@@ -57,21 +57,23 @@ save(plotsdir("efficiency_distribution.png"), f)
 # Efficiency given species degree
 begin
     Random.seed!(42)
+    ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
     ranks = :rank => ranknames => "Within-simulation Degree Percentile Rank"
+    sppalette = from_continuous(cgrad(:viridis; rev=true))
     f = Figure(; size=(650, 650))
     fg1 = draw!(
         f[1, 1:2],
         data(effs_species) *
         mapping(ranks, efflog; color=ranks) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false),
-        scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true)))),
+        scales(; Color=(; palette=sppalette)),
     )
     fg2 = draw!(
         f[2, 1],
         data(effs_species) *
         mapping(:deg => "Degree", efflog; color=:rank => ranknames => "Percentile rank") *
         visual(Scatter),
-        scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true)))),
+        scales(; Color=(; palette=sppalette)),
     )
     legend!(f[2, 2], fg2)
     f
@@ -122,29 +124,29 @@ fig = let
 end
 save(plotsdir("_xtras/", "efficiency_occupancy_scatter.png"), fig)
 
-# Species degree & efficiency-occupancy
-fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
-save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
+## Efficiency & Occupancy with species degree
 
-# Species rank instead of degree
-ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
+# Scatter & smooth with percentile rank
+sppalette = from_continuous(cgrad(:viridis; rev=true))
 fig = draw(
-    data(effs_species) *
-    layout *
-    mapping(; color=:rank => ranknames => "Within-simulation Degree Percentile Rank"),
-    scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
+    data(effs_species) * layout * mapping(; color=ranks, layout=ranks),
+    scales(; Color=(; palette=sppalette));
+    figure=(; size=(500, 450)),
+    legend=legend,
+)
+save(plotsdir("efficiency_occupancy_species.png"), fig)
+
+# Group all ranks in single figure
+fig = draw(
+    data(effs_species) * layout * mapping(; color=ranks),
+    scales(; Color=(; palette=sppalette));
     legend=legend,
 )
 save(plotsdir("_xtras", "efficiency_occupancy_species_rank.png"), fig)
 
-# Same with facets
-fig = draw(
-    data(effs_species) * layout * mapping(; color=ranks, layout=ranks),
-    scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
-    figure=(; size=(500, 450)),
-    legend=legend,
-)
-save(plotsdir("efficiency_occupancy_degree_ranked_facets.png"), fig)
+# Species degree & efficiency-occupancy
+fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
+save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 
 ## Within-simulation comparison
 
@@ -198,8 +200,9 @@ let d = within_combined_log
     linkxaxes!(fg1..., fg2...)
     f
 end
-save(plotsdir("efficiency_comparison_log.png"), current_figure())
+save(plotsdir("efficiency_comparison.png"), current_figure())
 
+# Confirm number of positives proportions in comparison
 @chain begin
     groupby(within_combined, [:set, :variable])
     @combine(:prop = sum((:value .>= 0) ./ length(:value)))
