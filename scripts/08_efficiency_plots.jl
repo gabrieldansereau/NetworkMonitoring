@@ -99,7 +99,7 @@ fig = draw(
     scales(; Color=(; palette=cols, legend=false));
     figure=(; size=(800, 450)),
 )
-save(plotsdir("efficiency_occupancy_scatter_facets.png"), fig)
+save(plotsdir("efficiency_occupancy.png"), fig)
 
 # Same with independent subfigures
 fig = let
@@ -124,7 +124,7 @@ save(plotsdir("_xtras/", "efficiency_occupancy_scatter.png"), fig)
 
 # Species degree & efficiency-occupancy
 fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
-save(plotsdir("efficiency_occupancy_degree.png"), fig)
+save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 
 # Species rank instead of degree
 ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
@@ -135,7 +135,7 @@ fig = draw(
     scales(; Color=(; palette=from_continuous(cgrad(:viridis; rev=true))));
     legend=legend,
 )
-save(plotsdir("efficiency_occupancy_degree_ranked.png"), fig)
+save(plotsdir("_xtras", "efficiency_occupancy_species_rank.png"), fig)
 
 # Same with facets
 fig = draw(
@@ -187,18 +187,6 @@ begin
     )
     vline = mapping([0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined
-    Random.seed!(42)
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
-    f = Figure()
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
-    fg2 = draw!(f[2, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
-    linkxaxes!(fg1..., fg2...)
-    f
-end
-save(plotsdir("efficiency_comparison.png"), current_figure())
-
 let d = within_combined_log
     Random.seed!(42)
     d1 = @rsubset(d, :set == "Samplers")
@@ -212,78 +200,7 @@ let d = within_combined_log
 end
 save(plotsdir("efficiency_comparison_log.png"), current_figure())
 
-let d = within_combined_ndi
-    Random.seed!(42)
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
-    m = mapping(:variable, :value => "NDI efficiency"; color=:value => (x -> x >= 0.0))
-    f = Figure()
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
-    fg2 = draw!(f[2, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
-    linkxaxes!(fg1..., fg2...)
-    f
-end
-save(plotsdir("efficiency_comparison_ndi.png"), current_figure())
-
 @chain begin
     groupby(within_combined, [:set, :variable])
     @combine(:prop = sum((:value .>= 0) ./ length(:value)))
 end
-
-# Pairwise scatter plot comparison
-let df = effs_combined
-    df_wide = unstack(df, :sampler, :eff)
-    effmin = nothing
-    effmax = maximum(df.eff)
-    base = data(df_wide) * visual(Scatter)
-    ax = (; aspect=1, limits=((effmin, effmax), (effmin, effmax)))
-    m1 = mapping(:UncertaintySampling, :WeightedBalancedAcceptance)
-    m2 = mapping(:UncertaintySampling, :SimpleRandom)
-    m3 = mapping(:WeightedBalancedAcceptance, :SimpleRandom)
-    m4 = mapping("Focal species range", "Realized interactions")
-    m5 = mapping("Focal species range", "Species richness")
-    m6 = mapping("Species richness", "Realized interactions")
-    diag = mapping(0, 1) * visual(ABLines; linestyle=:dash, color=:grey)
-    f = Figure(; size=(800, 600))
-    fg1 = draw!(f[1, 1], base * m1 + diag; axis=ax)
-    fg2 = draw!(f[1, 2], base * m2 + diag; axis=ax)
-    fg3 = draw!(f[1, 3], base * m3 + diag; axis=ax)
-    fg4 = draw!(f[2, 1], base * m4 + diag; axis=ax)
-    fg5 = draw!(f[2, 2], base * m5 + diag; axis=ax)
-    fg6 = draw!(f[2, 3], base * m6 + diag; axis=ax)
-    linkaxes!(fg1..., fg2..., fg3...)
-    linkaxes!(fg4..., fg5..., fg6...)
-    Label(f[1, 1, TopLeft()], "Samplers"; font=:bold, padding=(0, 0, 10, 0))
-    Label(f[2, 1, TopLeft()], "Layers"; font=:bold, padding=(0, 0, 10, 0))
-    f
-end
-save(plotsdir("efficiency_comparison_pairwise_scatter.png"), current_figure())
-
-# Same with log
-let df = effs_combined
-    df_wide = unstack(df, :sampler, :eff)
-    effmin = log(minimum(df.eff))
-    effmax = log(maximum(df.eff))
-    base = data(df_wide) * visual(Scatter)
-    ax = (; aspect=1, limits=((effmin, effmax), (effmin, effmax)))
-    m1 = mapping(:UncertaintySampling => log, :WeightedBalancedAcceptance => log)
-    m2 = mapping(:UncertaintySampling => log, :SimpleRandom => log)
-    m3 = mapping(:WeightedBalancedAcceptance => log, :SimpleRandom => log)
-    m4 = mapping("Realized interactions" => log, "Focal species range" => log)
-    m5 = mapping("Focal species range" => log, "Species richness" => log)
-    m6 = mapping("Realized interactions" => log, "Species richness" => log)
-    diag = mapping(0, 1) * visual(ABLines; linestyle=:dash, color=:grey)
-    f = Figure(; size=(800, 600))
-    fg1 = draw!(f[1, 1], base * m1 + diag; axis=ax)
-    fg2 = draw!(f[1, 2], base * m2 + diag; axis=ax)
-    fg3 = draw!(f[1, 3], base * m3 + diag; axis=ax)
-    fg4 = draw!(f[2, 1], base * m4 + diag; axis=ax)
-    fg5 = draw!(f[2, 2], base * m5 + diag; axis=ax)
-    fg6 = draw!(f[2, 3], base * m6 + diag; axis=ax)
-    linkaxes!(fg1..., fg2..., fg3...)
-    linkaxes!(fg4..., fg5..., fg6...)
-    Label(f[1, 1, TopLeft()], "Samplers"; font=:bold, padding=(0, 0, 10, 0))
-    Label(f[2, 1, TopLeft()], "Layers"; font=:bold, padding=(0, 0, 10, 0))
-    f
-end
-save(plotsdir("efficiency_comparison_pairwise_scatter_log.png"), current_figure())
