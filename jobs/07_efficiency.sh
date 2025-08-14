@@ -13,4 +13,4 @@ cd $HOME/projects/def-tpoisot/gabdans/NetworkMonitoring
 
 export PROGRESS_BARS_DT=60
 
-julia --project -e 'const NREP = 50; include("scripts/04_focal_sims.jl")'
+julia --project -e 'const NREP = 50; const OUTDIR = "efficiency"; include("scripts/04_focal_sims.jl")'
