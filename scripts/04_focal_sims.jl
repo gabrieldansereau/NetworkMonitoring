@@ -304,11 +304,10 @@ monitored_probabilistic = focal_monitoring(
 @rtransform!(monitored_probabilistic, :sampler = optimlabels[:layer])
 
 # Combine with Uncertainty Sampling on focal species layer
-# monitored_optimized = CSV.read("./data/efficiency/monitored_optimized-01.csv", DataFrame)
 append!(monitored_optimized, monitored_probabilistic; promote=true, cols=:subset)
 
 # Export
-CSV.write(datadir(OUTDIR, "monitored_probabilistic-$idp.csv"), monitored_probabilistic)
+CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
 
 # Export individual layers only for focal array simulations
 if OUTDIR == "focal_array"
