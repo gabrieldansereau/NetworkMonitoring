@@ -72,7 +72,7 @@ cols = Dict{Any,Any}(
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
     "Realized interactions" => Makie.wong_colors()[5],
-    "Probabilistic range" => Makie.wong_colors()[7],
+    "Probabilistic range" => Makie.wong_colors()[6],
 )
 for (sp, col) in zip(unique(monitored_spp.sp), [Makie.wong_colors()[[2, 6, 7]]..., :black])
     cols[sp] = col
@@ -247,7 +247,12 @@ sort!(monitored_optimized, order(:sampler; by=x -> _order[x]))
 
 # Plot
 begin
-    set = ["Realized interactions", "Focal species range", "Species richness"]
+    set = [
+        "Realized interactions",
+        "Focal species range",
+        "Species richness",
+        "Probabilistic range",
+    ]
     res = @rsubset(monitored_optimized, :sampler in set)
     fig = Figure()
     # Create layouts

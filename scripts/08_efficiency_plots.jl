@@ -34,6 +34,7 @@ cols = [
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
     "Realized interactions" => Makie.wong_colors()[5],
+    "Probabilistic range" => Makie.wong_colors()[6],
 ]
 
 ## Efficiency only
@@ -84,7 +85,12 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 
 # Scatter & smooth
 sortedsamplers = ["UncertaintySampling", "WeightedBalancedAcceptance", "SimpleRandom"]
-sortedlayers = ["Focal species range", "Species richness", "Realized interactions"]
+sortedlayers = [
+    "Focal species range",
+    "Species richness",
+    "Realized interactions",
+    "Probabilistic range",
+]
 sortedlayout = [sortedsamplers..., sortedlayers...]
 begin
     occ = :occ => "occupancy"
@@ -155,7 +161,7 @@ ndi(x, y) = (x - y) / (x + y)
 
 # Separate results per simulation
 effs_combined = vcat(effs_samplers, effs_optimized)
-function comparewithin(effs_combined; f=(x, y) -> -(x, y))
+function comparewithin(effs_combined; f=(x, y) -> /(x, y))
     within_combined = @chain effs_combined begin
         unstack(:sampler, :eff)
         @rtransform(
@@ -165,6 +171,9 @@ function comparewithin(effs_combined; f=(x, y) -> -(x, y))
             :ΔRI_SR = f($("Realized interactions"), $("Species richness")),
             :ΔRI_FR = f($("Realized interactions"), $("Focal species range")),
             :ΔFR_SR = f($("Focal species range"), $("Species richness")),
+            :ΔRI_PR = f($("Realized interactions"), $("Probabilistic range")),
+            :ΔFR_PR = f($("Focal species range"), $("Probabilistic range")),
+            :ΔPR_SR = f($("Probabilistic range"), $("Species richness")),
         )
         select(:sim, :set, :occ, r"Δ")
         stack(r"Δ")
@@ -174,7 +183,7 @@ function comparewithin(effs_combined; f=(x, y) -> -(x, y))
 end
 within_combined = comparewithin(effs_combined)
 within_combined_ndi = comparewithin(effs_combined; f=ndi)
-within_combined_log = comparewithin(effs_combined; f=(x, y) -> log(x) - log(y))
+within_combined_log = comparewithin(effs_combined; f=(x, y) -> log(x / y))
 
 # Visualize
 begin
@@ -193,10 +202,12 @@ let d = within_combined_log
     Random.seed!(42)
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
-    m = mapping(:variable, :value => "efficiency (log)"; color=:value => (x -> x >= 0.0))
+    m = mapping(
+        :variable, :value => "log(efficiency ratio)"; color=:value => (x -> x >= 0.0)
+    )
     f = Figure()
     fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
-    fg2 = draw!(f[2, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
+    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
     linkxaxes!(fg1..., fg2...)
     f
 end
@@ -205,5 +216,5 @@ save(plotsdir("efficiency_comparison.png"), current_figure())
 # Confirm number of positives proportions in comparison
 @chain begin
     groupby(within_combined, [:set, :variable])
-    @combine(:prop = sum((:value .>= 0) ./ length(:value)))
+    @combine(:prop = sum((:value .>= 0) ./ length(:value)) .* 100)
 end
