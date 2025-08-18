@@ -144,7 +144,9 @@ function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
     monitored = reduce(vcat, monitored_vec)
     return monitored
 end
-function focal_monitoring(nets_dict, sp::Symbol, layers::Vector{SDT.SDMLayer}; kw...)
+function focal_monitoring(
+    nets_dict, sp::Symbol, layers::Vector{T}; kw...
+) where {T<:SDT.SDMLayer}
     monitored_vec = Vector{DataFrame}(undef, length(layers))
     for (i, layer) in enumerate(layers)
         @info "Monitoring layer $i/$(length(layers))"
@@ -274,8 +276,39 @@ monitored_optimized = focal_monitoring(
     append!(monitored_optimized, _; promote=true, cols=:subset)
 end
 
+## Probabilistic range sampling
+
+# Extract layers
+probsp_range = SDT.SDMLayer(
+    occurrence(probranges)[indexin([sp], probranges.species)...];
+    x=(0.0, d.nsites),
+    y=(0.0, d.nsites),
+)
+probsp_mask = deepcopy(probsp_range)
+probsp_mask.grid[findall(iszero, sp_range)] .= 0.0
+
+# Optimize with UncertaintySampling
+Random.seed!(id * 44)
+optim = [probsp_range, probsp_mask]
+optimlabels = ["Probabilistic range", "Masked probabilistic range"]
+monitored_probabilistic = focal_monitoring(
+    nets_dict,
+    sp,
+    optim;
+    type=[:realized],
+    sampler=[UncertaintySampling],
+    nbons=1:5:500,
+    nrep=NREP,
+    combined=false,
+)
+@rtransform!(monitored_probabilistic, :sampler = optimlabels[:layer])
+
+# Combine with Uncertainty Sampling on focal species layer
+# monitored_optimized = CSV.read("./data/efficiency/monitored_optimized-01.csv", DataFrame)
+append!(monitored_optimized, monitored_probabilistic; promote=true, cols=:subset)
+
 # Export
-CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
+CSV.write(datadir(OUTDIR, "monitored_probabilistic-$idp.csv"), monitored_probabilistic)
 
 # Export individual layers only for focal array simulations
 if OUTDIR == "focal_array"
@@ -288,4 +321,6 @@ if OUTDIR == "focal_array"
     SDT.SimpleSDMLayers.save(
         datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
     )
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_mask-$idp.tiff"), probsp_mask)
 end
