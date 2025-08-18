@@ -284,13 +284,11 @@ probsp_range = SDT.SDMLayer(
     x=(0.0, d.nsites),
     y=(0.0, d.nsites),
 )
-probsp_mask = deepcopy(probsp_range)
-probsp_mask.grid[findall(iszero, sp_range)] .= 0.0
 
 # Optimize with UncertaintySampling
 Random.seed!(id * 44)
-optim = [probsp_range, probsp_mask]
-optimlabels = ["Probabilistic range", "Masked probabilistic range"]
+optim = [probsp_range]
+optimlabels = ["Probabilistic range"]
 monitored_probabilistic = focal_monitoring(
     nets_dict,
     sp,
@@ -321,5 +319,4 @@ if OUTDIR == "focal_array"
         datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
     )
     SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_mask-$idp.tiff"), probsp_mask)
 end

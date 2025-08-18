@@ -55,7 +55,6 @@ focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$idp.tiff")
 richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-$idp.tiff"))
 degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-$idp.tiff"))
 probsp_range = SDT.SDMLayer(datadir("focal_array", "layer_probsp_range-$idp.tiff"))
-probsp_mask = SDT.SDMLayer(datadir("focal_array", "layer_probsp_mask-$idp.tiff"))
 
 ## Define labels and colors for all plots
 
@@ -74,7 +73,6 @@ cols = Dict{Any,Any}(
     "Species richness" => Makie.wong_colors()[4],
     "Realized interactions" => Makie.wong_colors()[5],
     "Probabilistic range" => Makie.wong_colors()[7],
-    "Masked probabilistic range" => Makie.wong_colors()[6],
 )
 for (sp, col) in zip(unique(monitored_spp.sp), [Makie.wong_colors()[[2, 6, 7]]..., :black])
     cols[sp] = col
@@ -228,9 +226,6 @@ begin
         BON.UncertaintySampling(100), degree_realized
     )
     bons["Probabilistic range"] = BON.sample(BON.UncertaintySampling(100), probsp_range)
-    bons["Masked probabilistic range"] = BON.sample(
-        BON.UncertaintySampling(100), probsp_mask
-    )
 end
 
 # Collect layers
@@ -239,8 +234,6 @@ begin
     layers["Focal species range"] = focal_sp_range
     layers["Species richness"] = richness_spp
     layers["Realized interactions"] = degree_realized
-    layers["Probabilistic range"] = probsp_range
-    layers["Masked probabilistic range"] = probsp_mask
 end
 
 # Reorder elements for display
@@ -249,7 +242,6 @@ _order = Dict(
     "Focal species range" => 2,
     "Species richness" => 3,
     "Probabilistic range" => 4,
-    "Masked probabilistic range" => 5,
 )
 sort!(monitored_optimized, order(:sampler; by=x -> _order[x]))
 
@@ -301,52 +293,3 @@ begin
     fig
 end
 save(plotsdir("focal_optimized.png"), fig)
-
-# Probabilistic ranges
-begin
-    set = ["Focal species range", "Probabilistic range", "Masked probabilistic range"]
-    res = @rsubset(monitored_optimized, :sampler in set)
-    fig = Figure()
-    # Create layouts
-    ga = GridLayout(fig[:, 1:3])
-    gb = GridLayout(fig[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
-    )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-    # Sampling results
-    for s in unique(res.sampler)
-        b = filter(:sampler => ==(s), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
-    end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(ax; position=:lt, merge=true, labelsize=14)
-    # Heatmaps & BON example
-    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
-        heatmap!(a, layers[s])
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
-        a.ylabel = s
-    end
-    # Subpanel labels
-    Label(
-        ga[1, :, Top()], "Optimization layer efficiency"; padding=(0, 0, 5, 0), font=:bold
-    )
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    fig
-end
-save(plotsdir("focal_optimized_prob.png"), fig)
