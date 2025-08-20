@@ -29,6 +29,9 @@ effs_samplers.sampler =
         "SimpleRandom" => "Simple Random",
     )
 
+# Combine for convenience
+effs_combined = vcat(effs_samplers, effs_optimized)
+
 # Define color sets
 cols = [
     # Interaction types
@@ -113,13 +116,13 @@ begin
     layout = mapping(occ, efflog; color=:sampler) * (visual(Scatter) + linear())
     scale = scales(; Color=(; palette=cols))
     legend = (; position=:bottom)
-    f1 = data(effs_samplers) * layout
-    f2 = data(effs_optimized) * layout * mapping(; color=:sampler => "optimization layer")
+    f1 = data(effs_samplers) * layout * mapping(; col=:sampler => sorter(sortedlayout))
+    f2 = data(effs_optimized) * layout * mapping(; col=:sampler => sorter(sortedlayout))
 end
-draw(f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale; legend=legend)
-draw(f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale; legend=legend)
+draw(f1, scale; legend=legend)
+draw(f2, scale; legend=legend)
 fig = draw(
-    (f1 + f2) * mapping(; layout=:sampler => sorter(sortedlayout)),
+    data(effs_combined) * layout * mapping(; layout=:sampler => sorter(sortedlayout)),
     scales(; Color=(; palette=cols, legend=false));
     figure=(; size=(800, 450)),
 )
@@ -127,8 +130,8 @@ fig = draw(
 # Same with independent subfigures
 fig = let
     f = Figure(; size=(800, 500))
-    fg1 = draw!(f[1, 1:3], f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale)
-    fg2 = draw!(f[2, 1:4], f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale)
+    fg1 = draw!(f[1, 1:3], f1, scale)
+    fg2 = draw!(f[2, 1:4], f2, scale)
     linkaxes!(fg1..., fg2...)
     pad = (-50, 0, 30, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
@@ -140,9 +143,9 @@ save(plotsdir("efficiency_occupancy.png"), fig)
 # Group columns in single panel
 fig = let
     f = Figure(; size=(800, 450))
-    fg1 = draw!(f[1, 1], f1, scale)
+    fg1 = draw!(f[1, 1], f1 * mapping(; col=:set), scale)
     legend!(f[2, 1], fg1; position=:bottom, tellheight=true, tellwidth=false)
-    fg2 = draw!(f[1, 2], f2, scale)
+    fg2 = draw!(f[1, 2], f2 * mapping(; col=:set), scale)
     legend!(f[2, 2], fg2; position=:bottom, tellheight=true, tellwidth=false)
     linkyaxes!(fg1..., fg2...)
     f
@@ -179,7 +182,6 @@ save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 ndi(x, y) = (x - y) / (x + y)
 
 # Separate results per simulation
-effs_combined = vcat(effs_samplers, effs_optimized)
 function comparewithin(effs_combined; f=(x, y) -> /(x, y))
     within_combined = @chain effs_combined begin
         unstack(:sampler, :eff)
