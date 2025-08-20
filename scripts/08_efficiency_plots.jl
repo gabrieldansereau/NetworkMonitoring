@@ -61,7 +61,7 @@ sortedlayout = [sortedsamplers..., sortedlayers...]
 # Violin
 begin
     Random.seed!(42) # for jitter
-    efflog = :eff => log => "log(efficiency)"
+    efflog = :eff => log2 => "log2(efficiency)"
     layer =
         mapping(:sampler => sorter(sortedlayout) => "", efflog; color=:sampler) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
@@ -130,7 +130,7 @@ fig = let
     fg1 = draw!(f[1, 1:3], f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale)
     fg2 = draw!(f[2, 1:4], f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale)
     linkaxes!(fg1..., fg2...)
-    pad = (-30, 0, 30, 0)
+    pad = (-50, 0, 30, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
     f
@@ -202,7 +202,7 @@ function comparewithin(effs_combined; f=(x, y) -> /(x, y))
 end
 within_combined = comparewithin(effs_combined)
 within_combined_ndi = comparewithin(effs_combined; f=ndi)
-within_combined_log = comparewithin(effs_combined; f=(x, y) -> log(x / y))
+within_combined_log = comparewithin(effs_combined; f=(x, y) -> (x / y))
 
 # Visualize
 begin
@@ -223,8 +223,8 @@ let d = within_combined_log
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "comparison",
-        :value => "log(efficiency ratio)";
-        color=:value => (x -> x >= 0.0),
+        :value => log2 => "log2(efficiency ratio)";
+        color=:value => (x -> x >= 1.0),
     )
     f = Figure()
     fg1 = draw!(f[1, 1], data(d1) * m * rains + vline)
