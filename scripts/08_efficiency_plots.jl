@@ -64,7 +64,7 @@ sortedlayout = [sortedsamplers..., sortedlayers...]
 # Violin
 begin
     Random.seed!(42) # for jitter
-    efflog = :eff => log2 => "log2(efficiency)"
+    efflog = :eff => log2 => "efficiency"
     layer =
         mapping(:sampler => sorter(sortedlayout) => "", efflog; color=:sampler) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
@@ -72,8 +72,10 @@ begin
     f2 = data(effs_optimized) * layer
     f = Figure(; size=(700, 700))
     sc = scales(; Color=(; palette=cols))
-    fg1 = draw!(f[1, 1], f1, sc)
-    fg2 = draw!(f[2, 1], f2, sc)
+    ylog2f = (; ytickformat=vs -> [rich("2", superscript("$(Int(v))")) for v in vs])
+    ylog2 = (; axis=(; yticks=2:2:100, ylog2f...))
+    fg1 = draw!(f[1, 1], f1, sc; ylog2...)
+    fg2 = draw!(f[2, 1], f2, sc; ylog2...)
     linkyaxes!(fg1..., fg2...)
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
@@ -94,14 +96,16 @@ begin
         data(effs_species) *
         mapping(ranks, efflog; color=ranks) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false),
-        scales(; Color=(; palette=sppalette)),
+        scales(; Color=(; palette=sppalette));
+        axis=(; yticks=2:4:100, ylog2f...),
     )
     fg2 = draw!(
         f[2, 1],
         data(effs_species) *
         mapping(:deg => "Degree", efflog; color=:rank => ranknames => "Percentile rank") *
         visual(Scatter),
-        scales(; Color=(; palette=sppalette)),
+        scales(; Color=(; palette=sppalette));
+        ylog2...,
     )
     legend!(f[2, 2], fg2)
     f
@@ -130,8 +134,8 @@ fig = draw(
 # Same with independent subfigures
 fig = let
     f = Figure(; size=(800, 500))
-    fg1 = draw!(f[1, 1:3], f1, scale)
-    fg2 = draw!(f[2, 1:4], f2, scale)
+    fg1 = draw!(f[1, 1:3], f1, scale; ylog2...)
+    fg2 = draw!(f[2, 1:4], f2, scale; ylog2...)
     linkaxes!(fg1..., fg2...)
     pad = (-50, 0, 30, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
@@ -143,9 +147,9 @@ save(plotsdir("efficiency_occupancy.png"), fig)
 # Group columns in single panel
 fig = let
     f = Figure(; size=(800, 450))
-    fg1 = draw!(f[1, 1], f1 * mapping(; col=:set), scale)
+    fg1 = draw!(f[1, 1], f1 * mapping(; col=:set), scale; ylog2...)
     legend!(f[2, 1], fg1; position=:bottom, tellheight=true, tellwidth=false)
-    fg2 = draw!(f[1, 2], f2 * mapping(; col=:set), scale)
+    fg2 = draw!(f[1, 2], f2 * mapping(; col=:set), scale; ylog2...)
     legend!(f[2, 2], fg2; position=:bottom, tellheight=true, tellwidth=false)
     linkyaxes!(fg1..., fg2...)
     f
@@ -161,6 +165,7 @@ fig = draw(
     scales(; Color=(; palette=sppalette));
     figure=(; size=(500, 450)),
     legend=legend,
+    axis=(; yticks=4:4:100, ylog2f...),
 )
 save(plotsdir("efficiency_occupancy_species.png"), fig)
 
@@ -169,11 +174,12 @@ fig = draw(
     data(effs_species) * layout * mapping(; color=ranks),
     scales(; Color=(; palette=sppalette));
     legend=legend,
+    ylog2...,
 )
 save(plotsdir("_xtras", "efficiency_occupancy_species_rank.png"), fig)
 
 # Species degree & efficiency-occupancy
-fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend)
+fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend, ylog2...)
 save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 
 ## Within-simulation comparison
@@ -225,12 +231,14 @@ let d = within_combined_log
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "comparison",
-        :value => log2 => "log2(efficiency ratio)";
+        :value => log2 => "ratio of efficiencies";
         color=:value => (x -> x >= 1.0),
     )
     f = Figure()
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline)
-    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline)
+    xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
+    xlog2 = (; axis=(; xtickformat=xlog2f))
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; xlog2...)
+    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline; xlog2...)
     linkxaxes!(fg1..., fg2...)
     pad = (-100, 0, 10, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
