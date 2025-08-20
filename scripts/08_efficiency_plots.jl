@@ -20,6 +20,15 @@ effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
 effs_optimized = CSV.read(datadir("efficiency_optimized.csv"), DataFrame)
 effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 
+# Rename
+effs_samplers.sampler =
+    replace.(
+        effs_samplers.sampler,
+        "UncertaintySampling" => "Uncertainty Sampling",
+        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+        "SimpleRandom" => "Simple Random",
+    )
+
 # Define color sets
 cols = [
     # Interaction types
@@ -27,9 +36,9 @@ cols = [
     "realized" => Makie.wong_colors()[3],
     "detected" => Makie.wong_colors()[4],
     # Samplers
-    "UncertaintySampling" => Makie.wong_colors()[2],
-    "WeightedBalancedAcceptance" => Makie.wong_colors()[3],
-    "SimpleRandom" => Makie.wong_colors()[1],
+    "Uncertainty Sampling" => Makie.wong_colors()[2],
+    "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
+    "Simple Random" => Makie.wong_colors()[1],
     # Layers
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
@@ -39,18 +48,33 @@ cols = [
 
 ## Efficiency only
 
+# Define sorting order across figures
+sortedsamplers = ["Uncertainty Sampling", "Weighted Balanced Acceptance", "Simple Random"]
+sortedlayers = [
+    "Focal species range",
+    "Realized interactions",
+    "Probabilistic range",
+    "Species richness",
+]
+sortedlayout = [sortedsamplers..., sortedlayers...]
+
 # Violin
 begin
     Random.seed!(42) # for jitter
     efflog = :eff => log => "log(efficiency)"
     layer =
-        mapping(:sampler, efflog; color=:sampler) *
+        mapping(:sampler => sorter(sortedlayout) => "", efflog; color=:sampler) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
     f = Figure(; size=(700, 700))
-    draw!(f[1, 1], f1, scales(; Color=(; palette=cols)))
-    draw!(f[2, 1], f2, scales(; Color=(; palette=cols)))
+    sc = scales(; Color=(; palette=cols))
+    fg1 = draw!(f[1, 1], f1, sc)
+    fg2 = draw!(f[2, 1], f2, sc)
+    linkyaxes!(fg1..., fg2...)
+    pad = (-45, 0, 20, 0)
+    Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
+    Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
     f
 end
 save(plotsdir("efficiency_distribution.png"), f)
@@ -84,14 +108,6 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 ## Efficiency & Occupancy
 
 # Scatter & smooth
-sortedsamplers = ["UncertaintySampling", "WeightedBalancedAcceptance", "SimpleRandom"]
-sortedlayers = [
-    "Focal species range",
-    "Species richness",
-    "Realized interactions",
-    "Probabilistic range",
-]
-sortedlayout = [sortedsamplers..., sortedlayers...]
 begin
     occ = :occ => "occupancy"
     layout = mapping(occ, efflog; color=:sampler) * (visual(Scatter) + linear())
@@ -107,16 +123,19 @@ fig = draw(
     scales(; Color=(; palette=cols, legend=false));
     figure=(; size=(800, 450)),
 )
-save(plotsdir("efficiency_occupancy.png"), fig)
 
 # Same with independent subfigures
 fig = let
-    f = Figure(; size=(800, 450))
-    fg1 = draw!(f[1, 1], f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale)
-    fg2 = draw!(f[2, 1], f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale)
-    linkyaxes!(fg1..., fg2...)
+    f = Figure(; size=(800, 500))
+    fg1 = draw!(f[1, 1:3], f1 * mapping(; col=:sampler => sorter(sortedsamplers)), scale)
+    fg2 = draw!(f[2, 1:4], f2 * mapping(; col=:sampler => sorter(sortedlayers)), scale)
+    linkaxes!(fg1..., fg2...)
+    pad = (-30, 0, 30, 0)
+    Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
+    Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
     f
 end
+save(plotsdir("efficiency_occupancy.png"), fig)
 
 # Group columns in single panel
 fig = let
@@ -165,9 +184,9 @@ function comparewithin(effs_combined; f=(x, y) -> /(x, y))
     within_combined = @chain effs_combined begin
         unstack(:sampler, :eff)
         @rtransform(
-            :ΔUS_SR = f(:UncertaintySampling, :SimpleRandom),
-            :ΔUS_WBA = f(:UncertaintySampling, :WeightedBalancedAcceptance),
-            :ΔWBA_SR = f(:WeightedBalancedAcceptance, :SimpleRandom),
+            :ΔUS_SR = f($("Uncertainty Sampling"), $("Simple Random")),
+            :ΔUS_WBA = f($("Uncertainty Sampling"), $("Weighted Balanced Acceptance")),
+            :ΔWBA_SR = f($("Weighted Balanced Acceptance"), $("Simple Random")),
             :ΔRI_SR = f($("Realized interactions"), $("Species richness")),
             :ΔRI_FR = f($("Realized interactions"), $("Focal species range")),
             :ΔFR_SR = f($("Focal species range"), $("Species richness")),
@@ -203,12 +222,17 @@ let d = within_combined_log
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
-        :variable, :value => "log(efficiency ratio)"; color=:value => (x -> x >= 0.0)
+        :variable => "comparison",
+        :value => "log(efficiency ratio)";
+        color=:value => (x -> x >= 0.0),
     )
     f = Figure()
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; axis=(; title="Samplers"))
-    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline; axis=(; title="Layers"))
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline)
+    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline)
     linkxaxes!(fg1..., fg2...)
+    pad = (-100, 0, 10, 0)
+    Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
+    Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
     f
 end
 save(plotsdir("efficiency_comparison.png"), current_figure())
