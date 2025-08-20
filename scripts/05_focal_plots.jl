@@ -54,6 +54,7 @@ deg = maximum(monitored_types.deg)
 focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$idp.tiff"))
 richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-$idp.tiff"))
 degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-$idp.tiff"))
+probsp_range = SDT.SDMLayer(datadir("focal_array", "layer_probsp_range-$idp.tiff"))
 
 ## Define labels and colors for all plots
 
@@ -71,6 +72,7 @@ cols = Dict{Any,Any}(
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
     "Realized interactions" => Makie.wong_colors()[5],
+    "Probabilistic range" => Makie.wong_colors()[6],
 )
 for (sp, col) in zip(unique(monitored_spp.sp), [Makie.wong_colors()[[2, 6, 7]]..., :black])
     cols[sp] = col
@@ -223,6 +225,7 @@ begin
     bons["Realized interactions"] = BON.sample(
         BON.UncertaintySampling(100), degree_realized
     )
+    bons["Probabilistic range"] = BON.sample(BON.UncertaintySampling(100), probsp_range)
 end
 
 # Collect layers
@@ -235,13 +238,22 @@ end
 
 # Reorder elements for display
 _order = Dict(
-    "Realized interactions" => 1, "Focal species range" => 2, "Species richness" => 3
+    "Realized interactions" => 1,
+    "Focal species range" => 2,
+    "Species richness" => 3,
+    "Probabilistic range" => 4,
 )
 sort!(monitored_optimized, order(:sampler; by=x -> _order[x]))
 
 # Plot
 begin
-    res = monitored_optimized
+    set = [
+        "Realized interactions",
+        "Focal species range",
+        "Species richness",
+        "Probabilistic range",
+    ]
+    res = @rsubset(monitored_optimized, :sampler in set)
     fig = Figure()
     # Create layouts
     ga = GridLayout(fig[:, 1:3])

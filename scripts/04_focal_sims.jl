@@ -22,6 +22,16 @@ nets_dict = generate_networks(d)
 nets_dict[:possible] = nets_dict[:pos]
 @unpack detected, realized, pos, metaweb, ranges = nets_dict
 
+# Generate probabilistic ranges
+# We need to run operations in the same order
+begin
+    Random.seed!(id * 42)
+    _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
+    probranges = generate(
+        AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites)), d.ns
+    )
+end
+
 ## Test focal monitoring for a single species
 
 # Get species with highest degree for test run
@@ -77,7 +87,7 @@ function focal_monitoring(
             deg = degree(net.metaweb, sp)
         end
 
-        # Create neutral layer for optimization if nore was provided
+        # Create neutral layer for optimization if none was provided
         if isnothing(layer)
             layer = SDT.SDMLayer(
                 MidpointDisplacement(H_nlm),
@@ -134,7 +144,9 @@ function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
     monitored = reduce(vcat, monitored_vec)
     return monitored
 end
-function focal_monitoring(nets_dict, sp::Symbol, layers::Vector{SDT.SDMLayer}; kw...)
+function focal_monitoring(
+    nets_dict, sp::Symbol, layers::Vector{T}; kw...
+) where {T<:SDT.SDMLayer}
     monitored_vec = Vector{DataFrame}(undef, length(layers))
     for (i, layer) in enumerate(layers)
         @info "Monitoring layer $i/$(length(layers))"
@@ -264,6 +276,34 @@ monitored_optimized = focal_monitoring(
     append!(monitored_optimized, _; promote=true, cols=:subset)
 end
 
+## Probabilistic range sampling
+
+# Extract layers
+probsp_range = SDT.SDMLayer(
+    occurrence(probranges)[indexin([sp], probranges.species)...];
+    x=(0.0, d.nsites),
+    y=(0.0, d.nsites),
+)
+
+# Optimize with UncertaintySampling
+Random.seed!(id * 44)
+optim = [probsp_range]
+optimlabels = ["Probabilistic range"]
+monitored_probabilistic = focal_monitoring(
+    nets_dict,
+    sp,
+    optim;
+    type=[:realized],
+    sampler=[UncertaintySampling],
+    nbons=1:5:500,
+    nrep=NREP,
+    combined=false,
+)
+@rtransform!(monitored_probabilistic, :sampler = optimlabels[:layer])
+
+# Combine with Uncertainty Sampling on focal species layer
+append!(monitored_optimized, monitored_probabilistic; promote=true, cols=:subset)
+
 # Export
 CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
 
@@ -278,4 +318,5 @@ if OUTDIR == "focal_array"
     SDT.SimpleSDMLayers.save(
         datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
     )
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
 end

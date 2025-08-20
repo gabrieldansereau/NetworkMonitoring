@@ -1,4 +1,4 @@
-job,sp,type,sampler,nbon,low,med,upp,deg
+sim,sp,type,sampler,nbon,low,med,upp,deg
 01,node_55,realized,BalancedAcceptance,1,0.0,0.0,0.0,57
 01,node_55,realized,BalancedAcceptance,6,0.0,0.0,0.03508771929824561,57
 01,node_55,realized,BalancedAcceptance,11,0.0,0.017543859649122806,0.03508771929824561,57

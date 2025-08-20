@@ -1,4 +1,4 @@
-job,sp,type,sampler,nbon,low,med,upp,deg
+sim,sp,type,sampler,nbon,low,med,upp,deg
 01,node_55,realized,UncertaintySampling,1,0.0,0.0,0.017543859649122806,57
 01,node_55,realized,UncertaintySampling,6,0.0,0.017543859649122806,0.05263157894736842,57
 01,node_55,realized,UncertaintySampling,11,0.0,0.03508771929824561,0.07017543859649122,57
