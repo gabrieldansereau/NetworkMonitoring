@@ -84,13 +84,13 @@ CSV.write(datadir("sims_efficiency_species.csv"), sims_species)
 saturation(a) = (x) -> x ./ (a .+ x)
 
 # Efficiency grid search
-function efficiency(x, y; A=LinRange(-12.0, 12.0, 10_000))
+function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000))
     err = zeros(length(A))
     for i in eachindex(A)
-        f = saturation(exp(A[i]))
+        f = saturation(exp2(A[i]))
         err[i] = sqrt(sum((y .- f(x)) .^ 2.0))
     end
-    return exp(A[last(findmin(err))])
+    return exp2(A[last(findmin(err))])
 end
 
 # Select UncertaintySampling only as example
