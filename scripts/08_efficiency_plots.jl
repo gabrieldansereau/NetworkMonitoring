@@ -64,16 +64,16 @@ sortedlayout = [sortedsamplers..., sortedlayers...]
 # Violin
 begin
     Random.seed!(42) # for jitter
-    efflog = :eff => log2 => "efficiency"
+    eff = :eff => "efficiency"
     layer =
-        mapping(:sampler => sorter(sortedlayout) => "", efflog; color=:sampler) *
+        mapping(:sampler => sorter(sortedlayout) => "", eff; color=:sampler) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
     f = Figure(; size=(700, 700))
     sc = scales(; Color=(; palette=cols))
     ylog2f = (; ytickformat=vs -> [rich("2", superscript("$(Int(v))")) for v in vs])
-    ylog2 = (; axis=(; yticks=2:2:100, ylog2f...))
+    ylog2 = (; axis=(; yticks=2:2:100))
     fg1 = draw!(f[1, 1], f1, sc; ylog2...)
     fg2 = draw!(f[2, 1], f2, sc; ylog2...)
     linkyaxes!(fg1..., fg2...)
@@ -94,15 +94,15 @@ begin
     fg1 = draw!(
         f[1, 1:2],
         data(effs_species) *
-        mapping(ranks, efflog; color=ranks) *
+        mapping(ranks, eff; color=ranks) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false),
         scales(; Color=(; palette=sppalette));
-        axis=(; yticks=2:4:100, ylog2f...),
+        axis=(; yticks=2:4:100),
     )
     fg2 = draw!(
         f[2, 1],
         data(effs_species) *
-        mapping(:deg => "Degree", efflog; color=:rank => ranknames => "Percentile rank") *
+        mapping(:deg => "Degree", eff; color=:rank => ranknames => "Percentile rank") *
         visual(Scatter),
         scales(; Color=(; palette=sppalette));
         ylog2...,
@@ -117,7 +117,7 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 # Scatter & smooth
 begin
     occ = :occ => "occupancy"
-    layout = mapping(occ, efflog; color=:sampler) * (visual(Scatter) + linear())
+    layout = mapping(occ, eff; color=:sampler) * (visual(Scatter) + linear())
     scale = scales(; Color=(; palette=cols))
     legend = (; position=:bottom)
     f1 = data(effs_samplers) * layout * mapping(; col=:sampler => sorter(sortedlayout))
@@ -161,11 +161,11 @@ save(plotsdir("_xtras/", "efficiency_occupancy_scatter.png"), fig)
 # Scatter & smooth with percentile rank
 sppalette = from_continuous(cgrad(:viridis; rev=true))
 fig = draw(
-    data(effs_species) * layout * mapping(; color=ranks, layout=ranks),
+    data(effs_species) * layout * mapping(; color=ranks, col=ranks),
     scales(; Color=(; palette=sppalette));
-    figure=(; size=(500, 450)),
+    figure=(; size=(800, 300)),
     legend=legend,
-    axis=(; yticks=4:4:100, ylog2f...),
+    axis=(; yticks=4:4:100),
 )
 save(plotsdir("efficiency_occupancy_species.png"), fig)
 
@@ -231,14 +231,14 @@ let d = within_combined_log
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "comparison",
-        :value => log2 => "ratio of efficiencies";
+        :value => log2 => "log2(ratio of efficiencies)";
         color=:value => (x -> x >= 1.0),
     )
     f = Figure()
-    xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
+    xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     xlog2 = (; axis=(; xtickformat=xlog2f))
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline; xlog2...)
-    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline; xlog2...)
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline;)
+    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline;)
     linkxaxes!(fg1..., fg2...)
     pad = (-100, 0, 10, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
@@ -250,5 +250,6 @@ save(plotsdir("efficiency_comparison.png"), current_figure())
 # Confirm number of positives proportions in comparison
 @chain begin
     groupby(within_combined, [:set, :variable])
-    @combine(:prop = sum((:value .>= 0) ./ length(:value)) .* 100)
+    @combine(:prop = sum((:value .>= 1) ./ length(:value)) .* 100)
+    show(_; allrows=true)
 end
