@@ -188,7 +188,7 @@ save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 ndi(x, y) = (x - y) / (x + y)
 
 # Separate results per simulation
-function comparewithin(effs_combined; f=(x, y) -> /(x, y))
+function comparewithin(effs_combined; f=(x, y) -> -(x, y))
     within_combined = @chain effs_combined begin
         unstack(:sampler, :eff)
         @rtransform(
@@ -225,14 +225,14 @@ begin
     )
     vline = mapping([0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined_log
+let d = within_combined
     Random.seed!(42)
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "comparison",
-        :value => log2 => "log2(ratio of efficiencies)";
-        color=:value => (x -> x >= 1.0),
+        :value => "efficiency difference";
+        color=:value => (x -> x >= 0.0),
     )
     f = Figure()
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
@@ -245,7 +245,7 @@ let d = within_combined_log
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
     f
 end
-save(plotsdir("efficiency_comparison.png"), current_figure())
+save(plotsdir("efficiency_comparison_diff.png"), current_figure())
 
 # Confirm number of positives proportions in comparison
 @chain begin
