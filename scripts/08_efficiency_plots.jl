@@ -225,14 +225,14 @@ begin
     )
     vline = mapping([0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined
+let d = within_combined_log
     Random.seed!(42)
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "comparison",
-        :value => "efficiency difference";
-        color=:value => (x -> x >= 0.0),
+        :value => log2 => "log2(ratio of efficiencies)";
+        color=:value => (x -> x >= 1.0),
     )
     f = Figure()
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
@@ -245,7 +245,7 @@ let d = within_combined
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
     f
 end
-save(plotsdir("efficiency_comparison_diff.png"), current_figure())
+save(plotsdir("efficiency_comparison.png"), current_figure())
 
 # Confirm number of positives proportions in comparison
 @chain begin
