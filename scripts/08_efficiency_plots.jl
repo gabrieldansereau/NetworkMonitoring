@@ -233,7 +233,7 @@ begin
         clouds=nothing,
         orientation=:horizontal,
     )
-    vline = mapping([0.5]) * visual(VLines; linestyle=:dash)
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
 end
 let d = within_combined_dif
     Random.seed!(42)
@@ -280,7 +280,8 @@ let d = within_combined_dif2
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "",
-        :value => logit => "Efficiency compared to reference (Uncertainty Sampling)";
+        :value =>
+            Makie.Symlog10(10.0) => "Efficiency compared to reference (Uncertainty Sampling)";
         color=:value => (x -> x >= 0.0),
     )
     f = Figure()
