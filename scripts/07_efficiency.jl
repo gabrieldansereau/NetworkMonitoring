@@ -81,7 +81,7 @@ CSV.write(datadir("sims_efficiency_species.csv"), sims_species)
 ## Efficiency
 
 # Saturation equation
-saturation(a) = (x) -> x ./ (2^a .+ x)
+saturation(a) = (x) -> x ./ (exp(a) .+ x)
 
 # Efficiency grid search
 function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000))

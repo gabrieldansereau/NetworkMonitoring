@@ -1,401 +1,401 @@
 sim,sampler,eff,occ,set
-1,Species richness,9.699469946994698,0.4021,Layers
-1,Realized interactions,5.557055705570557,0.4021,Layers
-1,Focal species range,8.409340934093409,0.4021,Layers
-1,Probabilistic range,9.329432943294329,0.4021,Layers
-2,Species richness,7.961296129612961,0.4005,Layers
-2,Realized interactions,5.407040704070408,0.4005,Layers
-2,Focal species range,6.5571557155715565,0.4005,Layers
-2,Probabilistic range,7.581258125812582,0.4005,Layers
-3,Species richness,9.323432343234323,0.3808,Layers
-3,Realized interactions,5.991099109910991,0.3808,Layers
-3,Focal species range,8.06930693069307,0.3808,Layers
-3,Probabilistic range,8.853385338533853,0.3808,Layers
-4,Species richness,9.113411341134114,0.8611,Layers
-4,Realized interactions,6.043104310431042,0.8611,Layers
-4,Focal species range,8.913391339133915,0.8611,Layers
-4,Probabilistic range,8.995399539953993,0.8611,Layers
-5,Species richness,6.507150715071508,0.6814,Layers
-5,Realized interactions,5.183018301830183,0.6814,Layers
-5,Focal species range,6.031103110311031,0.6814,Layers
-5,Probabilistic range,6.323132313231324,0.6814,Layers
-6,Species richness,6.899189918991899,0.6245,Layers
-6,Realized interactions,4.822982298229823,0.6245,Layers
-6,Focal species range,6.149114911491149,0.6245,Layers
-6,Probabilistic range,6.5311531153115325,0.6245,Layers
-7,Species richness,5.727072707270726,0.859,Layers
-7,Realized interactions,4.774977497749775,0.859,Layers
-7,Focal species range,5.517051705170517,0.859,Layers
-7,Probabilistic range,5.587058705870587,0.859,Layers
-8,Species richness,11.20962096209621,0.4049,Layers
-8,Realized interactions,5.323032303230324,0.4049,Layers
-8,Focal species range,9.987498749874987,0.4049,Layers
-8,Probabilistic range,10.815581558155815,0.4049,Layers
-9,Species richness,8.869386938693868,0.2472,Layers
-9,Realized interactions,5.983098309830983,0.2472,Layers
-9,Focal species range,7.007200720072007,0.2472,Layers
-9,Probabilistic range,8.25932593259326,0.2472,Layers
-10,Species richness,9.06140614061406,0.2727,Layers
-10,Realized interactions,5.36903690369037,0.2727,Layers
-10,Focal species range,7.23922392239224,0.2727,Layers
-10,Probabilistic range,8.469346934693469,0.2727,Layers
-11,Species richness,9.733473347334733,0.5066,Layers
-11,Realized interactions,6.197119711971197,0.5066,Layers
-11,Focal species range,8.921392139213921,0.5066,Layers
-11,Probabilistic range,9.439443944394439,0.5066,Layers
-12,Species richness,10.711571157115712,0.7928,Layers
-12,Realized interactions,6.1231123112311225,0.7928,Layers
-12,Focal species range,10.381538153815383,0.7928,Layers
-12,Probabilistic range,10.51155115511551,0.7928,Layers
-13,Species richness,10.1995199519952,0.4207,Layers
-13,Realized interactions,6.447144714471447,0.4207,Layers
-13,Focal species range,9.10941094109411,0.4207,Layers
-13,Probabilistic range,9.81948194819482,0.4207,Layers
-14,Species richness,7.415241524152416,0.5388,Layers
-14,Realized interactions,5.605060506050606,0.5388,Layers
-14,Focal species range,6.559155915591559,0.5388,Layers
-14,Probabilistic range,7.057205720572057,0.5388,Layers
-15,Species richness,9.52945294529453,0.3835,Layers
-15,Realized interactions,5.34103410341034,0.3835,Layers
-15,Focal species range,8.061306130613062,0.3835,Layers
-15,Probabilistic range,9.115411541154115,0.3835,Layers
-16,Species richness,8.727372737273726,0.1926,Layers
-16,Realized interactions,5.6890689068906894,0.1926,Layers
-16,Focal species range,6.597159715971597,0.1926,Layers
-16,Probabilistic range,8.10931093109311,0.1926,Layers
-17,Species richness,9.165416541654166,0.2978,Layers
-17,Realized interactions,5.595059505950594,0.2978,Layers
-17,Focal species range,7.569256925692569,0.2978,Layers
-17,Probabilistic range,8.57935793579358,0.2978,Layers
-18,Species richness,8.971397139713972,0.494,Layers
-18,Realized interactions,6.00910091009101,0.494,Layers
-18,Focal species range,8.031303130313033,0.494,Layers
-18,Probabilistic range,8.565356535653565,0.494,Layers
-19,Species richness,9.027402740274027,0.7114,Layers
-19,Realized interactions,5.825082508250825,0.7114,Layers
-19,Focal species range,8.597359735973598,0.7114,Layers
-19,Probabilistic range,8.833383338333833,0.7114,Layers
-20,Species richness,9.973497349734975,0.8687,Layers
-20,Realized interactions,5.951095109510952,0.8687,Layers
-20,Focal species range,9.771477147714771,0.8687,Layers
-20,Probabilistic range,9.839483948394841,0.8687,Layers
-21,Species richness,8.025302530253024,0.9154,Layers
-21,Realized interactions,5.9870987098709865,0.9154,Layers
-21,Focal species range,7.893289328932893,0.9154,Layers
-21,Probabilistic range,7.925292529252926,0.9154,Layers
-22,Species richness,7.979297929792979,0.7362,Layers
-22,Realized interactions,6.0971097109710986,0.7362,Layers
-22,Focal species range,7.567256725672566,0.7362,Layers
-22,Probabilistic range,7.825282528252826,0.7362,Layers
-23,Species richness,7.057205720572057,0.6546,Layers
-23,Realized interactions,5.335033503350335,0.6546,Layers
-23,Focal species range,6.381138113811382,0.6546,Layers
-23,Probabilistic range,6.71917191719172,0.6546,Layers
-24,Species richness,10.355535553555356,0.0774,Layers
-24,Realized interactions,5.245024502450244,0.0774,Layers
-24,Focal species range,7.013201320132014,0.0774,Layers
-24,Probabilistic range,9.825482548254826,0.0774,Layers
-25,Species richness,8.683368336833682,0.6427,Layers
-25,Realized interactions,6.08910891089109,0.6427,Layers
-25,Focal species range,8.171317131713172,0.6427,Layers
-25,Probabilistic range,8.47934793479348,0.6427,Layers
-26,Species richness,7.983298329832984,0.8161,Layers
-26,Realized interactions,5.829082908290829,0.8161,Layers
-26,Focal species range,7.717271727172717,0.8161,Layers
-26,Probabilistic range,7.903290329032904,0.8161,Layers
-27,Species richness,8.393339333933394,0.429,Layers
-27,Realized interactions,5.819081908190819,0.429,Layers
-27,Focal species range,7.281228122812282,0.429,Layers
-27,Probabilistic range,8.05130513051305,0.429,Layers
-28,Species richness,10.121512151215121,0.1605,Layers
-28,Realized interactions,5.171017101710172,0.1605,Layers
-28,Focal species range,7.6792679267926784,0.1605,Layers
-28,Probabilistic range,9.417441744174418,0.1605,Layers
-29,Species richness,8.665366536653664,0.8435,Layers
-29,Realized interactions,6.133113311331134,0.8435,Layers
-29,Focal species range,8.471347134713472,0.8435,Layers
-29,Probabilistic range,8.583358335833584,0.8435,Layers
-30,Species richness,9.363436343634364,0.3721,Layers
-30,Realized interactions,5.6150615061506155,0.3721,Layers
-30,Focal species range,7.925292529252926,0.3721,Layers
-30,Probabilistic range,8.921392139213921,0.3721,Layers
-31,Species richness,8.013301330133013,0.3765,Layers
-31,Realized interactions,5.333033303330332,0.3765,Layers
-31,Focal species range,6.71917191719172,0.3765,Layers
-31,Probabilistic range,7.613261326132614,0.3765,Layers
-32,Species richness,6.9931993199319935,0.6721,Layers
-32,Realized interactions,4.9989998999899985,0.6721,Layers
-32,Focal species range,6.437143714371436,0.6721,Layers
-32,Probabilistic range,6.735173517351735,0.6721,Layers
-33,Species richness,8.393339333933394,0.2702,Layers
-33,Realized interactions,5.393039303930394,0.2702,Layers
-33,Focal species range,6.45914591459146,0.2702,Layers
-33,Probabilistic range,7.735273527352736,0.2702,Layers
-34,Species richness,8.971397139713972,0.7587,Layers
-34,Realized interactions,6.191119111911192,0.7587,Layers
-34,Focal species range,8.571357135713571,0.7587,Layers
-34,Probabilistic range,8.729372937293729,0.7587,Layers
-35,Species richness,9.705470547054707,0.1579,Layers
-35,Realized interactions,5.265026502650265,0.1579,Layers
-35,Focal species range,7.1452145214521465,0.1579,Layers
-35,Probabilistic range,8.691369136913691,0.1579,Layers
-36,Species richness,7.475247524752476,0.2899,Layers
-36,Realized interactions,4.742974297429743,0.2899,Layers
-36,Focal species range,5.643064306430643,0.2899,Layers
-36,Probabilistic range,6.877187718771879,0.2899,Layers
-37,Species richness,11.2996299629963,0.1472,Layers
-37,Realized interactions,4.704970497049706,0.1472,Layers
-37,Focal species range,8.375337533753376,0.1472,Layers
-37,Probabilistic range,10.421542154215421,0.1472,Layers
-38,Species richness,5.855085508550855,0.4431,Layers
-38,Realized interactions,4.210921092109211,0.4431,Layers
-38,Focal species range,4.742974297429743,0.4431,Layers
-38,Probabilistic range,5.563056305630562,0.4431,Layers
-39,Species richness,7.54925492549255,0.5251,Layers
-39,Realized interactions,5.849084908490849,0.5251,Layers
-39,Focal species range,6.71917191719172,0.5251,Layers
-39,Probabilistic range,7.235223522352234,0.5251,Layers
-40,Species richness,7.2792279227922805,0.7605,Layers
-40,Realized interactions,5.8110811081108125,0.7605,Layers
-40,Focal species range,6.865186518651865,0.7605,Layers
-40,Probabilistic range,7.055205520552055,0.7605,Layers
-41,Species richness,6.8131813181318135,0.6285,Layers
-41,Realized interactions,5.381038103810381,0.6285,Layers
-41,Focal species range,6.205120512051205,0.6285,Layers
-41,Probabilistic range,6.659165916591658,0.6285,Layers
-42,Species richness,9.457445744574457,0.6147,Layers
-42,Realized interactions,5.507050705070506,0.6147,Layers
-42,Focal species range,8.791379137913792,0.6147,Layers
-42,Probabilistic range,9.207420742074207,0.6147,Layers
-43,Species richness,9.363436343634364,0.2183,Layers
-43,Realized interactions,5.6450645064506455,0.2183,Layers
-43,Focal species range,7.333233323332332,0.2183,Layers
-43,Probabilistic range,8.74937493749375,0.2183,Layers
-44,Species richness,10.96159615961596,0.1512,Layers
-44,Realized interactions,4.966996699669966,0.1512,Layers
-44,Focal species range,8.19131913191319,0.1512,Layers
-44,Probabilistic range,10.285528552855284,0.1512,Layers
-45,Species richness,10.073507350735074,0.6697,Layers
-45,Realized interactions,5.169016901690169,0.6697,Layers
-45,Focal species range,9.551455145514552,0.6697,Layers
-45,Probabilistic range,9.859485948594859,0.6697,Layers
-46,Species richness,8.647364736473648,0.7795,Layers
-46,Realized interactions,6.413141314131414,0.7795,Layers
-46,Focal species range,8.297329732973298,0.7795,Layers
-46,Probabilistic range,8.471347134713472,0.7795,Layers
-47,Species richness,9.405440544054407,0.5061,Layers
-47,Realized interactions,6.007100710071008,0.5061,Layers
-47,Focal species range,8.497349734973499,0.5061,Layers
-47,Probabilistic range,9.035403540354034,0.5061,Layers
-48,Species richness,11.62966296629663,0.6077,Layers
-48,Realized interactions,4.822982298229823,0.6077,Layers
-48,Focal species range,10.91959195919592,0.6077,Layers
-48,Probabilistic range,11.245624562456245,0.6077,Layers
-49,Species richness,10.885588558855886,0.4456,Layers
-49,Realized interactions,5.585058505850585,0.4456,Layers
-49,Focal species range,9.871487148714872,0.4456,Layers
-49,Probabilistic range,10.625562556255625,0.4456,Layers
-50,Species richness,11.253625362536253,0.2437,Layers
-50,Realized interactions,4.426942694269426,0.2437,Layers
-50,Focal species range,9.39143914391439,0.2437,Layers
-50,Probabilistic range,10.671567156715671,0.2437,Layers
-51,Species richness,9.393439343934393,0.7946,Layers
-51,Realized interactions,5.449044904490449,0.7946,Layers
-51,Focal species range,9.077407740774078,0.7946,Layers
-51,Probabilistic range,9.233423342334232,0.7946,Layers
-52,Species richness,9.263426342634265,0.6608,Layers
-52,Realized interactions,6.297129712971296,0.6608,Layers
-52,Focal species range,8.741374137413743,0.6608,Layers
-52,Probabilistic range,9.025402540254026,0.6608,Layers
-53,Species richness,9.329432943294329,0.3894,Layers
-53,Realized interactions,5.9750975097509755,0.3894,Layers
-53,Focal species range,8.095309530953095,0.3894,Layers
-53,Probabilistic range,9.01140114011401,0.3894,Layers
-54,Species richness,11.92969296929693,0.2997,Layers
-54,Realized interactions,3.524852485248525,0.2997,Layers
-54,Focal species range,10.197519751975197,0.2997,Layers
-54,Probabilistic range,11.443644364436443,0.2997,Layers
-55,Species richness,9.167416741674169,0.9498,Layers
-55,Realized interactions,6.2291229122912295,0.9498,Layers
-55,Focal species range,9.099409940994098,0.9498,Layers
-55,Probabilistic range,9.125412541254125,0.9498,Layers
-56,Species richness,11.023602360236024,0.5365,Layers
-56,Realized interactions,4.858985898589859,0.5365,Layers
-56,Focal species range,10.01950195019502,0.5365,Layers
-56,Probabilistic range,10.661566156615661,0.5365,Layers
-57,Species richness,9.607460746074608,0.3572,Layers
-57,Realized interactions,5.763076307630763,0.3572,Layers
-57,Focal species range,8.221322132213222,0.3572,Layers
-57,Probabilistic range,9.277427742774279,0.3572,Layers
-58,Species richness,10.317531753175317,0.2368,Layers
-58,Realized interactions,6.137113711371136,0.2368,Layers
-58,Focal species range,8.431343134313432,0.2368,Layers
-58,Probabilistic range,9.64946494649465,0.2368,Layers
-59,Species richness,9.963496349634964,0.2587,Layers
-59,Realized interactions,5.823082308230823,0.2587,Layers
-59,Focal species range,8.257325732573257,0.2587,Layers
-59,Probabilistic range,9.547454745474548,0.2587,Layers
-60,Species richness,9.345434543454346,0.4398,Layers
-60,Realized interactions,5.647064706470648,0.4398,Layers
-60,Focal species range,8.167316731673166,0.4398,Layers
-60,Probabilistic range,8.97939793979398,0.4398,Layers
-61,Species richness,7.539253925392539,0.7676,Layers
-61,Realized interactions,5.371037103710372,0.7676,Layers
-61,Focal species range,7.111211121112111,0.7676,Layers
-61,Probabilistic range,7.325232523252325,0.7676,Layers
-62,Species richness,9.647464746474647,0.971,Layers
-62,Realized interactions,5.585058505850585,0.971,Layers
-62,Focal species range,9.60946094609461,0.971,Layers
-62,Probabilistic range,9.695469546954696,0.971,Layers
-63,Species richness,8.943394339433944,0.8078,Layers
-63,Realized interactions,5.625062506250624,0.8078,Layers
-63,Focal species range,8.623362336233624,0.8078,Layers
-63,Probabilistic range,8.821382138213822,0.8078,Layers
-64,Species richness,9.535453545354535,0.8524,Layers
-64,Realized interactions,6.319131913191319,0.8524,Layers
-64,Focal species range,9.325432543254326,0.8524,Layers
-64,Probabilistic range,9.401440144014401,0.8524,Layers
-65,Species richness,8.179317931793179,0.465,Layers
-65,Realized interactions,6.193119311931191,0.465,Layers
-65,Focal species range,7.2492249224922505,0.465,Layers
-65,Probabilistic range,7.911291129112911,0.465,Layers
-66,Species richness,12.06970697069707,0.7198,Layers
-66,Realized interactions,4.192919291929193,0.7198,Layers
-66,Focal species range,11.477647764776478,0.7198,Layers
-66,Probabilistic range,11.807680768076807,0.7198,Layers
-67,Species richness,8.515351535153515,0.466,Layers
-67,Realized interactions,5.991099109910991,0.466,Layers
-67,Focal species range,7.5612561256125606,0.466,Layers
-67,Probabilistic range,8.113311331133113,0.466,Layers
-68,Species richness,9.429442944294431,0.1421,Layers
-68,Realized interactions,4.962996299629962,0.1421,Layers
-68,Focal species range,6.603160316031603,0.1421,Layers
-68,Probabilistic range,8.573357335733574,0.1421,Layers
-69,Species richness,10.863586358635864,0.1026,Layers
-69,Realized interactions,4.658965896589659,0.1026,Layers
-69,Focal species range,7.593259325932593,0.1026,Layers
-69,Probabilistic range,10.157515751575156,0.1026,Layers
-70,Species richness,10.985598559855985,0.2799,Layers
-70,Realized interactions,4.646964696469647,0.2799,Layers
-70,Focal species range,9.155415541554156,0.2799,Layers
-70,Probabilistic range,10.51155115511551,0.2799,Layers
-71,Species richness,10.873587358735875,0.8064,Layers
-71,Realized interactions,5.555055505550555,0.8064,Layers
-71,Focal species range,10.501550155015503,0.8064,Layers
-71,Probabilistic range,10.625562556255625,0.8064,Layers
-72,Species richness,10.285528552855284,0.2074,Layers
-72,Realized interactions,5.227022702270228,0.2074,Layers
-72,Focal species range,8.14931493149315,0.2074,Layers
-72,Probabilistic range,9.901490149014903,0.2074,Layers
-73,Species richness,9.907490749074908,0.4773,Layers
-73,Realized interactions,5.685068506850685,0.4773,Layers
-73,Focal species range,8.8993899389939,0.4773,Layers
-73,Probabilistic range,9.577457745774579,0.4773,Layers
-74,Species richness,10.015501550155015,0.138,Layers
-74,Realized interactions,5.019001900190019,0.138,Layers
-74,Focal species range,7.3932393239323915,0.138,Layers
-74,Probabilistic range,9.463446344634463,0.138,Layers
-75,Species richness,10.171517151715172,0.2782,Layers
-75,Realized interactions,5.175017501750174,0.2782,Layers
-75,Focal species range,8.331333133313333,0.2782,Layers
-75,Probabilistic range,9.5994599459946,0.2782,Layers
-76,Species richness,9.447444744474447,0.5511,Layers
-76,Realized interactions,6.523152315231523,0.5511,Layers
-76,Focal species range,8.763376337633764,0.5511,Layers
-76,Probabilistic range,9.173417341734174,0.5511,Layers
-77,Species richness,9.01140114011401,0.6654,Layers
-77,Realized interactions,6.169116911691168,0.6654,Layers
-77,Focal species range,8.527352735273528,0.6654,Layers
-77,Probabilistic range,8.825382538253825,0.6654,Layers
-78,Species richness,7.299229922992298,0.9038,Layers
-78,Realized interactions,5.833083308330833,0.9038,Layers
-78,Focal species range,7.155215521552156,0.9038,Layers
-78,Probabilistic range,7.225222522252226,0.9038,Layers
-79,Species richness,10.801580158015803,0.4448,Layers
-79,Realized interactions,5.1950195019501955,0.4448,Layers
-79,Focal species range,9.725472547254725,0.4448,Layers
-79,Probabilistic range,10.369536953695368,0.4448,Layers
-80,Species richness,7.119211921192118,0.3648,Layers
-80,Realized interactions,4.832983298329832,0.3648,Layers
-80,Focal species range,5.649064906490649,0.3648,Layers
-80,Probabilistic range,6.735173517351735,0.3648,Layers
-81,Species richness,9.015401540154016,0.7709,Layers
-81,Realized interactions,5.845084508450844,0.7709,Layers
-81,Focal species range,8.657365736573658,0.7709,Layers
-81,Probabilistic range,8.841384138413842,0.7709,Layers
-82,Species richness,10.847584758475847,0.4988,Layers
-82,Realized interactions,5.18901890189019,0.4988,Layers
-82,Focal species range,9.865486548654864,0.4988,Layers
-82,Probabilistic range,10.487548754875489,0.4988,Layers
-83,Species richness,11.821682168216823,0.2803,Layers
-83,Realized interactions,4.614961496149617,0.2803,Layers
-83,Focal species range,9.94949494949495,0.2803,Layers
-83,Probabilistic range,11.237623762376238,0.2803,Layers
-84,Species richness,6.403140314031404,0.5691,Layers
-84,Realized interactions,4.668966896689669,0.5691,Layers
-84,Focal species range,5.585058505850585,0.5691,Layers
-84,Probabilistic range,6.135113511351136,0.5691,Layers
-85,Species richness,11.125612561256126,0.1629,Layers
-85,Realized interactions,5.507050705070506,0.1629,Layers
-85,Focal species range,8.891389138913892,0.1629,Layers
-85,Probabilistic range,10.44154415441544,0.1629,Layers
-86,Species richness,8.565356535653565,0.7534,Layers
-86,Realized interactions,5.837083708370836,0.7534,Layers
-86,Focal species range,8.157315731573158,0.7534,Layers
-86,Probabilistic range,8.425342534253426,0.7534,Layers
-87,Species richness,7.675267526752677,0.3123,Layers
-87,Realized interactions,5.017001700170017,0.3123,Layers
-87,Focal species range,6.067106710671067,0.3123,Layers
-87,Probabilistic range,7.225222522252226,0.3123,Layers
-88,Species richness,9.007400740074008,0.797,Layers
-88,Realized interactions,5.653065306530653,0.797,Layers
-88,Focal species range,8.683368336833682,0.797,Layers
-88,Probabilistic range,8.863386338633862,0.797,Layers
-89,Species richness,9.831483148314833,0.7591,Layers
-89,Realized interactions,5.9290929092909295,0.7591,Layers
-89,Focal species range,9.415441544154415,0.7591,Layers
-89,Probabilistic range,9.551455145514552,0.7591,Layers
-90,Species richness,7.235223522352234,0.5994,Layers
-90,Realized interactions,5.6150615061506155,0.5994,Layers
-90,Focal species range,6.579157915791578,0.5994,Layers
-90,Probabilistic range,6.979197919791979,0.5994,Layers
-91,Species richness,9.043404340434043,0.4598,Layers
-91,Realized interactions,6.1271127112711286,0.4598,Layers
-91,Focal species range,8.007300730073007,0.4598,Layers
-91,Probabilistic range,8.575357535753575,0.4598,Layers
-92,Species richness,6.031103110311031,0.8631,Layers
-92,Realized interactions,4.932993299329933,0.8631,Layers
-92,Focal species range,5.823082308230823,0.8631,Layers
-92,Probabilistic range,5.909090909090908,0.8631,Layers
-93,Species richness,8.157315731573158,0.8216,Layers
-93,Realized interactions,5.309030903090308,0.8216,Layers
-93,Focal species range,7.84928492849285,0.8216,Layers
-93,Probabilistic range,8.011301130113011,0.8216,Layers
-94,Species richness,10.305530553055306,0.5553,Layers
-94,Realized interactions,5.649064906490649,0.5553,Layers
-94,Focal species range,9.487448744874486,0.5553,Layers
-94,Probabilistic range,9.87948794879488,0.5553,Layers
-95,Species richness,9.625462546254626,0.5171,Layers
-95,Realized interactions,5.779077907790779,0.5171,Layers
-95,Focal species range,8.76937693769377,0.5171,Layers
-95,Probabilistic range,9.319431943194319,0.5171,Layers
-96,Species richness,8.50935093509351,0.7742,Layers
-96,Realized interactions,5.995099509950994,0.7742,Layers
-96,Focal species range,8.157315731573158,0.7742,Layers
-96,Probabilistic range,8.317331733173317,0.7742,Layers
-97,Species richness,7.555255525552555,0.6093,Layers
-97,Realized interactions,5.855085508550855,0.6093,Layers
-97,Focal species range,6.955195519551955,0.6093,Layers
-97,Probabilistic range,7.283228322832282,0.6093,Layers
-98,Species richness,7.553255325532554,0.626,Layers
-98,Realized interactions,5.483048304830483,0.626,Layers
-98,Focal species range,6.885188518851885,0.626,Layers
-98,Probabilistic range,7.247224722472247,0.626,Layers
-99,Species richness,8.441344134413441,0.3851,Layers
-99,Realized interactions,6.133113311331134,0.3851,Layers
-99,Focal species range,7.30923092309231,0.3851,Layers
-99,Probabilistic range,8.013301330133013,0.3851,Layers
-100,Species richness,11.633663366336632,0.3831,Layers
-100,Realized interactions,5.027002700270026,0.3831,Layers
-100,Focal species range,10.275527552755275,0.3831,Layers
-100,Probabilistic range,11.367636763676368,0.3831,Layers
+1,Species richness,6.723172317231722,0.4021,Layers
+1,Realized interactions,3.852885288528853,0.4021,Layers
+1,Focal species range,5.829082908290829,0.4021,Layers
+1,Probabilistic range,6.467146714671467,0.4021,Layers
+2,Species richness,5.519051905190519,0.4005,Layers
+2,Realized interactions,3.748874887488749,0.4005,Layers
+2,Focal species range,4.544954495449545,0.4005,Layers
+2,Probabilistic range,5.255025502550255,0.4005,Layers
+3,Species richness,6.463146314631463,0.3808,Layers
+3,Realized interactions,4.152915291529153,0.3808,Layers
+3,Focal species range,5.593059305930592,0.3808,Layers
+3,Probabilistic range,6.137113711371136,0.3808,Layers
+4,Species richness,6.317131713171318,0.8611,Layers
+4,Realized interactions,4.188918891889188,0.8611,Layers
+4,Focal species range,6.179117911791179,0.8611,Layers
+4,Probabilistic range,6.235123512351235,0.8611,Layers
+5,Species richness,4.51095109510951,0.6814,Layers
+5,Realized interactions,3.5928592859285926,0.6814,Layers
+5,Focal species range,4.180918091809181,0.6814,Layers
+5,Probabilistic range,4.3829382938293815,0.6814,Layers
+6,Species richness,4.782978297829783,0.6245,Layers
+6,Realized interactions,3.342834283428343,0.6245,Layers
+6,Focal species range,4.262926292629263,0.6245,Layers
+6,Probabilistic range,4.526952695269527,0.6245,Layers
+7,Species richness,3.9688968896889683,0.859,Layers
+7,Realized interactions,3.3108310831083103,0.859,Layers
+7,Focal species range,3.8228822882288234,0.859,Layers
+7,Probabilistic range,3.8728872887288723,0.859,Layers
+8,Species richness,7.7712771277127715,0.4049,Layers
+8,Realized interactions,3.6888688868886894,0.4049,Layers
+8,Focal species range,6.923192319231923,0.4049,Layers
+8,Probabilistic range,7.495249524952494,0.4049,Layers
+9,Species richness,6.149114911491149,0.2472,Layers
+9,Realized interactions,4.146914691469147,0.2472,Layers
+9,Focal species range,4.856985698569857,0.2472,Layers
+9,Probabilistic range,5.725072507250725,0.2472,Layers
+10,Species richness,6.281128112811281,0.2727,Layers
+10,Realized interactions,3.720872087208721,0.2727,Layers
+10,Focal species range,5.017001700170017,0.2727,Layers
+10,Probabilistic range,5.869086908690868,0.2727,Layers
+11,Species richness,6.747174717471746,0.5066,Layers
+11,Realized interactions,4.294929492949295,0.5066,Layers
+11,Focal species range,6.183118311831184,0.5066,Layers
+11,Probabilistic range,6.5431543154315435,0.5066,Layers
+12,Species richness,7.425242524252425,0.7928,Layers
+12,Realized interactions,4.244924492449245,0.7928,Layers
+12,Focal species range,7.195219521952194,0.7928,Layers
+12,Probabilistic range,7.287228722872287,0.7928,Layers
+13,Species richness,7.069206920692068,0.4207,Layers
+13,Realized interactions,4.46894689468947,0.4207,Layers
+13,Focal species range,6.315131513151314,0.4207,Layers
+13,Probabilistic range,6.805180518051806,0.4207,Layers
+14,Species richness,5.141014101410142,0.5388,Layers
+14,Realized interactions,3.884888488848884,0.5388,Layers
+14,Focal species range,4.546954695469547,0.5388,Layers
+14,Probabilistic range,4.890989098909891,0.5388,Layers
+15,Species richness,6.605160516051605,0.3835,Layers
+15,Realized interactions,3.7008700870087003,0.3835,Layers
+15,Focal species range,5.589058905890589,0.3835,Layers
+15,Probabilistic range,6.317131713171318,0.3835,Layers
+16,Species richness,6.04910491049105,0.1926,Layers
+16,Realized interactions,3.942894289428943,0.1926,Layers
+16,Focal species range,4.572957295729573,0.1926,Layers
+16,Probabilistic range,5.621062106210621,0.1926,Layers
+17,Species richness,6.353135313531354,0.2978,Layers
+17,Realized interactions,3.8768876887688766,0.2978,Layers
+17,Focal species range,5.247024702470247,0.2978,Layers
+17,Probabilistic range,5.947094709470948,0.2978,Layers
+18,Species richness,6.21912191219122,0.494,Layers
+18,Realized interactions,4.164916491649166,0.494,Layers
+18,Focal species range,5.567056705670568,0.494,Layers
+18,Probabilistic range,5.937093709370937,0.494,Layers
+19,Species richness,6.2571257125712565,0.7114,Layers
+19,Realized interactions,4.036903690369037,0.7114,Layers
+19,Focal species range,5.959095909590959,0.7114,Layers
+19,Probabilistic range,6.1231123112311225,0.7114,Layers
+20,Species richness,6.913191319131913,0.8687,Layers
+20,Realized interactions,4.124912491249125,0.8687,Layers
+20,Focal species range,6.773177317731774,0.8687,Layers
+20,Probabilistic range,6.821182118211821,0.8687,Layers
+21,Species richness,5.563056305630562,0.9154,Layers
+21,Realized interactions,4.1489148914891505,0.9154,Layers
+21,Focal species range,5.471047104710472,0.9154,Layers
+21,Probabilistic range,5.4930493049304925,0.9154,Layers
+22,Species richness,5.53105310531053,0.7362,Layers
+22,Realized interactions,4.224922492249226,0.7362,Layers
+22,Focal species range,5.245024502450244,0.7362,Layers
+22,Probabilistic range,5.423042304230423,0.7362,Layers
+23,Species richness,4.892989298929892,0.6546,Layers
+23,Realized interactions,3.6968696869686966,0.6546,Layers
+23,Focal species range,4.422942294229424,0.6546,Layers
+23,Probabilistic range,4.656965696569657,0.6546,Layers
+24,Species richness,7.177217721772178,0.0774,Layers
+24,Realized interactions,3.6348634863486353,0.0774,Layers
+24,Focal species range,4.86098609860986,0.0774,Layers
+24,Probabilistic range,6.811181118111811,0.0774,Layers
+25,Species richness,6.019101910191019,0.6427,Layers
+25,Realized interactions,4.2209220922092205,0.6427,Layers
+25,Focal species range,5.663066306630665,0.6427,Layers
+25,Probabilistic range,5.877087708770877,0.6427,Layers
+26,Species richness,5.535053505350536,0.8161,Layers
+26,Realized interactions,4.040904090409041,0.8161,Layers
+26,Focal species range,5.349034903490349,0.8161,Layers
+26,Probabilistic range,5.479047904790479,0.8161,Layers
+27,Species richness,5.817081708170818,0.429,Layers
+27,Realized interactions,4.032903290329033,0.429,Layers
+27,Focal species range,5.047004700470048,0.429,Layers
+27,Probabilistic range,5.581058105810581,0.429,Layers
+28,Species richness,7.015201520152014,0.1605,Layers
+28,Realized interactions,3.5848584858485837,0.1605,Layers
+28,Focal species range,5.323032303230324,0.1605,Layers
+28,Probabilistic range,6.529152915291529,0.1605,Layers
+29,Species richness,6.005100510051004,0.8435,Layers
+29,Realized interactions,4.250925092509251,0.8435,Layers
+29,Focal species range,5.871087108710872,0.8435,Layers
+29,Probabilistic range,5.949094909490948,0.8435,Layers
+30,Species richness,6.489148914891489,0.3721,Layers
+30,Realized interactions,3.890889088908891,0.3721,Layers
+30,Focal species range,5.4930493049304925,0.3721,Layers
+30,Probabilistic range,6.183118311831184,0.3721,Layers
+31,Species richness,5.555055505550555,0.3765,Layers
+31,Realized interactions,3.6968696869686966,0.3765,Layers
+31,Focal species range,4.658965896589659,0.3765,Layers
+31,Probabilistic range,5.277027702770276,0.3765,Layers
+32,Species richness,4.846984698469847,0.6721,Layers
+32,Realized interactions,3.464846484648465,0.6721,Layers
+32,Focal species range,4.4609460946094615,0.6721,Layers
+32,Probabilistic range,4.668966896689669,0.6721,Layers
+33,Species richness,5.817081708170818,0.2702,Layers
+33,Realized interactions,3.7388738873887384,0.2702,Layers
+33,Focal species range,4.476947694769477,0.2702,Layers
+33,Probabilistic range,5.3610361036103615,0.2702,Layers
+34,Species richness,6.21912191219122,0.7587,Layers
+34,Realized interactions,4.292929292929292,0.7587,Layers
+34,Focal species range,5.94109410941094,0.7587,Layers
+34,Probabilistic range,6.051105110511051,0.7587,Layers
+35,Species richness,6.727172717271728,0.1579,Layers
+35,Realized interactions,3.6508650865086514,0.1579,Layers
+35,Focal species range,4.952995299529954,0.1579,Layers
+35,Probabilistic range,6.025102510251026,0.1579,Layers
+36,Species richness,5.1810181018101815,0.2899,Layers
+36,Realized interactions,3.2868286828682876,0.2899,Layers
+36,Focal species range,3.9108910891089104,0.2899,Layers
+36,Probabilistic range,4.766976697669767,0.2899,Layers
+37,Species richness,7.8312831283128315,0.1472,Layers
+37,Realized interactions,3.2608260826082613,0.1472,Layers
+37,Focal species range,5.805080508050807,0.1472,Layers
+37,Probabilistic range,7.225222522252226,0.1472,Layers
+38,Species richness,4.058905890589059,0.4431,Layers
+38,Realized interactions,2.9187918791879186,0.4431,Layers
+38,Focal species range,3.2868286828682876,0.4431,Layers
+38,Probabilistic range,3.854885488548855,0.4431,Layers
+39,Species richness,5.233023302330233,0.5251,Layers
+39,Realized interactions,4.0549054905490545,0.5251,Layers
+39,Focal species range,4.656965696569657,0.5251,Layers
+39,Probabilistic range,5.0150015001500154,0.5251,Layers
+40,Species richness,5.0450045004500454,0.7605,Layers
+40,Realized interactions,4.028902890289029,0.7605,Layers
+40,Focal species range,4.7589758975897585,0.7605,Layers
+40,Probabilistic range,4.88898889888989,0.7605,Layers
+41,Species richness,4.720972097209721,0.6285,Layers
+41,Realized interactions,3.73087308730873,0.6285,Layers
+41,Focal species range,4.300930093009301,0.6285,Layers
+41,Probabilistic range,4.614961496149617,0.6285,Layers
+42,Species richness,6.555155515551556,0.6147,Layers
+42,Realized interactions,3.816881688168818,0.6147,Layers
+42,Focal species range,6.0931093109310925,0.6147,Layers
+42,Probabilistic range,6.381138113811382,0.6147,Layers
+43,Species richness,6.491149114911492,0.2183,Layers
+43,Realized interactions,3.9128912891289125,0.2183,Layers
+43,Focal species range,5.083008300830083,0.2183,Layers
+43,Probabilistic range,6.0651065106510655,0.2183,Layers
+44,Species richness,7.599259925992598,0.1512,Layers
+44,Realized interactions,3.4428442844284426,0.1512,Layers
+44,Focal species range,5.679067906790678,0.1512,Layers
+44,Probabilistic range,7.12921292129213,0.1512,Layers
+45,Species richness,6.983198319831983,0.6697,Layers
+45,Realized interactions,3.582858285828583,0.6697,Layers
+45,Focal species range,6.619161916191618,0.6697,Layers
+45,Probabilistic range,6.833183318331832,0.6697,Layers
+46,Species richness,5.993099309930993,0.7795,Layers
+46,Realized interactions,4.444944494449445,0.7795,Layers
+46,Focal species range,5.751075107510751,0.7795,Layers
+46,Probabilistic range,5.873087308730874,0.7795,Layers
+47,Species richness,6.519151915191519,0.5061,Layers
+47,Realized interactions,4.164916491649166,0.5061,Layers
+47,Focal species range,5.889088908890889,0.5061,Layers
+47,Probabilistic range,6.263126312631265,0.5061,Layers
+48,Species richness,8.061306130613062,0.6077,Layers
+48,Realized interactions,3.342834283428343,0.6077,Layers
+48,Focal species range,7.569256925692569,0.6077,Layers
+48,Probabilistic range,7.795279527952793,0.6077,Layers
+49,Species richness,7.5452545254525445,0.4456,Layers
+49,Realized interactions,3.870887088708871,0.4456,Layers
+49,Focal species range,6.8431843184318435,0.4456,Layers
+49,Probabilistic range,7.365236523652365,0.4456,Layers
+50,Species richness,7.8012801280128015,0.2437,Layers
+50,Realized interactions,3.0688068806880686,0.2437,Layers
+50,Focal species range,6.509150915091508,0.2437,Layers
+50,Probabilistic range,7.3972397239723975,0.2437,Layers
+51,Species richness,6.511151115111511,0.7946,Layers
+51,Realized interactions,3.7768776877687764,0.7946,Layers
+51,Focal species range,6.291129112911291,0.7946,Layers
+51,Probabilistic range,6.401140114011402,0.7946,Layers
+52,Species richness,6.421142114211422,0.6608,Layers
+52,Realized interactions,4.364936493649365,0.6608,Layers
+52,Focal species range,6.059105910591057,0.6608,Layers
+52,Probabilistic range,6.255125512551255,0.6608,Layers
+53,Species richness,6.467146714671467,0.3894,Layers
+53,Realized interactions,4.140914091409141,0.3894,Layers
+53,Focal species range,5.611061106110611,0.3894,Layers
+53,Probabilistic range,6.245124512451246,0.3894,Layers
+54,Species richness,8.269326932693268,0.2997,Layers
+54,Realized interactions,2.4427442744274424,0.2997,Layers
+54,Focal species range,7.069206920692068,0.2997,Layers
+54,Probabilistic range,7.933293329332933,0.2997,Layers
+55,Species richness,6.355135513551355,0.9498,Layers
+55,Realized interactions,4.316931693169317,0.9498,Layers
+55,Focal species range,6.307130713071308,0.9498,Layers
+55,Probabilistic range,6.325132513251326,0.9498,Layers
+56,Species richness,7.641264126412642,0.5365,Layers
+56,Realized interactions,3.368836883688369,0.5365,Layers
+56,Focal species range,6.945194519451945,0.5365,Layers
+56,Probabilistic range,7.38923892389239,0.5365,Layers
+57,Species richness,6.659165916591658,0.3572,Layers
+57,Realized interactions,3.9948994899489954,0.3572,Layers
+57,Focal species range,5.699069906990699,0.3572,Layers
+57,Probabilistic range,6.43114311431143,0.3572,Layers
+58,Species richness,7.151215121512152,0.2368,Layers
+58,Realized interactions,4.254925492549255,0.2368,Layers
+58,Focal species range,5.843084308430844,0.2368,Layers
+58,Probabilistic range,6.68916891689169,0.2368,Layers
+59,Species richness,6.907190719071908,0.2587,Layers
+59,Realized interactions,4.036903690369037,0.2587,Layers
+59,Focal species range,5.723072307230723,0.2587,Layers
+59,Probabilistic range,6.619161916191618,0.2587,Layers
+60,Species richness,6.477147714771476,0.4398,Layers
+60,Realized interactions,3.914891489148915,0.4398,Layers
+60,Focal species range,5.661066106610662,0.4398,Layers
+60,Probabilistic range,6.225122512251225,0.4398,Layers
+61,Species richness,5.225022502250225,0.7676,Layers
+61,Realized interactions,3.7228722872287223,0.7676,Layers
+61,Focal species range,4.928992899289929,0.7676,Layers
+61,Probabilistic range,5.077007700770078,0.7676,Layers
+62,Species richness,6.687168716871687,0.971,Layers
+62,Realized interactions,3.870887088708871,0.971,Layers
+62,Focal species range,6.6611661166116605,0.971,Layers
+62,Probabilistic range,6.721172117211722,0.971,Layers
+63,Species richness,6.1991199119911995,0.8078,Layers
+63,Realized interactions,3.8988898889888994,0.8078,Layers
+63,Focal species range,5.977097709770978,0.8078,Layers
+63,Probabilistic range,6.115111511151115,0.8078,Layers
+64,Species richness,6.609160916091611,0.8524,Layers
+64,Realized interactions,4.378937893789379,0.8524,Layers
+64,Focal species range,6.463146314631463,0.8524,Layers
+64,Probabilistic range,6.517151715171517,0.8524,Layers
+65,Species richness,5.669066906690669,0.465,Layers
+65,Realized interactions,4.292929292929292,0.465,Layers
+65,Focal species range,5.025002500250024,0.465,Layers
+65,Probabilistic range,5.483048304830483,0.465,Layers
+66,Species richness,8.365336533653364,0.7198,Layers
+66,Realized interactions,2.906790679067907,0.7198,Layers
+66,Focal species range,7.955295529552956,0.7198,Layers
+66,Probabilistic range,8.183318331833183,0.7198,Layers
+67,Species richness,5.9010901090109,0.466,Layers
+67,Realized interactions,4.152915291529153,0.466,Layers
+67,Focal species range,5.2410241024102415,0.466,Layers
+67,Probabilistic range,5.625062506250624,0.466,Layers
+68,Species richness,6.535153515351534,0.1421,Layers
+68,Realized interactions,3.440844084408441,0.1421,Layers
+68,Focal species range,4.576957695769577,0.1421,Layers
+68,Probabilistic range,5.94109410941094,0.1421,Layers
+69,Species richness,7.529252925292529,0.1026,Layers
+69,Realized interactions,3.2288228822882297,0.1026,Layers
+69,Focal species range,5.263026302630262,0.1026,Layers
+69,Probabilistic range,7.041204120412042,0.1026,Layers
+70,Species richness,7.615261526152615,0.2799,Layers
+70,Realized interactions,3.220822082208221,0.2799,Layers
+70,Focal species range,6.345134513451344,0.2799,Layers
+70,Probabilistic range,7.285228522852286,0.2799,Layers
+71,Species richness,7.537253725372537,0.8064,Layers
+71,Realized interactions,3.850885088508851,0.8064,Layers
+71,Focal species range,7.2792279227922805,0.8064,Layers
+71,Probabilistic range,7.365236523652365,0.8064,Layers
+72,Species richness,7.12921292129213,0.2074,Layers
+72,Realized interactions,3.622862286228623,0.2074,Layers
+72,Focal species range,5.647064706470648,0.2074,Layers
+72,Probabilistic range,6.863186318631864,0.2074,Layers
+73,Species richness,6.867186718671867,0.4773,Layers
+73,Realized interactions,3.940894089408941,0.4773,Layers
+73,Focal species range,6.167116711671168,0.4773,Layers
+73,Probabilistic range,6.63916391639164,0.4773,Layers
+74,Species richness,6.943194319431943,0.138,Layers
+74,Realized interactions,3.478847884788479,0.138,Layers
+74,Focal species range,5.125012501250126,0.138,Layers
+74,Probabilistic range,6.559155915591559,0.138,Layers
+75,Species richness,7.049204920492049,0.2782,Layers
+75,Realized interactions,3.586858685868587,0.2782,Layers
+75,Focal species range,5.775077507750774,0.2782,Layers
+75,Probabilistic range,6.653165316531653,0.2782,Layers
+76,Species richness,6.547154715471548,0.5511,Layers
+76,Realized interactions,4.520952095209521,0.5511,Layers
+76,Focal species range,6.073107310731075,0.5511,Layers
+76,Probabilistic range,6.357135713571358,0.5511,Layers
+77,Species richness,6.245124512451246,0.6654,Layers
+77,Realized interactions,4.276927692769277,0.6654,Layers
+77,Focal species range,5.911091109110911,0.6654,Layers
+77,Probabilistic range,6.117111711171117,0.6654,Layers
+78,Species richness,5.0610061006100615,0.9038,Layers
+78,Realized interactions,4.042904290429043,0.9038,Layers
+78,Focal species range,4.95899589958996,0.9038,Layers
+78,Probabilistic range,5.009000900090008,0.9038,Layers
+79,Species richness,7.487248724872487,0.4448,Layers
+79,Realized interactions,3.6008600860086,0.4448,Layers
+79,Focal species range,6.741174117411741,0.4448,Layers
+79,Probabilistic range,7.187218721872187,0.4448,Layers
+80,Species richness,4.934993499349934,0.3648,Layers
+80,Realized interactions,3.3488348834883483,0.3648,Layers
+80,Focal species range,3.916891689168916,0.3648,Layers
+80,Probabilistic range,4.668966896689669,0.3648,Layers
+81,Species richness,6.249124912491249,0.7709,Layers
+81,Realized interactions,4.052905290529053,0.7709,Layers
+81,Focal species range,6.001100110011002,0.7709,Layers
+81,Probabilistic range,6.129112911291128,0.7709,Layers
+82,Species richness,7.519251925192519,0.4988,Layers
+82,Realized interactions,3.596859685968596,0.4988,Layers
+82,Focal species range,6.839183918391839,0.4988,Layers
+82,Probabilistic range,7.269226922692269,0.4988,Layers
+83,Species richness,8.193319331933193,0.2803,Layers
+83,Realized interactions,3.1988198819881983,0.2803,Layers
+83,Focal species range,6.897189718971896,0.2803,Layers
+83,Probabilistic range,7.789278927892788,0.2803,Layers
+84,Species richness,4.438943894389439,0.5691,Layers
+84,Realized interactions,3.2368236823682373,0.5691,Layers
+84,Focal species range,3.870887088708871,0.5691,Layers
+84,Probabilistic range,4.252925292529253,0.5691,Layers
+85,Species richness,7.713271327132714,0.1629,Layers
+85,Realized interactions,3.816881688168818,0.1629,Layers
+85,Focal species range,6.163116311631162,0.1629,Layers
+85,Probabilistic range,7.237223722372237,0.1629,Layers
+86,Species richness,5.937093709370937,0.7534,Layers
+86,Realized interactions,4.046904690469047,0.7534,Layers
+86,Focal species range,5.655065506550656,0.7534,Layers
+86,Probabilistic range,5.841084108410842,0.7534,Layers
+87,Species richness,5.321032103210321,0.3123,Layers
+87,Realized interactions,3.476847684768477,0.3123,Layers
+87,Focal species range,4.2049204920492045,0.3123,Layers
+87,Probabilistic range,5.009000900090008,0.3123,Layers
+88,Species richness,6.243124312431243,0.797,Layers
+88,Realized interactions,3.9188918891889193,0.797,Layers
+88,Focal species range,6.019101910191019,0.797,Layers
+88,Probabilistic range,6.143114311431144,0.797,Layers
+89,Species richness,6.815181518151816,0.7591,Layers
+89,Realized interactions,4.108910891089108,0.7591,Layers
+89,Focal species range,6.525152515251524,0.7591,Layers
+89,Probabilistic range,6.621162116211622,0.7591,Layers
+90,Species richness,5.0150015001500154,0.5994,Layers
+90,Realized interactions,3.890889088908891,0.5994,Layers
+90,Focal species range,4.56095609560956,0.5994,Layers
+90,Probabilistic range,4.836983698369837,0.5994,Layers
+91,Species richness,6.267126712671266,0.4598,Layers
+91,Realized interactions,4.246924692469247,0.4598,Layers
+91,Focal species range,5.551055105510551,0.4598,Layers
+91,Probabilistic range,5.945094509450946,0.4598,Layers
+92,Species richness,4.180918091809181,0.8631,Layers
+92,Realized interactions,3.4188418841884194,0.8631,Layers
+92,Focal species range,4.036903690369037,0.8631,Layers
+92,Probabilistic range,4.094909490949094,0.8631,Layers
+93,Species richness,5.655065506550656,0.8216,Layers
+93,Realized interactions,3.6808680868086805,0.8216,Layers
+93,Focal species range,5.441044104410442,0.8216,Layers
+93,Probabilistic range,5.5530553055305525,0.8216,Layers
+94,Species richness,7.143214321432143,0.5553,Layers
+94,Realized interactions,3.914891489148915,0.5553,Layers
+94,Focal species range,6.577157715771577,0.5553,Layers
+94,Probabilistic range,6.847184718471849,0.5553,Layers
+95,Species richness,6.673167316731674,0.5171,Layers
+95,Realized interactions,4.004900490049005,0.5171,Layers
+95,Focal species range,6.0771077107710765,0.5171,Layers
+95,Probabilistic range,6.461146114611459,0.5171,Layers
+96,Species richness,5.897089708970897,0.7742,Layers
+96,Realized interactions,4.154915491549156,0.7742,Layers
+96,Focal species range,5.655065506550656,0.7742,Layers
+96,Probabilistic range,5.765076507650766,0.7742,Layers
+97,Species richness,5.2370237023702355,0.6093,Layers
+97,Realized interactions,4.056905690569057,0.6093,Layers
+97,Focal species range,4.820982098209821,0.6093,Layers
+97,Probabilistic range,5.047004700470048,0.6093,Layers
+98,Species richness,5.235023502350236,0.626,Layers
+98,Realized interactions,3.8008800880088014,0.626,Layers
+98,Focal species range,4.772977297729772,0.626,Layers
+98,Probabilistic range,5.023002300230024,0.626,Layers
+99,Species richness,5.851085108510851,0.3851,Layers
+99,Realized interactions,4.250925092509251,0.3851,Layers
+99,Focal species range,5.067006700670067,0.3851,Layers
+99,Probabilistic range,5.555055505550555,0.3851,Layers
+100,Species richness,8.063306330633065,0.3831,Layers
+100,Realized interactions,3.4848484848484858,0.3831,Layers
+100,Focal species range,7.123212321232124,0.3831,Layers
+100,Probabilistic range,7.87928792879288,0.3831,Layers

@@ -187,6 +187,13 @@ save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 # NDI
 ndi(x, y) = (x - y) / (x + y)
 
+# Efficiency difference
+function efficiency_difference(n, n2; k=10_000)
+    n = exp(n)
+    n2 = exp(n2)
+    return ((n * log(n) - n * log(n + k) + k) - (n2 * log(n2) - n2 * log(n2 + k) + k))
+end
+
 # Separate results per simulation
 function comparewithin(effs_combined; f=(x, y) -> -(x, y))
     within_combined = @chain effs_combined begin
@@ -211,6 +218,9 @@ end
 within_combined = comparewithin(effs_combined)
 within_combined_ndi = comparewithin(effs_combined; f=ndi)
 within_combined_log = comparewithin(effs_combined; f=(x, y) -> (x / y))
+within_combined_dif = comparewithin(
+    effs_combined; f=(n, n2) -> efficiency_difference(n, n2; k=10_000)
+)
 
 # Visualize
 begin
@@ -223,20 +233,21 @@ begin
         clouds=nothing,
         orientation=:horizontal,
     )
-    vline = mapping([0]) * visual(VLines; linestyle=:dash)
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined_log
+let d = within_combined_dif
     Random.seed!(42)
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "comparison",
-        :value => log2 => "log2(ratio of efficiencies)";
-        color=:value => (x -> x >= 1.0),
+        :value => "Efficiency difference";
+        color=:value => (x -> x <= 0.0),
     )
     f = Figure()
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     xlog2 = (; axis=(; xtickformat=xlog2f))
+    # xaxis = (; axis=(; xticks=0:2:10))
     fg1 = draw!(f[1, 1], data(d1) * m * rains + vline;)
     fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline;)
     linkxaxes!(fg1..., fg2...)
@@ -247,9 +258,43 @@ let d = within_combined_log
 end
 save(plotsdir("efficiency_comparison.png"), current_figure())
 
-# Confirm number of positives proportions in comparison
-@chain begin
-    groupby(within_combined, [:set, :variable])
-    @combine(:prop = sum((:value .>= 1) ./ length(:value)) .* 100)
-    show(_; allrows=true)
+# Reduce number of comparisons
+comps_dict = Dict(
+    "ΔUS_SR" => "Simple Random",
+    "ΔUS_WBA" => "Weighted Balanced Acceptance",
+    "ΔRI_FR" => "Realized Interactions",
+    "ΔFR_SR" => "Species Richness",
+    "ΔFR_PR" => "Probabilistic Range",
+)
+within_combined_dif2 = @chain within_combined_dif begin
+    @rsubset(:variable in keys(comps_dict))
+    @rtransform(:variable = comps_dict[:variable])
+    @rtransform(:value = :variable == "Realized Interactions" ? -(:value) : :value)
+    @rtransform(:value = -:value)
 end
+let d = within_combined_dif2
+    Random.seed!(42)
+    d1 = @rsubset(d, :set == "Samplers")
+    d2 = @rsubset(d, :set == "Layers")
+    m = mapping(
+        :variable => "",
+        :value => "Efficiency compared to reference (Uncertainty Sampling)";
+        color=:value => (x -> x >= 0.0),
+    )
+    f = Figure()
+    xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
+    xlog2 = (; axis=(; xtickformat=xlog2f))
+    # xaxis = (; axis=(; xticks=0:2:10))
+    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline;)
+    fg2 = draw!(
+        f[2:3, 1],
+        data(d2) * m * rains + vline;
+        axis=(; xlabel="Efficiency compared to reference (Focal Range)"),
+    )
+    linkxaxes!(fg1..., fg2...)
+    pad = (-100, 0, 10, 0)
+    Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
+    Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+    f
+end
+save(plotsdir("efficiency_comparison_reduced.png"), current_figure())
