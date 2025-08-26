@@ -233,7 +233,7 @@ begin
         clouds=nothing,
         orientation=:horizontal,
     )
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+    vline = mapping([0.5]) * visual(VLines; linestyle=:dash)
 end
 let d = within_combined_dif
     Random.seed!(42)
@@ -259,6 +259,7 @@ end
 save(plotsdir("efficiency_comparison.png"), current_figure())
 
 # Reduce number of comparisons
+logit(p) = 1 / (1 + exp(-p))
 comps_dict = Dict(
     "ΔUS_SR" => "Simple Random",
     "ΔUS_WBA" => "Weighted Balanced Acceptance",
@@ -271,6 +272,7 @@ within_combined_dif2 = @chain within_combined_dif begin
     @rtransform(:variable = comps_dict[:variable])
     @rtransform(:value = :variable == "Realized Interactions" ? -(:value) : :value)
     @rtransform(:value = -:value)
+    # @rtransform(:value = logit(:value))
 end
 let d = within_combined_dif2
     Random.seed!(42)
@@ -278,7 +280,7 @@ let d = within_combined_dif2
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
         :variable => "",
-        :value => "Efficiency compared to reference (Uncertainty Sampling)";
+        :value => logit => "Efficiency compared to reference (Uncertainty Sampling)";
         color=:value => (x -> x >= 0.0),
     )
     f = Figure()
