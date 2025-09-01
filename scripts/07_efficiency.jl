@@ -100,7 +100,12 @@ sims_set = @rsubset(sims_samplers, :sampler == "UncertaintySampling")
 # Visualize
 begin
     f = Figure()
-    ax = Axis(f[1, 1])
+    ax = Axis(
+        f[1, 1];
+        xlabel="Number of sites",
+        ylabel="Proportion of sampled interactions",
+        title="Illustration of replicates & efficiency - Uncertainty Sampling",
+    )
     for iter in unique(sims_set.sim)
         X₁ = @rsubset(sims_set, :sim == iter)
         x = X₁.nbon
@@ -111,6 +116,7 @@ begin
     end
     f
 end
+save(plotsdir("efficiency_example.png"), f)
 
 ## Occupancy
 
