@@ -33,10 +33,10 @@ function load_and_prep(file)
 
     # Rename variables
     renamed = Dict(
-        "prop_monitored_sp" => "Monitored sp",
-        "prop_possible_int" => "Possible int",
-        "prop_realized_int" => "Realized int",
-        "prop_detected_int" => "Detected int",
+        "prop_monitored_sp" => "Monitored species",
+        "prop_possible_int" => "Possible interactions",
+        "prop_realized_int" => "Realized interactions",
+        "prop_detected_int" => "Detected interactions",
     )
     @rtransform!(param_stack, :variable = renamed[:variable])
 end
@@ -74,25 +74,27 @@ end
 
 # Proportion results as linesfill plot (median line & bands for intervals)
 fig =
-    data(param_combined) *
-    visual(LinesFill; fillalpha=0.15) *
-    mapping(
-        :nbon => "Number of sites in BON",
-        :med;
-        lower=:low,
-        upper=:upp,
-        color=:variable => presorted => "Sampled element",
-        layout=:refmethod => renamer(
-            "global" => "Global reference", "metawebify" => "Per-element reference"
-        ),
-    ) |>
-    x -> draw(
-        x,
-        scales(; Y=(; label="Proportion of sampled elements"));
-        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
-        legend=(; framevisible=false),
-        figure=(; size=(700, 450)),
-    )
+    filter(:refmethod => ==("global"), param_combined) |>
+    x ->
+        data(x) *
+        visual(LinesFill; fillalpha=0.15) *
+        mapping(
+            :nbon => "Number of sites in BON",
+            :med;
+            lower=:low,
+            upper=:upp,
+            color=:variable => presorted => "Sampled element",
+            # layout=:refmethod => renamer(
+            #     "global" => "Global reference", "metawebify" => "Per-element reference"
+            # ),
+        ) |>
+        x -> draw(
+            x,
+            scales(; Y=(; label="Proportion of sampled elements"));
+            axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
+            legend=(; framevisible=false),
+            figure=(;),
+        )
 save(plotsdir("nbon_bands.png"), fig)
 
 ## Random sampling comparison
