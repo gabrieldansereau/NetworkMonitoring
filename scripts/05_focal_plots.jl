@@ -58,6 +58,15 @@ probsp_range = SDT.SDMLayer(datadir("focal_array", "layer_probsp_range-$idp.tiff
 
 ## Define labels and colors for all plots
 
+# Rename samplers
+monitored_samplers.sampler =
+    replace.(
+        monitored_samplers.sampler,
+        "UncertaintySampling" => "Uncertainty Sampling",
+        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+        "SimpleRandom" => "Simple Random",
+    )
+
 # Colors
 cols = Dict{Any,Any}(
     # Interaction types
@@ -65,9 +74,9 @@ cols = Dict{Any,Any}(
     "realized" => Makie.wong_colors()[3],
     "detected" => Makie.wong_colors()[4],
     # Samplers
-    "UncertaintySampling" => Makie.wong_colors()[2],
-    "WeightedBalancedAcceptance" => Makie.wong_colors()[3],
-    "SimpleRandom" => Makie.wong_colors()[1],
+    "Uncertainty Sampling" => Makie.wong_colors()[2],
+    "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
+    "Simple Random" => Makie.wong_colors()[1],
     # Layers
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
@@ -161,11 +170,11 @@ save(plotsdir("focal_spp.png"), fig)
 begin
     Random.seed!(42)
     bons = Dict()
-    bons["UncertaintySampling"] = BON.sample(BON.UncertaintySampling(100), focal_sp_range)
-    bons["WeightedBalancedAcceptance"] = BON.sample(
+    bons["Uncertainty Sampling"] = BON.sample(BON.UncertaintySampling(100), focal_sp_range)
+    bons["Weighted Balanced Acceptance"] = BON.sample(
         BON.WeightedBalancedAcceptance(100), focal_sp_range
     )
-    bons["SimpleRandom"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
+    bons["Simple Random"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
 end
 
 # Plot
@@ -211,7 +220,7 @@ begin
     Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
-    fig
+    figA = fig
 end
 save(plotsdir("focal_samplers.png"), fig)
 
@@ -220,7 +229,7 @@ save(plotsdir("focal_samplers.png"), fig)
 # Generate BON examples
 begin
     Random.seed!(33)
-    bons["Focal species range"] = bons["UncertaintySampling"]
+    bons["Focal species range"] = bons["Uncertainty Sampling"]
     bons["Species richness"] = BON.sample(BON.UncertaintySampling(100), richness_spp)
     bons["Realized interactions"] = BON.sample(
         BON.UncertaintySampling(100), degree_realized
@@ -295,6 +304,114 @@ begin
     )
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
-    fig
+    figB = fig
 end
 save(plotsdir("focal_optimized.png"), fig)
+
+# Join
+begin
+    fig = Figure(; size=(650, 900))
+    g1 = GridLayout(fig[1, :])
+    g2 = GridLayout(fig[2, :])
+
+    # Figure 1
+    res = monitored_samplers
+    # Create layouts
+    ga = GridLayout(g1[:, 1:3])
+    gb = GridLayout(g1[:, end + 1])
+    # Create axes
+    ax = Axis(
+        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+    )
+    ax1 = Axis(
+        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax2 = Axis(
+        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax3 = Axis(
+        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    # Remove decorations for heatmaps
+    hidedecorations!(ax1; label=false)
+    hidedecorations!(ax2; label=false)
+    hidedecorations!(ax3; label=false)
+    # hidedecorations!(ax4)
+    # hidespines!(ax4)
+    # Sampling results
+    for s in unique(res.sampler)
+        b = filter(:sampler => ==(s), res)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
+        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+    end
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(ax; position=:lt, merge=true, labelsize=14)
+    # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
+    # Heatmaps & BON example
+    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
+        heatmap!(a, focal_sp_range)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        a.ylabel = s
+    end
+    # Subpanel labels
+    Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
+    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+    # Show figure
+    figA = fig
+
+    # Figure 2
+    set = [
+        "Realized interactions",
+        "Focal species range",
+        "Species richness",
+        "Probabilistic range",
+    ]
+    res = @rsubset(monitored_optimized, :sampler in set)
+    # fig = Figure()
+    # Create layouts
+    ga = GridLayout(g2[:, 1:3])
+    gb = GridLayout(g2[:, end + 1])
+    # Create axes
+    ax = Axis(
+        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+    )
+    ax1 = Axis(
+        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax2 = Axis(
+        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    ax3 = Axis(
+        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
+    # Remove decorations for heatmaps
+    hidedecorations!(ax1; label=false)
+    hidedecorations!(ax2; label=false)
+    hidedecorations!(ax3; label=false)
+    # Sampling results
+    for s in unique(res.sampler)
+        b = filter(:sampler => ==(s), res)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
+        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+    end
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(ax; position=:lt, merge=true, labelsize=14)
+    # Heatmaps & BON example
+    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
+        heatmap!(a, layers[s])
+        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        a.ylabel = s
+    end
+    # Subpanel labels
+    Label(
+        ga[1, :, Top()], "Optimization layer efficiency"; padding=(0, 0, 5, 0), font=:bold
+    )
+    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+
+    # Additional labels
+    Label(g1[1, :, TopLeft()], "A)"; padding=(0, 0, 5, 0), font=:bold)
+    Label(g2[1, :, TopLeft()], "B)"; padding=(0, 0, 5, 0), font=:bold)
+    # Show figure
+    figB = fig
+end
+save(plotsdir("focal_joined.png"), fig)
