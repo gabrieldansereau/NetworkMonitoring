@@ -243,14 +243,15 @@ begin
     layers["Focal species range"] = focal_sp_range
     layers["Species richness"] = richness_spp
     layers["Realized interactions"] = degree_realized
+    layers["Probabilistic range"] = probsp_range
 end
 
 # Reorder elements for display
 _order = Dict(
     "Realized interactions" => 1,
     "Focal species range" => 2,
-    "Species richness" => 3,
-    "Probabilistic range" => 4,
+    "Probabilistic range" => 3,
+    "Species richness" => 4,
 )
 sort!(monitored_optimized, order(:sampler; by=x -> _order[x]))
 
@@ -310,7 +311,7 @@ save(plotsdir("focal_optimized.png"), fig)
 
 # Join
 begin
-    fig = Figure(; size=(650, 900))
+    fig = Figure(; size=(650, 1100))
     g1 = GridLayout(fig[1, :])
     g2 = GridLayout(fig[2, :])
 
@@ -332,21 +333,23 @@ begin
     ax3 = Axis(
         gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
     )
+    ax4 = Axis(
+        gb[4, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
     # Remove decorations for heatmaps
     hidedecorations!(ax1; label=false)
     hidedecorations!(ax2; label=false)
     hidedecorations!(ax3; label=false)
-    # hidedecorations!(ax4)
-    # hidespines!(ax4)
+    hidedecorations!(ax4; label=false)
+    hidespines!(ax4)
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
         lines!(ax, b.nbon, b.med; label=s, color=cols[s])
     end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(ax; position=:lt, merge=true, labelsize=14)
-    # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
+    # axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, focal_sp_range)
@@ -356,15 +359,24 @@ begin
     # Subpanel labels
     Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    figA = fig
+    # Legend
+    Legend(
+        ga[end + 1, :],
+        ax;
+        merge=true,
+        tellwidth=false,
+        tellheight=true,
+        nbanks=2,
+        framevisible=false,
+        labelsize=12.0,
+    )
 
     # Figure 2
     set = [
         "Realized interactions",
         "Focal species range",
-        "Species richness",
         "Probabilistic range",
+        "Species richness",
     ]
     res = @rsubset(monitored_optimized, :sampler in set)
     # fig = Figure()
@@ -384,20 +396,24 @@ begin
     ax3 = Axis(
         gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
     )
+    ax4 = Axis(
+        gb[4, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+    )
     # Remove decorations for heatmaps
     hidedecorations!(ax1; label=false)
     hidedecorations!(ax2; label=false)
     hidedecorations!(ax3; label=false)
+    hidedecorations!(ax4; label=false)
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
         lines!(ax, b.nbon, b.med; label=s, color=cols[s])
     end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(ax; position=:lt, merge=true, labelsize=14)
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
+    # axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
-    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
+    for (a, s) in zip([ax1, ax2, ax3, ax4], unique(res.sampler))
         heatmap!(a, layers[s])
         scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
         a.ylabel = s
@@ -407,6 +423,17 @@ begin
         ga[1, :, Top()], "Optimization layer efficiency"; padding=(0, 0, 5, 0), font=:bold
     )
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+    # Legend
+    Legend(
+        ga[end + 1, :],
+        ax;
+        merge=true,
+        tellwidth=false,
+        tellheight=true,
+        nbanks=3,
+        framevisible=false,
+        labelsize=12.0,
+    )
 
     # Additional labels
     Label(g1[1, :, TopLeft()], "A)"; padding=(0, 0, 5, 0), font=:bold)
