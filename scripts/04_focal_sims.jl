@@ -9,7 +9,7 @@ d = DefaultParams()
 
 # Set directory to export results
 if !(@isdefined OUTDIR)
-    const OUTDIR = "focal_array" # focal_array or efficiency
+    const OUTDIR = "dev" # focal_array or efficiency
 end
 
 # Use job id to vary parameters
@@ -138,7 +138,7 @@ end
 function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
     monitored_vec = Vector{DataFrame}(undef, length(spp))
     for (i, sp) in enumerate(spp)
-        @info "Monitoring $sp ($i/$(length(spp))"
+        @info "Monitoring $sp ($i/$(length(spp)))"
         monitored_vec[i] = focal_monitoring(nets_dict, sp; kw...)
     end
     monitored = reduce(vcat, monitored_vec)
@@ -216,6 +216,10 @@ sp_range = SDT.SDMLayer(
     y=(0.0, d.nsites),
 )
 
+# Create species range mask
+sp_mask = SDT.nodata(sp_range, 0)
+heatmap(sp_mask)
+
 # Run with replicates
 Random.seed!(id * 22)
 samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
@@ -229,10 +233,25 @@ monitored_samplers = focal_monitoring(
     nrep=NREP,
     combined=false,
 )
+Random.seed!(id * 23)
+monitored_mask = focal_monitoring(
+    nets_dict,
+    sp,
+    sp_mask;
+    type=[:realized],
+    sampler=[BalancedAcceptance, SimpleRandom],
+    nbons=1:5:500,
+    nrep=NREP,
+    combined=false,
+)
+@rtransform!(monitored_mask, :sampler = string(:sampler))
+replace!(monitored_mask.sampler, "SimpleRandom" => "SimpleRandomMask")
+append!(monitored_samplers, monitored_mask; promote=true)
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
 SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_range-$idp.tiff"), sp_range)
+SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
 
 ## Richness-focused sampling
 
