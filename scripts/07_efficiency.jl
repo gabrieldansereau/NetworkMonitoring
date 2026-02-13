@@ -189,7 +189,7 @@ fig = let bs = sim1_samplers, b = monitored_samplers
         eff = efficiency(bi.nbon, bi.monitored; A=LinRange(-12.0, 12.0, 5000))
         lines!(
             bi.nbon,
-            saturation(eff)(b.nbon);
+            saturation(eff)(bi.nbon);
             color=:grey,
             linestyle=:solid,
             label="individual saturation curves",

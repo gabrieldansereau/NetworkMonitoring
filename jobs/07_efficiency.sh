@@ -3,8 +3,8 @@
 #SBATCH --array=1-100
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
-#SBATCH --time=03:00:00
-#SBATCH --job-name=04_focal_array
+#SBATCH --time=01:40:00
+#SBATCH --job-name=07_efficiency
 #SBATCH --output=jobs/out/%x-%J.out
 
 module load julia/1.11.3
