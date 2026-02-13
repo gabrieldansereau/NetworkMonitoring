@@ -239,7 +239,7 @@ monitored_mask = focal_monitoring(
     sp,
     sp_mask;
     type=[:realized],
-    sampler=[BalancedAcceptance, SimpleRandom],
+    sampler=[BalancedAcceptance],
     nbons=1:5:500,
     nrep=NREP,
     combined=false,

@@ -83,7 +83,7 @@ cols = Dict{Any,Any}(
     "Uncertainty Sampling" => Makie.wong_colors()[2],
     "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
     "Simple Random" => Makie.wong_colors()[1],
-    "Balanced Acceptance" => Makie.wong_colors()[3],
+    "Balanced Acceptance" => :grey,
     "Simple Random Mask" => Makie.wong_colors()[1],
     # Layers
     "Focal species range" => Makie.wong_colors()[2],
@@ -223,7 +223,7 @@ begin
     # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
-        heatmap!(a, focal_sp_range)
+        heatmap!(a, ifelse(s == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
         scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
         a.ylabel = s
     end
@@ -233,7 +233,7 @@ begin
     # Show figure
     figA = fig
 end
-save(plotsdir("focal_samplers.png"), fig)
+save(plotsdir("focal_samplers_mask.png"), fig)
 
 ## Optimized sampling
 
@@ -352,7 +352,7 @@ begin
     hidedecorations!(ax2; label=false)
     hidedecorations!(ax3; label=false)
     hidedecorations!(ax4; label=false)
-    hidespines!(ax4)
+    # hidespines!(ax4)
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
@@ -362,8 +362,8 @@ begin
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
-    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
-        heatmap!(a, focal_sp_range)
+    for (a, s) in zip([ax1, ax2, ax3, ax4], unique(res.sampler))
+        heatmap!(a, ifelse(s == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
         scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
         a.ylabel = s
     end
@@ -450,6 +450,6 @@ begin
     Label(g1[1, :, TopLeft()], "A)"; padding=(0, 0, 5, 0), font=:bold)
     Label(g2[1, :, TopLeft()], "B)"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
-    figB = fig
+    fig
 end
 save(plotsdir("focal_joined.png"), fig)
