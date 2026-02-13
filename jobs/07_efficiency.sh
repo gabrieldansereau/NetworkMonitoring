@@ -3,7 +3,7 @@
 #SBATCH --array=1-100
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
-#SBATCH --time=01:15:00
+#SBATCH --time=03:00:00
 #SBATCH --job-name=04_focal_array
 #SBATCH --output=jobs/out/%x-%J.out
 
