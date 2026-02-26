@@ -26,6 +26,8 @@ effs_samplers.sampler =
         effs_samplers.sampler,
         "UncertaintySampling" => "Uncertainty Sampling",
         "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+        "BalancedAcceptance" => "Balanced Acceptance",
+        "SimpleRandomMask" => "Simple Random Mask",
         "SimpleRandom" => "Simple Random",
     )
 
@@ -42,6 +44,8 @@ cols = [
     "Uncertainty Sampling" => Makie.wong_colors()[2],
     "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
     "Simple Random" => Makie.wong_colors()[1],
+    "Balanced Acceptance" => "grey",
+    "Simple Random Mask" => "turquoise",
     # Layers
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
@@ -52,7 +56,13 @@ cols = [
 ## Efficiency only
 
 # Define sorting order across figures
-sortedsamplers = ["Uncertainty Sampling", "Weighted Balanced Acceptance", "Simple Random"]
+sortedsamplers = [
+    "Uncertainty Sampling",
+    "Weighted Balanced Acceptance",
+    "Simple Random",
+    "Balanced Acceptance",
+    "Simple Random Mask",
+]
 sortedlayers = [
     "Focal species range",
     "Realized interactions",
@@ -118,13 +128,13 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 begin
     occ = :occ => "occupancy"
     layout = mapping(occ, eff; color=:sampler) * (visual(Scatter) + linear())
-    scale = scales(; Color=(; palette=cols))
+    scl = scales(; Color=(; palette=cols))
     legend = (; position=:bottom)
     f1 = data(effs_samplers) * layout * mapping(; col=:sampler => sorter(sortedlayout))
     f2 = data(effs_optimized) * layout * mapping(; col=:sampler => sorter(sortedlayout))
 end
-draw(f1, scale; legend=legend)
-draw(f2, scale; legend=legend)
+draw(f1, scl; legend=legend)
+draw(f2, scl; legend=legend)
 fig = draw(
     data(effs_combined) * layout * mapping(; layout=:sampler => sorter(sortedlayout)),
     scales(; Color=(; palette=cols, legend=false));
@@ -134,8 +144,8 @@ fig = draw(
 # Same with independent subfigures
 fig = let
     f = Figure(; size=(800, 500))
-    fg1 = draw!(f[1, 1:3], f1, scale; ylog2...)
-    fg2 = draw!(f[2, 1:4], f2, scale; ylog2...)
+    fg1 = draw!(f[1, 1:5], f1, scl; ylog2...)
+    fg2 = draw!(f[2, 1:4], f2, scl; ylog2...)
     linkaxes!(fg1..., fg2...)
     pad = (-50, 0, 30, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
@@ -147,9 +157,9 @@ save(plotsdir("efficiency_occupancy.png"), fig)
 # Group columns in single panel
 fig = let
     f = Figure(; size=(800, 450))
-    fg1 = draw!(f[1, 1], f1 * mapping(; col=:set), scale; ylog2...)
+    fg1 = draw!(f[1, 1], f1 * mapping(; col=:set), scl; ylog2...)
     legend!(f[2, 1], fg1; position=:bottom, tellheight=true, tellwidth=false)
-    fg2 = draw!(f[1, 2], f2 * mapping(; col=:set), scale; ylog2...)
+    fg2 = draw!(f[1, 2], f2 * mapping(; col=:set), scl; ylog2...)
     legend!(f[2, 2], fg2; position=:bottom, tellheight=true, tellwidth=false)
     linkyaxes!(fg1..., fg2...)
     f
@@ -199,6 +209,9 @@ function comparewithin(effs_combined; f=(x, y) -> -(x, y))
     within_combined = @chain effs_combined begin
         unstack(:sampler, :eff)
         @rtransform(
+            :ΔSRM_BA = f($("Simple Random Mask"), $("Balanced Acceptance")),
+            :ΔUS_BA = f($("Uncertainty Sampling"), $("Balanced Acceptance")),
+            :ΔUS_SRM = f($("Uncertainty Sampling"), $("Simple Random Mask")),
             :ΔUS_SR = f($("Uncertainty Sampling"), $("Simple Random")),
             :ΔUS_WBA = f($("Uncertainty Sampling"), $("Weighted Balanced Acceptance")),
             :ΔWBA_SR = f($("Weighted Balanced Acceptance"), $("Simple Random")),
@@ -221,8 +234,31 @@ within_combined_log = comparewithin(effs_combined; f=(x, y) -> (x / y))
 within_combined_dif = comparewithin(
     effs_combined; f=(n, n2) -> efficiency_difference(n, n2; k=10_000)
 )
+@chain within_combined_dif begin
+    @groupby(:set, :variable)
+    @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+end
+unique_df = @chain within_combined_dif begin
+    @groupby(:set, :variable)
+    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+end
 
 # Visualize
+sortedcomps = [
+    "ΔSRM_BA"
+    "ΔUS_BA"
+    "ΔUS_SRM"
+    "ΔUS_SR"
+    "ΔUS_WBA"
+    "ΔWBA_SR"
+    "ΔRI_SR"
+    "ΔRI_FR"
+    "ΔFR_SR"
+    "ΔRI_PR"
+    "ΔFR_PR"
+    "ΔPR_SR"
+]
 begin
     m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
     rains = visual(
@@ -235,25 +271,70 @@ begin
     )
     vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined_dif
+let d = within_combined_dif, u = unique_df
     Random.seed!(42)
+
+    # Figure & grid
+    f = Figure()
+    g1 = GridLayout(f[1:6, 1:3])
+    g2 = GridLayout(f[7:12, 1:3])
+    g3 = GridLayout(f[1:6, end + 1])
+    g4 = GridLayout(f[7:end, end])
+
+    # Main panels
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
-        :variable => "comparison",
+        :variable => sorter(sortedcomps) => "comparison",
         :value => "Efficiency difference";
         color=:value => (x -> x <= 0.0),
     )
-    f = Figure()
-    xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
-    xlog2 = (; axis=(; xtickformat=xlog2f))
+    # xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
+    # xlog2 = (; axis=(; xtickformat=xlog2f))
     # xaxis = (; axis=(; xticks=0:2:10))
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline;)
-    fg2 = draw!(f[2:3, 1], data(d2) * m * rains + vline;)
+    fg1 = draw!(g1, data(d1) * m * rains + vline;)
+    fg2 = draw!(g2, data(d2) * m * rains + vline;)
     linkxaxes!(fg1..., fg2...)
     pad = (-100, 0, 10, 0)
-    Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
-    Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+    Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
+    Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+
+    # Summary panels
+    d3 = @rsubset(u, :set == "Samplers")
+    d4 = @rsubset(u, :set == "Layers")
+    ax3 = Axis(g3[1, 1])
+    ax4 = Axis(g4[1, 1])
+    m34 = mapping(
+        :variable => sorter(sortedcomps),
+        [1];
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
+        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d3.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    v4 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d4.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    draw!(ax3, data(d3) * m34 * v3)
+    draw!(ax4, data(d4) * m34 * v4)
+
+    hidedecorations!(ax3)
+    hidespines!(ax3)
+    hidedecorations!(ax4)
+    hidespines!(ax4)
+    pad = (0, 0, 10, 0)
+    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+
     f
 end
 save(plotsdir("efficiency_comparison.png"), current_figure())
@@ -263,19 +344,42 @@ logit(p) = 1 / (1 + exp(-p))
 comps_dict = Dict(
     "ΔUS_SR" => "Simple Random",
     "ΔUS_WBA" => "Weighted Balanced Acceptance",
+    "ΔUS_BA" => "Balanced Acceptance",
+    "ΔUS_SRM" => "Simple Random Mask",
     "ΔRI_FR" => "Realized Interactions",
     "ΔFR_SR" => "Species Richness",
     "ΔFR_PR" => "Probabilistic Range",
 )
+countmax = maximum(unique_df.count)
 within_combined_dif2 = @chain within_combined_dif begin
     @rsubset(:variable in keys(comps_dict))
     @rtransform(:variable = comps_dict[:variable])
-    @rtransform(:value = :variable == "Realized Interactions" ? -(:value) : :value)
+    @rtransform(
+        :value = :variable == "Realized Interactions" ? -(:value) : :value,
+        :count_pos =
+            :variable == "Realized Interactions" ? countmax - :count_pos : :count_pos,
+        :count_neg =
+            :variable == "Realized Interactions" ? countmax - :count_neg : :count_neg,
+    )
     @rtransform(:value = -:value)
     # @rtransform(:value = logit(:value))
 end
-let d = within_combined_dif2
+unique_df2 = @chain within_combined_dif2 begin
+    unique([:set, :variable])
+    select(Not(:sim, :occ))
+    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+end
+let d = within_combined_dif2, u = unique_df2
     Random.seed!(42)
+
+    # Figure
+    f = Figure()
+    g1 = GridLayout(f[1:4, 1:3])
+    g2 = GridLayout(f[5:8, 1:3])
+    g3 = GridLayout(f[1:4, end + 1])
+    g4 = GridLayout(f[5:end, end])
+
+    # Main panels
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
@@ -283,20 +387,57 @@ let d = within_combined_dif2
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
         color=:value => (x -> x >= 0.0),
     )
-    f = Figure()
+
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     xlog2 = (; axis=(; xtickformat=xlog2f))
     # xaxis = (; axis=(; xticks=0:2:10))
-    fg1 = draw!(f[1, 1], data(d1) * m * rains + vline;)
+    fg1 = draw!(g1, data(d1) * m * rains + vline;)
     fg2 = draw!(
-        f[2:3, 1],
+        g2,
         data(d2) * m * rains + vline;
         axis=(; xlabel="Efficiency compared to reference (Focal Range)"),
     )
     linkxaxes!(fg1..., fg2...)
     pad = (-100, 0, 10, 0)
-    Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
-    Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+    Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
+    Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+
+    # Summary panels
+    d3 = @rsubset(u, :set == "Samplers")
+    d4 = @rsubset(u, :set == "Layers")
+    ax3 = Axis(g3[1, 1])
+    ax4 = Axis(g4[1, 1])
+    m34 = mapping(
+        :variable,
+        [1];
+        color=:countmeasure => sorter(["count_neg", "count_pos"]),
+        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d3.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    v4 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d4.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    draw!(ax3, data(d3) * m34 * v3)
+    draw!(ax4, data(d4) * m34 * v4)
+
+    hidedecorations!(ax3)
+    hidespines!(ax3)
+    hidedecorations!(ax4)
+    hidespines!(ax4)
+    pad = (0, 0, 10, 0)
+    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+
     f
 end
 save(plotsdir("efficiency_comparison_reduced.png"), current_figure())

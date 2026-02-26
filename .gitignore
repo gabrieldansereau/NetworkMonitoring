@@ -6,6 +6,7 @@ data/sim-*
 data/layer*
 data/focal_array
 data/efficiency/
+data/dev
 
 # narval
 narval.sh

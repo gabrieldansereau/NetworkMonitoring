@@ -9,15 +9,18 @@ update_theme!(; CairoMakie=(; px_per_unit=2.0))
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
 idp = lpad(id, 2, "0")
 
+# Set directory to import results
+if !(@isdefined OUTDIR)
+    const OUTDIR = "dev" # focal_array or efficiency
+end
+
 # Load all results
-monitored_types = CSV.read(datadir("focal_array", "monitored_types-01.csv"), DataFrame)
-monitored_types2 = CSV.read(datadir("focal_array", "monitored_types2-01.csv"), DataFrame)
-monitored_spp_all = CSV.read(datadir("focal_array", "monitored_spp-$idp.csv"), DataFrame)
-monitored_samplers_all = CSV.read(
-    datadir("focal_array", "monitored_samplers-$idp.csv"), DataFrame
-)
+monitored_types = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
+monitored_types2 = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
+monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
+monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
 monitored_optimized_all = CSV.read(
-    datadir("focal_array", "monitored_optimized-$idp.csv"), DataFrame
+    datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
 )
 
 # Summmarize results not combined previously
@@ -51,10 +54,11 @@ sp = monitored_types.sp[1]
 deg = maximum(monitored_types.deg)
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$idp.tiff"))
-richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-$idp.tiff"))
-degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-$idp.tiff"))
-probsp_range = SDT.SDMLayer(datadir("focal_array", "layer_probsp_range-$idp.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
+richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"))
+degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree_realized-$idp.tiff"))
+probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"))
 
 ## Define labels and colors for all plots
 
@@ -64,6 +68,8 @@ monitored_samplers.sampler =
         monitored_samplers.sampler,
         "UncertaintySampling" => "Uncertainty Sampling",
         "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+        "BalancedAcceptance" => "Balanced Acceptance",
+        "SimpleRandomMask" => "Simple Random Mask",
         "SimpleRandom" => "Simple Random",
     )
 
@@ -77,6 +83,8 @@ cols = Dict{Any,Any}(
     "Uncertainty Sampling" => Makie.wong_colors()[2],
     "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
     "Simple Random" => Makie.wong_colors()[1],
+    "Balanced Acceptance" => :grey,
+    "Simple Random Mask" => Makie.wong_colors()[1],
     # Layers
     "Focal species range" => Makie.wong_colors()[2],
     "Species richness" => Makie.wong_colors()[4],
@@ -175,11 +183,14 @@ begin
         BON.WeightedBalancedAcceptance(100), focal_sp_range
     )
     bons["Simple Random"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
+    bons["Balanced Acceptance"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_mask)
+    bons["Simple Random Mask"] = BON.sample(BON.SimpleRandom(100), focal_sp_mask)
 end
 
 # Plot
 begin
-    res = monitored_samplers
+    set = ["Uncertainty Sampling", "Balanced Acceptance", "Simple Random Mask"]
+    res = @rsubset(monitored_samplers, :sampler in set)
     fig = Figure()
     # Create layouts
     ga = GridLayout(fig[:, 1:3])
@@ -212,7 +223,7 @@ begin
     # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
-        heatmap!(a, focal_sp_range)
+        heatmap!(a, ifelse(s == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
         scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
         a.ylabel = s
     end
@@ -222,7 +233,7 @@ begin
     # Show figure
     figA = fig
 end
-save(plotsdir("focal_samplers.png"), fig)
+save(plotsdir("focal_samplers_mask.png"), fig)
 
 ## Optimized sampling
 
@@ -341,7 +352,7 @@ begin
     hidedecorations!(ax2; label=false)
     hidedecorations!(ax3; label=false)
     hidedecorations!(ax4; label=false)
-    hidespines!(ax4)
+    # hidespines!(ax4)
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
@@ -351,8 +362,8 @@ begin
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
-    for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
-        heatmap!(a, focal_sp_range)
+    for (a, s) in zip([ax1, ax2, ax3, ax4], unique(res.sampler))
+        heatmap!(a, ifelse(s == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
         scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
         a.ylabel = s
     end
@@ -439,6 +450,6 @@ begin
     Label(g1[1, :, TopLeft()], "A)"; padding=(0, 0, 5, 0), font=:bold)
     Label(g2[1, :, TopLeft()], "B)"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
-    figB = fig
+    fig
 end
 save(plotsdir("focal_joined.png"), fig)
