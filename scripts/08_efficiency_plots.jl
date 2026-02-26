@@ -236,11 +236,12 @@ within_combined_dif = comparewithin(
 )
 @chain within_combined_dif begin
     @groupby(:set, :variable)
-    @transform!(:count_pos = count(>(0), :value))
+    @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
 end
 unique_df = @chain within_combined_dif begin
     @groupby(:set, :variable)
-    @combine(:count_pos = count(>(0), :value))
+    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
 
 # Visualize
@@ -270,8 +271,17 @@ begin
     )
     vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined_dif
+let d = within_combined_dif, u = unique_df
     Random.seed!(42)
+
+    # Figure & grid
+    f = Figure()
+    g1 = GridLayout(f[1:6, 1:3])
+    g2 = GridLayout(f[7:12, 1:3])
+    g3 = GridLayout(f[1:6, end + 1])
+    g4 = GridLayout(f[7:end, end])
+
+    # Main panels
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
@@ -279,30 +289,52 @@ let d = within_combined_dif
         :value => "Efficiency difference";
         color=:value => (x -> x <= 0.0),
     )
-    f = Figure()
-    g1 = GridLayout(f[1:6, 1:3])
-    g2 = GridLayout(f[7:12, 1:3])
-    xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
-    xlog2 = (; axis=(; xtickformat=xlog2f))
+    # xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
+    # xlog2 = (; axis=(; xtickformat=xlog2f))
     # xaxis = (; axis=(; xticks=0:2:10))
     fg1 = draw!(g1, data(d1) * m * rains + vline;)
-    # _vs = unique_df.count_pos[1:6]
-    # draw!(g1, mapping(repeat([4000], 6), _vs; text=string.(_vs)) * visual(Makie.Text))
-    for (i, v) in enumerate(unique(d1.variable))
-        _df = @rsubset(d1, :variable == v)
-        text!(
-            4500,
-            i;
-            text="$(first(_df.count_pos)) %",
-            align=(:center, :baseline),
-            color=Makie.wong_colors()[1],
-        )
-    end
     fg2 = draw!(g2, data(d2) * m * rains + vline;)
     linkxaxes!(fg1..., fg2...)
     pad = (-100, 0, 10, 0)
     Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+
+    # Summary panels
+    d3 = @rsubset(u, :set == "Samplers")
+    d4 = @rsubset(u, :set == "Layers")
+    ax3 = Axis(g3[1, 1])
+    ax4 = Axis(g4[1, 1])
+    m34 = mapping(
+        :variable => sorter(sortedcomps),
+        [1];
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
+        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d3.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    v4 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d4.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    draw!(ax3, data(d3) * m34 * v3)
+    draw!(ax4, data(d4) * m34 * v4)
+
+    hidedecorations!(ax3)
+    hidespines!(ax3)
+    hidedecorations!(ax4)
+    hidespines!(ax4)
+    pad = (0, 0, 10, 0)
+    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+
     f
 end
 save(plotsdir("efficiency_comparison.png"), current_figure())
@@ -318,15 +350,36 @@ comps_dict = Dict(
     "ΔFR_SR" => "Species Richness",
     "ΔFR_PR" => "Probabilistic Range",
 )
+countmax = maximum(unique_df.count)
 within_combined_dif2 = @chain within_combined_dif begin
     @rsubset(:variable in keys(comps_dict))
     @rtransform(:variable = comps_dict[:variable])
-    @rtransform(:value = :variable == "Realized Interactions" ? -(:value) : :value)
+    @rtransform(
+        :value = :variable == "Realized Interactions" ? -(:value) : :value,
+        :count_pos =
+            :variable == "Realized Interactions" ? countmax - :count_pos : :count_pos,
+        :count_neg =
+            :variable == "Realized Interactions" ? countmax - :count_neg : :count_neg,
+    )
     @rtransform(:value = -:value)
     # @rtransform(:value = logit(:value))
 end
-let d = within_combined_dif2
+unique_df2 = @chain within_combined_dif2 begin
+    unique([:set, :variable])
+    select(Not(:sim, :occ))
+    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+end
+let d = within_combined_dif2, u = unique_df2
     Random.seed!(42)
+
+    # Figure
+    f = Figure()
+    g1 = GridLayout(f[1:4, 1:3])
+    g2 = GridLayout(f[5:8, 1:3])
+    g3 = GridLayout(f[1:4, end + 1])
+    g4 = GridLayout(f[5:end, end])
+
+    # Main panels
     d1 = @rsubset(d, :set == "Samplers")
     d2 = @rsubset(d, :set == "Layers")
     m = mapping(
@@ -334,9 +387,7 @@ let d = within_combined_dif2
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
         color=:value => (x -> x >= 0.0),
     )
-    f = Figure()
-    g1 = GridLayout(f[1:4, 1])
-    g2 = GridLayout(f[5:8, 1])
+
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     xlog2 = (; axis=(; xtickformat=xlog2f))
     # xaxis = (; axis=(; xticks=0:2:10))
@@ -350,27 +401,43 @@ let d = within_combined_dif2
     pad = (-100, 0, 10, 0)
     Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+
+    # Summary panels
+    d3 = @rsubset(u, :set == "Samplers")
+    d4 = @rsubset(u, :set == "Layers")
+    ax3 = Axis(g3[1, 1])
+    ax4 = Axis(g4[1, 1])
+    m34 = mapping(
+        :variable,
+        [1];
+        color=:countmeasure => sorter(["count_neg", "count_pos"]),
+        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d3.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    v4 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d4.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    draw!(ax3, data(d3) * m34 * v3)
+    draw!(ax4, data(d4) * m34 * v4)
+
+    hidedecorations!(ax3)
+    hidespines!(ax3)
+    hidedecorations!(ax4)
+    hidespines!(ax4)
+    pad = (0, 0, 10, 0)
+    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+
     f
 end
 save(plotsdir("efficiency_comparison_reduced.png"), current_figure())
-
-unique_df = @chain within_combined_dif begin
-    @groupby(:set, :variable)
-    @combine(:count_pos = count(>(0), :value), :count_neg = count(<(0), :value))
-    stack([:count_pos, :count_neg]; variable_name=:countmeasure)
-end
-
-data(unique_df) *
-mapping(:variable, :value; color=:countmeasure, stack=:countmeasure) *
-visual(BarPlot; direction=:x) |> draw
-
-pts = Point.(unique(unique_df.variable), 1:12)
-
-begin
-    f = Figure()
-    ax = Axis(f[1, 1]; limits=((0.0, 2.0), (nothing, nothing)))
-    scatter!([1 - 0.055], 1:12; marker=Rect, markersize=(30, 30))
-    scatter!([1 + 0.055], 1:12; marker=Rect, markersize=(30, 30))
-    # text!(0.5, pts, string.(1:12))
-    f
-end
