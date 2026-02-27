@@ -53,6 +53,7 @@ function focal_monitoring(
     nets_dict,
     sp::Symbol,
     layer::Union{Nothing,SDT.SDMLayer}=nothing;
+    name::String="unnamed",
     nrep::Int=1,
     nbons::AbstractRange{Int64}=1:100,
     type::Vector{Symbol}=[:possible],
@@ -134,6 +135,9 @@ function focal_monitoring(
         end
     end
 
+    # Add simulation set name
+    @select!(monitored, :set = name, All())
+
     return monitored
 end
 function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
@@ -160,7 +164,9 @@ end
 
 # Test run
 Random.seed!(333)
-monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nrep=2, nbons=1:5:100)
+monitored_sp = focal_monitoring(
+    nets_dict, sp; name="test", type=[:possible], nrep=2, nbons=1:5:100
+)
 
 # Export for convenience in plot scripts
 if id == 1
@@ -175,12 +181,14 @@ Random.seed!(id * 33)
 
 # Run for all types
 types = [:possible, :realized, :detected]
-monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=false)
+monitored_types = focal_monitoring(
+    nets_dict, sp; name="types", type=types, nrep=NREP, combined=false
+)
 
 # Re-run for realized and detected with more sites in BON
 types2 = [:realized, :detected]
 monitored_types2 = focal_monitoring(
-    nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
+    nets_dict, sp; name="types2", type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
 )
 
 # Export
@@ -203,7 +211,13 @@ spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
 monitored_spp = focal_monitoring(
-    nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
+    nets_dict,
+    spp;
+    name="species",
+    type=[:realized],
+    nrep=NREP,
+    nbons=1:5:500,
+    combined=false,
 )
 
 # Extract species ranges
@@ -244,6 +258,7 @@ monitored_samplers = focal_monitoring(
     nets_dict,
     sp,
     sp_range;
+    name="samplers",
     type=[:realized],
     sampler=samplers,
     nbons=1:5:500,
@@ -300,6 +315,7 @@ monitored_optimized = focal_monitoring(
     nets_dict,
     sp,
     optim;
+    name="layers",
     type=[:realized],
     sampler=[UncertaintySampling],
     nbons=1:5:500,
@@ -337,6 +353,7 @@ monitored_probabilistic = focal_monitoring(
     nets_dict,
     sp,
     optim;
+    name="probabilistic",
     type=[:realized],
     sampler=[UncertaintySampling],
     nbons=1:5:500,
