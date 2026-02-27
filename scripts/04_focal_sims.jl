@@ -11,6 +11,7 @@ d = DefaultParams()
 if !(@isdefined OUTDIR)
     const OUTDIR = "dev" # focal_array or efficiency
 end
+mkpath(datadir(OUTDIR))
 
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
