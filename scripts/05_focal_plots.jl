@@ -11,7 +11,7 @@ idp = lpad(id, 2, "0")
 
 # Set directory to import results
 if !(@isdefined OUTDIR)
-    const OUTDIR = "dev" # focal_array or efficiency
+    const OUTDIR = "sim-range-estimation" # focal_array or efficiency
 end
 
 # Load all results
@@ -487,6 +487,9 @@ end
 # Plot
 begin
     set = [-0.2, 0.0, 0.2]
+    range_over = estimated_ranges[set[1]]
+    range_true = estimated_ranges[set[2]]
+    range_under = estimated_ranges[set[3]]
     labs = Dict()
     if !(@isdefined cols)
         cols = Dict()
@@ -527,8 +530,13 @@ begin
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
     Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
+    heatmap!(ax1, range_over; colormap=:greys, alpha=0.5)
+    heatmap!(ax1, range_true; colormap=:viridis)
+    heatmap!(ax2, range_true; colormap=:viridis)
+    heatmap!(ax3, range_true; colormap=:viridis, alpha=0.5)
+    heatmap!(ax3, range_under; colormap=:viridis)
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
-        heatmap!(a, estimated_ranges[s])
+        # heatmap!(a, estimated_ranges[s])
         scatter!(a, coordinates(bons[s]); markersize=5, strokewidth=0.5, color=cols[s])
         a.ylabel = labs[s]
     end
