@@ -463,12 +463,11 @@ save(plotsdir("focal_joined.png"), fig)
 
 # Load layers
 errors = unique(monitored_estimations.sampler)
-estimated_ranges = Dict{Float64,SDT.SDMLayer}()
+estimated_ranges = Dict()
 for (i, e) in enumerate(errors)
-    # estimated_ranges[e] = SDT.SDMLayer(
-    #     datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), i
-    # )
-    estimated_ranges[e] = layers[i] # Need to load from previous script
+    estimated_ranges[e] = SDT.SDMLayer(
+        datadir(OUTDIR, "layer_range_estimations-$idp.tiff"); bandnumber=i
+    )
 end
 estimated_ranges
 heatmap(estimated_ranges[0.2])
@@ -489,6 +488,9 @@ end
 begin
     set = [-0.2, 0.0, 0.2]
     labs = Dict()
+    if !(@isdefined cols)
+        cols = Dict()
+    end
     for (i, s) in enumerate(set)
         cols[s] = Makie.wong_colors()[i]
         labs[s] = string(["Over", "True-", "Under-"][i], s)
@@ -522,8 +524,8 @@ begin
         lines!(ax, b.nbon, b.med; label=labs[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(ax; position=:lt, merge=true, labelsize=14)
-    # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
+    # axislegend(ax; position=:lt, merge=true, labelsize=14)
+    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, estimated_ranges[s])

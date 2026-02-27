@@ -162,52 +162,62 @@ monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
 
 ## Repeat focal monitoring by network types
 
-# Random.seed!(id * 33)
+#=
 
-# # Run for all types
-# types = [:possible, :realized, :detected]
-# monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=false)
+Random.seed!(id * 33)
 
-# # Re-run for realized and detected with more sites in BON
-# types2 = [:realized, :detected]
-# monitored_types2 = focal_monitoring(
-#     nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
-# )
+# Run for all types
+types = [:possible, :realized, :detected]
+monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=false)
 
-# # Export
-# CSV.write(datadir(OUTDIR, "monitored_types-$idp.csv"), monitored_types)
-# CSV.write(datadir(OUTDIR, "monitored_types2-$idp.csv"), monitored_types2)
+# Re-run for realized and detected with more sites in BON
+types2 = [:realized, :detected]
+monitored_types2 = focal_monitoring(
+    nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
+)
 
-# ## Repeat with 4 species with different degrees
+# Export
+CSV.write(datadir(OUTDIR, "monitored_types-$idp.csv"), monitored_types)
+CSV.write(datadir(OUTDIR, "monitored_types2-$idp.csv"), monitored_types2)
 
-# Random.seed!(id * 101)
+=#
 
-# # Get species to test
-# degrees = degree(metaweb.metaweb)
-# idx = [1, 25, 50, 70]
-# spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
-# spp = [sp.first for sp in spp]
+## Repeat with 4 species with different degrees
 
-# # Repeat focal monitoring per species
-# monitored_spp = focal_monitoring(
-#     nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
-# )
+#=
 
-# # Extract species ranges
-# speciesranges = [
-#     SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
-# ]
+Random.seed!(id * 101)
 
-# # Get layer occupancy
-# occupancy(l) = length(findall(isone, l)) / length(l)
-# occupancies = occupancy.(speciesranges)
-# monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
+# Get species to test
+degrees = degree(metaweb.metaweb)
+idx = [1, 25, 50, 70]
+spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
+spp = [sp.first for sp in spp]
 
-# # Export
-# CSV.write(datadir(OUTDIR, "monitored_spp-$idp.csv"), monitored_spp)
-# CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
+# Repeat focal monitoring per species
+monitored_spp = focal_monitoring(
+    nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
+)
+
+# Extract species ranges
+speciesranges = [
+    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
+]
+
+# Get layer occupancy
+occupancy(l) = length(findall(isone, l)) / length(l)
+occupancies = occupancy.(speciesranges)
+monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
+
+# Export
+CSV.write(datadir(OUTDIR, "monitored_spp-$idp.csv"), monitored_spp)
+CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
+
+=#
 
 ## Explore variations with different sampler
+
+#=
 
 # Extract species range
 sp_range = SDT.SDMLayer(
@@ -253,7 +263,11 @@ CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
 SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_range-$idp.tiff"), sp_range)
 SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
 
+=#
+
 ## Richness-focused sampling
+
+#=
 
 # Extract richness layers
 richness_spp = SDT.SDMLayer(sum(occurrence(ranges)); x=(0.0, d.nsites), y=(0.0, d.nsites))
@@ -295,7 +309,11 @@ monitored_optimized = focal_monitoring(
     append!(monitored_optimized, _; promote=true, cols=:subset)
 end
 
+=#
+
 ## Probabilistic range sampling
+
+#=
 
 # Extract layers
 probsp_range = SDT.SDMLayer(
@@ -340,6 +358,8 @@ if OUTDIR == "focal_array"
     SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
 end
 
+=#
+
 ## Range estimation
 
 # Extract thresholds
@@ -368,7 +388,7 @@ probsp_range = SDT.SDMLayer(
 errors = -0.2:0.05:0.2
 layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in errors]
 SDT.nodata!.(layers, 0)
-heatmap(layers[9])
+# heatmap(layers[9])
 
 # Optimize with UncertaintySampling
 Random.seed!(id * 832)
@@ -380,8 +400,8 @@ monitored_estimations = focal_monitoring(
     optim;
     type=[:realized],
     sampler=[BalancedAcceptance],
-    nbons=1:20:500,
-    nrep=3,
+    nbons=1:5:500,
+    nrep=NREP,
     combined=false,
 )
 @rtransform!(monitored_estimations, :sampler = optimlabels[:layer])
