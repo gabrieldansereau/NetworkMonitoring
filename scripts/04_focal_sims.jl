@@ -159,7 +159,13 @@ function focal_monitoring(
 end
 
 # Test run
-monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
+Random.seed!(333)
+monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nrep=2, nbons=1:5:100)
+
+# Export for convenience in plot scripts
+if id == 1
+    CSV.write(datadir("monitored_test.csv"), monitored_sp)
+end
 
 ## Repeat focal monitoring by network types
 
