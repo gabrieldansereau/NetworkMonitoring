@@ -220,8 +220,11 @@ CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
 ## Range estimation
 
 # Misestimate ranges
-threshold = thresholds[indexin([sp], probranges.species)...]
-errors = -0.2:0.05:0.2
+if OUTDIR == "efficiency"
+    errors = -0.3:0.02:0.3
+else
+    errors = -0.2:0.05:0.2
+end
 layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in errors]
 SDT.nodata!.(layers, 0)
 
