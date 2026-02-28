@@ -2,8 +2,8 @@
 #SBATCH --account=ctb-tpoisot
 #SBATCH --array=1-10
 #SBATCH --ntasks=1
-#SBATCH --mem=4G
-#SBATCH --time=02:30:00
+#SBATCH --mem=8GB
+#SBATCH --time=03:00:00
 #SBATCH --job-name=04_focal_array
 #SBATCH --output=jobs/out/%x-%J.out
 
