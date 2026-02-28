@@ -593,7 +593,7 @@ if id == 1
 end
 
 # Load layers used for optimization
-errors = unique(monitored_estimations.layer)
+errors = String.(unique(monitored_estimations.layer))
 estimated_ranges = Dict()
 for (i, e) in enumerate(errors)
     estimated_ranges[e] = SDT.SDMLayer(
@@ -614,7 +614,7 @@ end
 
 # Plot
 fig_estimation = let
-    set = [-0.2, 0.0, 0.2]
+    set = ["Over-0.2", "True-0.0", "Under-0.2"]
     var = :layer
     res = filter(var => in(set), monitored_estimations)
     vals = unique(res[:, var])
@@ -623,13 +623,11 @@ fig_estimation = let
     range_true = estimated_ranges[set[2]]
     range_under = estimated_ranges[set[3]]
 
-    labs = Dict()
     if !(@isdefined cols)
         cols = Dict()
     end
     for (i, s) in enumerate(set)
         cols[s] = Makie.wong_colors()[i]
-        labs[s] = string(["Over", "True-", "Under-"][i], s)
     end
 
     # Create figure
@@ -661,8 +659,8 @@ fig_estimation = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=cols[v], label=labs[v])
-        lines!(ax, b.nbon, b.med; label=labs[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=cols[v], label=v)
+        lines!(ax, b.nbon, b.med; label=v)
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
@@ -674,7 +672,7 @@ fig_estimation = let
     heatmap!(ax3, range_under; colormap=:viridis)
     for (a, v) in zip([ax1, ax2, ax3], vals)
         scatter!(a, coordinates(bons[v]); markersize=5, strokewidth=0.5, color=cols[v])
-        a.ylabel = labs[v]
+        a.ylabel = v
     end
 
     # Subpanel labels

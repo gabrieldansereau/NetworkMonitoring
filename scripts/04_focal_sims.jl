@@ -404,7 +404,8 @@ SDT.nodata!.(layers, 0)
 # Optimize with UncertaintySampling
 Random.seed!(id * 832)
 optim = layers
-optimlabels = string.(errors)
+optimlabels = [ifelse(e < 0, "Over$e", "Under-$e") for e in errors]
+replace!(optimlabels, "Under-0.0" => "True-0.0")
 monitored_estimations = focal_monitoring(
     nets_dict,
     sp,
