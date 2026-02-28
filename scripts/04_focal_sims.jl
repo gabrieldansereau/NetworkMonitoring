@@ -9,7 +9,7 @@ d = DefaultParams()
 
 # Set directory to export results
 if !(@isdefined OUTDIR)
-    const OUTDIR = "dev" # focal_array or efficiency
+    const OUTDIR = "dev" # dev (local), focal_array or efficiency (remote)
 end
 mkpath(datadir(OUTDIR))
 
@@ -40,7 +40,7 @@ deg, sp = findmax(degree(metaweb.metaweb))
 
 # Set number of replicates for short interactive run
 if !(@isdefined NREP)
-    const NREP = 5
+    const NREP = 3
 end
 # For longer, non-interactive runs, set the number of replicates with:
 # julia --project -e 'const NREP = 100; include("scripts/04_focal_sims.jl")'
@@ -182,13 +182,19 @@ Random.seed!(id * 33)
 # Run for all types
 types = [:possible, :realized, :detected]
 monitored_types = focal_monitoring(
-    nets_dict, sp; name="types", type=types, nrep=NREP, combined=false
+    nets_dict, sp; name="types", type=types, nrep=NREP, nbons=1:5:101, combined=false
 )
 
 # Re-run for realized and detected with more sites in BON
 types2 = [:realized, :detected]
 monitored_types2 = focal_monitoring(
-    nets_dict, sp; name="types2", type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
+    nets_dict,
+    sp;
+    name="types2",
+    type=types2,
+    nbons=1:1000:10_001,
+    nrep=NREP,
+    combined=false,
 )
 
 # Export
@@ -216,7 +222,7 @@ monitored_spp = focal_monitoring(
     name="species",
     type=[:realized],
     nrep=NREP,
-    nbons=1:5:500,
+    nbons=1:10:500,
     combined=false,
 )
 
@@ -249,7 +255,6 @@ sp_range = SDT.SDMLayer(
 
 # Create species range mask
 sp_mask = SDT.nodata(sp_range, 0)
-heatmap(sp_mask)
 
 # Run with replicates
 Random.seed!(id * 22)
@@ -265,11 +270,14 @@ monitored_samplers = focal_monitoring(
     nrep=NREP,
     combined=false,
 )
+
+# Variation with focal range mask
 Random.seed!(id * 23)
 monitored_mask = focal_monitoring(
     nets_dict,
     sp,
     sp_mask;
+    name="samplers",
     type=[:realized],
     sampler=[BalancedAcceptance, SimpleRandom],
     nbons=1:5:500,
@@ -287,7 +295,7 @@ SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
 
 =#
 
-## Richness-focused sampling
+## Explore variations with optimization layers
 
 #=
 
@@ -308,9 +316,17 @@ degree_realized = SDT.SDMLayer(
     y=(0.0, d.nsites),
 )
 
+# Extract probabilistic range
+probsp_range = SDT.SDMLayer(
+    occurrence(probranges)[indexin([sp], probranges.species)...];
+    x=(0.0, d.nsites),
+    y=(0.0, d.nsites),
+)
+
 # Optimize with UncertaintySampling
-optim = [richness_spp, degree_realized]
-optimlabels = ["Species richness", "Realized interactions"]
+Random.seed!(id * 44)
+optim = [richness_spp, degree_realized, probsp_range]
+optimlabels = ["Species richness", "Realized interactions", "Probabilistic range"]
 monitored_optimized = focal_monitoring(
     nets_dict,
     sp,
@@ -322,48 +338,20 @@ monitored_optimized = focal_monitoring(
     nrep=NREP,
     combined=false,
 )
-@rtransform!(monitored_optimized, :sampler = optimlabels[:layer])
+@rtransform!(monitored_optimized, :layer = optimlabels[:layer])
+@select!(monitored_optimized, :set, :sp, :type, :sampler, :layer, All())
 
 # Combine with Uncertainty Sampling on focal species layer
-@chain begin
-    monitored_samplers
-    filter(:sampler => ==(UncertaintySampling), _)
-    @transform!(:sampler = "Focal species range")
-    append!(monitored_optimized, _; promote=true, cols=:subset)
+if !(@isdefined monitored_samplers)
+    @warn "Need to run previous section for Uncertainty Sampling option"
+else
+    @chain begin
+        monitored_samplers
+        filter(:sampler => ==(UncertaintySampling), _)
+        @transform(:layer = "Focal species range", :set = "layers")
+        append!(monitored_optimized, _; promote=true, cols=:subset)
+    end
 end
-
-=#
-
-## Probabilistic range sampling
-
-#=
-
-# Extract layers
-probsp_range = SDT.SDMLayer(
-    occurrence(probranges)[indexin([sp], probranges.species)...];
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Optimize with UncertaintySampling
-Random.seed!(id * 44)
-optim = [probsp_range]
-optimlabels = ["Probabilistic range"]
-monitored_probabilistic = focal_monitoring(
-    nets_dict,
-    sp,
-    optim;
-    name="probabilistic",
-    type=[:realized],
-    sampler=[UncertaintySampling],
-    nbons=1:5:500,
-    nrep=NREP,
-    combined=false,
-)
-@rtransform!(monitored_probabilistic, :sampler = optimlabels[:layer])
-
-# Combine with Uncertainty Sampling on focal species layer
-append!(monitored_optimized, monitored_probabilistic; promote=true, cols=:subset)
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
@@ -412,7 +400,6 @@ probsp_range = SDT.SDMLayer(
 errors = -0.2:0.05:0.2
 layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in errors]
 SDT.nodata!.(layers, 0)
-# heatmap(layers[9])
 
 # Optimize with UncertaintySampling
 Random.seed!(id * 832)
@@ -422,13 +409,15 @@ monitored_estimations = focal_monitoring(
     nets_dict,
     sp,
     optim;
+    name="ranges",
     type=[:realized],
     sampler=[BalancedAcceptance],
     nbons=1:5:500,
     nrep=NREP,
     combined=false,
 )
-@rtransform!(monitored_estimations, :sampler = optimlabels[:layer])
+@rtransform!(monitored_estimations, :layer = optimlabels[:layer])
+@select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, All())
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimations)
