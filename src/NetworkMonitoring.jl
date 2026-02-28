@@ -35,6 +35,7 @@ using Reexport
     import SpeciesInteractionSamplers: generate
 end
 
+include("focal.jl")
 include("metaweb.jl")
 include("monitor.jl")
 include("plots.jl")
@@ -51,5 +52,6 @@ export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor
 export DefaultParams, generate_networks, generate_bon, evaluate_monitoring, runsim
 export AutocorrelatedProbabilisticRange, generate
+export focal_monitoring
 
 end # module NetworkMonitoring
