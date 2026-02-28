@@ -11,20 +11,11 @@ idp = lpad(id, 2, "0")
 
 # Set directory to import results
 if !(@isdefined OUTDIR)
-    const OUTDIR = "sim-range-estimation" # focal_array or efficiency
+    const OUTDIR = "focal_array" # focal_array or efficiency
 end
 
-# Load all results
-monitored_types = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
-monitored_types2 = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
-monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
-monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
-monitored_optimized_all = CSV.read(
-    datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
-)
-monitored_estimations_all = CSV.read(
-    datadir(OUTDIR, "monitored_estimations-$idp.csv"), DataFrame
-)
+# Load test results
+monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
 
 # Summmarize results not combined previously
 function summarize_monitored(df)
@@ -41,44 +32,9 @@ function summarize_monitored(df)
     end
     return monitored
 end
-monitored_spp = summarize_monitored(monitored_spp_all)
-monitored_samplers = summarize_monitored(monitored_samplers_all)
-monitored_optimized = summarize_monitored(monitored_optimized_all)
-monitored_estimations = summarize_monitored(monitored_estimations_all)
+monitored_test = summarize_monitored(monitored_test_all)
 
-# Export summarized layers (only for first simulation as example)
-if id == 1
-    CSV.write(datadir("monitored_spp.csv"), monitored_spp)
-    CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
-    CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
-    CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
-end
-
-# Get species with highest degree
-sp = monitored_types.sp[1]
-deg = maximum(monitored_types.deg)
-
-# Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
-focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
-richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"))
-degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree_realized-$idp.tiff"))
-probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"))
-
-## Define labels and colors for all plots
-
-# Rename samplers
-monitored_samplers.sampler =
-    replace.(
-        monitored_samplers.sampler,
-        "UncertaintySampling" => "Uncertainty Sampling",
-        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
-        "BalancedAcceptance" => "Balanced Acceptance",
-        "SimpleRandomMask" => "Simple Random Mask",
-        "SimpleRandom" => "Simple Random",
-    )
-
-# Colors
+# Define colors for all plots
 cols = Dict{Any,Any}(
     # Interaction types
     "possible" => Makie.wong_colors()[2],
@@ -96,19 +52,23 @@ cols = Dict{Any,Any}(
     "Realized interactions" => Makie.wong_colors()[5],
     "Probabilistic range" => Makie.wong_colors()[6],
 )
-for (sp, col) in zip(unique(monitored_spp.sp), [Makie.wong_colors()[[2, 6, 7]]..., :black])
-    cols[sp] = col
-end
 cols
-
 ## Monitored types
 
-begin
-    res = monitored_types
+# Load & summarize results
+monitored_types_all = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
+monitored_types2_all = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
+
+# Visualize
+fig_types = let
+    res = monitored_types_all
     vars = unique(res.var)
     fig = Figure()
     ax = Axis(
-        fig[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:25:100
+        fig[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:25:100,
     )
     for v in vars
         b = filter(:var => ==(v), res)
@@ -119,11 +79,11 @@ begin
     axislegend(; position=:rc, merge=true)
     fig
 end
-save(plotsdir("focal_types.png"), fig)
+save(plotsdir("focal_types.png"), fig_types)
 
 # Visualize result
-begin
-    res = monitored_types2
+fig_types2 = let
+    res = monitored_types2_all
     vars = unique(res.var)
     fig = Figure()
     ax = Axis(
@@ -142,12 +102,19 @@ begin
     axislegend(; position=:rb, merge=true)
     fig
 end
-save(plotsdir("focal_types2.png"), fig)
+save(plotsdir("focal_types2.png"), fig_types2)
 
 ## Repeat with 4 species with different degrees
 
+# Load & summarize results
+monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
+monitored_spp = summarize_monitored(monitored_spp_all)
+if id == 1
+    CSV.write(datadir("monitored_spp.csv"), monitored_spp)
+end
+
 # Visualize result
-begin
+fig_spp = let
     res = monitored_spp
     spp = unique(res.sp)
     fig = Figure(; size=(600, 600))
@@ -175,9 +142,31 @@ begin
     fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
     fig
 end
-save(plotsdir("focal_spp.png"), fig)
+save(plotsdir("focal_spp.png"), fig_spp)
 
 ## Explore variations with different sampler
+
+# Load & summarize results
+monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
+monitored_samplers = summarize_monitored(monitored_samplers_all)
+if id == 1
+    CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
+end
+
+# Load layers used for optimization
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
+
+# Rename samplers
+monitored_samplers.sampler =
+    replace.(
+        monitored_samplers.sampler,
+        "UncertaintySampling" => "Uncertainty Sampling",
+        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+        "BalancedAcceptance" => "Balanced Acceptance",
+        "SimpleRandomMask" => "Simple Random Mask",
+        "SimpleRandom" => "Simple Random",
+    )
 
 # Generate BON examples
 begin
@@ -190,11 +179,12 @@ begin
     bons["Simple Random"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
     bons["Balanced Acceptance"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_mask)
     bons["Simple Random Mask"] = BON.sample(BON.SimpleRandom(100), focal_sp_mask)
+    bons
 end
 
 # Plot
-begin
-    set = ["Uncertainty Sampling", "Balanced Acceptance", "Simple Random Mask"]
+fig_samplers = let
+    set = ["Uncertainty Sampling", "Balanced Acceptance"]
     res = @rsubset(monitored_samplers, :sampler in set)
     fig = Figure()
     # Create layouts
@@ -202,7 +192,10 @@ begin
     gb = GridLayout(fig[:, end + 1])
     # Create axes
     ax = Axis(
-        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+        ga[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:100:500,
     )
     ax1 = Axis(
         gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
@@ -224,8 +217,8 @@ begin
         lines!(ax, b.nbon, b.med; label=s, color=cols[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(ax; position=:lt, merge=true, labelsize=14)
-    # Legend(ga[2,1], ax, orientation=:horizontal, merge=true, nbanks=2)
+    # axislegend(ax; position=:lt, merge=true, labelsize=14)
+    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, ifelse(s == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
@@ -238,13 +231,32 @@ begin
     # Show figure
     figA = fig
 end
-save(plotsdir("focal_samplers_mask.png"), fig)
+save(plotsdir("focal_samplers_mask.png"), fig_samplers)
 
 ## Optimized sampling
+
+# Load & summarize results
+monitored_optimized_all = CSV.read(
+    datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
+)
+monitored_optimized = summarize_monitored(monitored_optimized_all)
+if id == 1
+    CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
+end
+
+# Load layers used for optimization
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
+richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"))
+degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree_realized-$idp.tiff"))
+probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"))
 
 # Generate BON examples
 begin
     Random.seed!(33)
+    if !(@isdefined bons)
+        bons = Dict()
+    end
     bons["Focal species range"] = bons["Uncertainty Sampling"]
     bons["Species richness"] = BON.sample(BON.UncertaintySampling(100), richness_spp)
     bons["Realized interactions"] = BON.sample(
@@ -272,7 +284,7 @@ _order = Dict(
 sort!(monitored_optimized, order(:sampler; by=x -> _order[x]))
 
 # Plot
-begin
+fig_optimized = let
     set = [
         "Realized interactions",
         "Focal species range",
@@ -286,7 +298,10 @@ begin
     gb = GridLayout(fig[:, end + 1])
     # Create axes
     ax = Axis(
-        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+        ga[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:100:500,
     )
     ax1 = Axis(
         gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
@@ -308,7 +323,8 @@ begin
         lines!(ax, b.nbon, b.med; label=s, color=cols[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(ax; position=:lt, merge=true, labelsize=14)
+    # axislegend(ax; position=:lt, merge=true, labelsize=14)
+    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, layers[s])
@@ -317,28 +333,40 @@ begin
     end
     # Subpanel labels
     Label(
-        ga[1, :, Top()], "Optimization layer efficiency"; padding=(0, 0, 5, 0), font=:bold
+        ga[1, :, Top()],
+        "Optimization layer efficiency";
+        padding=(0, 0, 5, 0),
+        font=:bold,
     )
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
     figB = fig
 end
-save(plotsdir("focal_optimized.png"), fig)
+save(plotsdir("focal_optimized.png"), fig_optimized)
 
 # Join
-begin
+fig_joined = let
     fig = Figure(; size=(650, 1100))
     g1 = GridLayout(fig[1, :])
     g2 = GridLayout(fig[2, :])
 
     # Figure 1
-    res = monitored_samplers
+    set = [
+        "Uncertainty Sampling",
+        "Weighted Balanced Acceptance",
+        "Simple Random",
+        "Balanced Acceptance",
+    ]
+    res = @rsubset(monitored_samplers, :sampler in set)
     # Create layouts
     ga = GridLayout(g1[:, 1:3])
     gb = GridLayout(g1[:, end + 1])
     # Create axes
     ax = Axis(
-        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+        ga[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:100:500,
     )
     ax1 = Axis(
         gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
@@ -401,7 +429,10 @@ begin
     gb = GridLayout(g2[:, end + 1])
     # Create axes
     ax = Axis(
-        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+        ga[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:100:500,
     )
     ax1 = Axis(
         gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
@@ -436,7 +467,10 @@ begin
     end
     # Subpanel labels
     Label(
-        ga[1, :, Top()], "Optimization layer efficiency"; padding=(0, 0, 5, 0), font=:bold
+        ga[1, :, Top()],
+        "Optimization layer efficiency";
+        padding=(0, 0, 5, 0),
+        font=:bold,
     )
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
     # Legend
@@ -457,11 +491,20 @@ begin
     # Show figure
     fig
 end
-save(plotsdir("focal_joined.png"), fig)
+save(plotsdir("focal_joined.png"), fig_joined)
 
 ## Range estimation
 
-# Load layers
+# Load & summarize results
+monitored_estimations_all = CSV.read(
+    datadir(OUTDIR, "monitored_estimations-$idp.csv"), DataFrame
+)
+monitored_estimations = summarize_monitored(monitored_estimations_all)
+if id == 1
+    CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
+end
+
+# Load layers used for optimization
 errors = unique(monitored_estimations.sampler)
 estimated_ranges = Dict()
 for (i, e) in enumerate(errors)
@@ -470,9 +513,6 @@ for (i, e) in enumerate(errors)
     )
 end
 estimated_ranges
-heatmap(estimated_ranges[0.2])
-heatmap(estimated_ranges[0.0])
-heatmap(estimated_ranges[-0.2])
 
 # Generate BON examples
 begin
@@ -485,7 +525,7 @@ begin
 end
 
 # Plot
-begin
+fig_estimation = let
     set = [-0.2, 0.0, 0.2]
     range_over = estimated_ranges[set[1]]
     range_true = estimated_ranges[set[2]]
@@ -505,7 +545,10 @@ begin
     gb = GridLayout(fig[:, end + 1])
     # Create axes
     ax = Axis(
-        ga[1, 1]; xlabel="Sites in BON", ylabel="Monitored interactions", xticks=0:100:500
+        ga[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:100:500,
     )
     ax1 = Axis(
         gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
@@ -546,4 +589,4 @@ begin
     # Show figure
     figA = fig
 end
-save(plotsdir("focal_estimation.png"), fig)
+save(plotsdir("focal_estimation.png"), fig_estimation)
