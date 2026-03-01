@@ -6,7 +6,7 @@ update_theme!(; CairoMakie=(; px_per_unit=2.0))
 ## Load all simulations
 
 # Summmarize results not combined previously
-function summarize_monitored(df)
+function summarize_focal(df)
     monitored = @chain df begin
         groupby([:sp, :type, :sampler, :nbon])
         @combine(
@@ -35,8 +35,8 @@ for id in ids
     )
 
     # Summmarize results not combined previously
-    monitored_samplers = summarize_monitored(monitored_samplers_all)
-    monitored_optimized = summarize_monitored(monitored_optimized_all)
+    monitored_samplers = summarize_focal(monitored_samplers_all)
+    monitored_optimized = summarize_focal(monitored_optimized_all)
 
     # Add sim id
     @select!(monitored_samplers, :sim = idp, All())

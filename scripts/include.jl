@@ -18,3 +18,6 @@ using Statistics
 import SpeciesDistributionToolkit as SDT
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
+
+includet(srcdir("efficiency.jl"))
+includet(srcdir("focal.jl"))

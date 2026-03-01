@@ -14,39 +14,9 @@ if !(@isdefined OUTDIR)
     const OUTDIR = "focal_array" # dev(local), focal_array or efficiency
 end
 
-# Load test results
+# Load & summarize test results
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
-
-# Summmarize results not combined previously
-function summarize_monitored(df)
-    if "layer" in names(df)
-        cols = [:set, :sp, :type, :sampler, :layer, :nbon]
-    else
-        cols = [:set, :sp, :type, :sampler, :nbon]
-    end
-    monitored = @chain df begin
-        groupby(cols)
-        @combine(
-            :low = quantile(:monitored, 0.05),
-            :med = median(:monitored),
-            :upp = quantile(:monitored, 0.95),
-            :deg = maximum(:deg)
-        )
-        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg)
-        @select(:sim = idp, All())
-    end
-    monitored.sampler =
-        replace.(
-            monitored.sampler,
-            "UncertaintySampling" => "Uncertainty Sampling",
-            "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
-            "BalancedAcceptance" => "Balanced Acceptance",
-            "SimpleRandomMask" => "Simple Random Mask",
-            "SimpleRandom" => "Simple Random",
-        )
-    return monitored
-end
-monitored_test = summarize_monitored(monitored_test_all)
+monitored_test = summarize_focal(monitored_test_all; id=idp)
 
 # Define colors for all plots
 cols = Dict{Any,Any}(
@@ -72,8 +42,8 @@ cols
 # Load & summarize results
 monitored_types_all = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
 monitored_types2_all = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
-monitored_types = summarize_monitored(monitored_types_all)
-monitored_types2 = summarize_monitored(monitored_types2_all)
+monitored_types = summarize_focal(monitored_types_all; id=idp)
+monitored_types2 = summarize_focal(monitored_types2_all; id=idp)
 
 # Visualize
 fig_types = let
@@ -128,7 +98,7 @@ save(plotsdir("focal_types2.png"), fig_types2)
 
 # Load & summarize results
 monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
-monitored_spp = summarize_monitored(monitored_spp_all)
+monitored_spp = summarize_focal(monitored_spp_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_spp.csv"), monitored_spp)
 end
@@ -169,7 +139,7 @@ save(plotsdir("focal_spp.png"), fig_spp)
 
 # Load & summarize results
 monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
-monitored_samplers = summarize_monitored(monitored_samplers_all)
+monitored_samplers = summarize_focal(monitored_samplers_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
 end
@@ -304,7 +274,7 @@ save(plotsdir("focal_samplers_mask.png"), fig_mask)
 monitored_optimized_all = CSV.read(
     datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
 )
-monitored_optimized = summarize_monitored(monitored_optimized_all)
+monitored_optimized = summarize_focal(monitored_optimized_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
 end
@@ -587,7 +557,7 @@ save(plotsdir("focal_joined.png"), fig_joined)
 monitored_estimations_all = CSV.read(
     datadir(OUTDIR, "monitored_estimations-$idp.csv"), DataFrame
 )
-monitored_estimations = summarize_monitored(monitored_estimations_all)
+monitored_estimations = summarize_focal(monitored_estimations_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end

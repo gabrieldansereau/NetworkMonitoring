@@ -8,19 +8,8 @@ effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
 effs_optimized = CSV.read(datadir("efficiency_optimized.csv"), DataFrame)
 effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 
-# Rename
-effs_samplers.sampler =
-    replace.(
-        effs_samplers.sampler,
-        "UncertaintySampling" => "Uncertainty Sampling",
-        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
-        "BalancedAcceptance" => "Balanced Acceptance",
-        "SimpleRandomMask" => "Simple Random Mask",
-        "SimpleRandom" => "Simple Random",
-    )
-
 # Combine for convenience
-effs_combined = vcat(effs_samplers, effs_optimized)
+effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
 # Define color sets
 cols = [
@@ -181,16 +170,6 @@ fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend, y
 save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 
 ## Within-simulation comparison
-
-# NDI
-ndi(x, y) = (x - y) / (x + y)
-
-# Efficiency difference
-function efficiency_difference(n, n2; k=10_000)
-    n = exp(n)
-    n2 = exp(n2)
-    return ((n * log(n) - n * log(n + k) + k) - (n2 * log(n2) - n2 * log(n2 + k) + k))
-end
 
 # Separate results per simulation
 function comparewithin(effs_combined; f=(x, y) -> -(x, y))

@@ -120,7 +120,6 @@ speciesranges = [
 ]
 
 # Get layer occupancy
-occupancy(l) = length(findall(isone, l)) / length(l)
 occupancies = occupancy.(speciesranges)
 monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
 

@@ -190,3 +190,32 @@ function focal_monitoring(
     monitored = reduce(vcat, monitored_vec)
     return monitored
 end
+
+function summarize_focal(df; id=0)
+    if "layer" in names(df)
+        cols = [:set, :sp, :type, :sampler, :layer, :nbon]
+    else
+        cols = [:set, :sp, :type, :sampler, :nbon]
+    end
+    monitored = @chain df begin
+        groupby(cols)
+        @combine(
+            :low = quantile(:monitored, 0.05),
+            :med = median(:monitored),
+            :upp = quantile(:monitored, 0.95),
+            :deg = maximum(:deg)
+        )
+        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg,)
+        @select(:sim = id, All())
+    end
+    monitored.sampler =
+        replace.(
+            monitored.sampler,
+            "UncertaintySampling" => "Uncertainty Sampling",
+            "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+            "BalancedAcceptance" => "Balanced Acceptance",
+            "SimpleRandomMask" => "Simple Random Mask",
+            "SimpleRandom" => "Simple Random",
+        )
+    return monitored
+end
