@@ -46,6 +46,7 @@ if OUTDIR == "focal_array"
 end
 
 # Test run focal monitoring
+@info "Test run"
 Random.seed!(333)
 monitored_sp = focal_monitoring(
     nets_dict, sp; name="test", type=[:possible], nrep=2, nbons=1:5:100
@@ -61,20 +62,23 @@ end
 #=
 
 # Run for all types
+@info "Network types"
 Random.seed!(id * 33)
 types = [:possible, :realized, :detected]
+STEP = (OUTDIR == "dev" ? 20 : 5)
 monitored_types = focal_monitoring(
-    nets_dict, sp; name="types", type=types, nrep=NREP, nbons=1:5:101, combined=false
+    nets_dict, sp; name="types", type=types, nrep=NREP, nbons=1:STEP:101, combined=false
 )
 
 # Re-run for realized and detected with more sites in BON
 types2 = [:realized, :detected]
+STEP = (OUTDIR == "dev" ? 4000 : 1000)
 monitored_types2 = focal_monitoring(
     nets_dict,
     sp;
     name="types2",
     type=types2,
-    nbons=1:1000:10_001,
+    nbons=1:STEP:10_001,
     nrep=NREP,
     combined=false,
 )
@@ -98,20 +102,21 @@ spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
 spp = [sp.first for sp in spp]
 
 # Repeat focal monitoring per species
+@info "Species"
+STEP = (OUTDIR == "dev" ? 50 : 10)
 monitored_spp = focal_monitoring(
     nets_dict,
     spp;
     name="species",
     type=[:realized],
     nrep=NREP,
-    nbons=1:10:500,
+    nbons=1:STEP:500,
     combined=false,
 )
 
 # Extract species ranges
 speciesranges = [
-    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for
-    id in idx
+    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
 ]
 
 # Get layer occupancy
@@ -130,8 +135,10 @@ CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
 #=
 
 # Run with replicates
+@info "Samplers"
 Random.seed!(id * 22)
 samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
+STEP = (OUTDIR == "dev" ? 50 : 5)
 monitored_samplers = focal_monitoring(
     nets_dict,
     sp,
@@ -139,12 +146,13 @@ monitored_samplers = focal_monitoring(
     name="samplers",
     type=[:realized],
     sampler=samplers,
-    nbons=1:5:500,
+    nbons=1:STEP:500,
     nrep=NREP,
     combined=false,
 )
 
 # Variation with focal range mask
+@info "Focal range mask"
 Random.seed!(id * 23)
 monitored_mask = focal_monitoring(
     nets_dict,
@@ -153,7 +161,7 @@ monitored_mask = focal_monitoring(
     name="samplers",
     type=[:realized],
     sampler=[BalancedAcceptance, SimpleRandom],
-    nbons=1:5:500,
+    nbons=1:STEP:500,
     nrep=NREP,
     combined=false,
 )
@@ -173,9 +181,11 @@ SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
 #=
 
 # Optimize with UncertaintySampling
+@info "Optimization layers"
 Random.seed!(id * 44)
 optim = [richness_spp, degree_realized, probsp_range]
 optimlabels = ["Species richness", "Realized interactions", "Probabilistic range"]
+STEP = (OUTDIR == "dev" ? 50 : 5)
 monitored_optimized = focal_monitoring(
     nets_dict,
     sp,
@@ -183,7 +193,7 @@ monitored_optimized = focal_monitoring(
     name="layers",
     type=[:realized],
     sampler=[UncertaintySampling],
-    nbons=1:5:500,
+    nbons=1:STEP:500,
     nrep=NREP,
     combined=false,
 )
@@ -216,10 +226,12 @@ layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in
 SDT.nodata!.(layers, 0)
 
 # Optimize with UncertaintySampling
+@info "Range estimations"
 Random.seed!(id * 832)
 optim = layers
 optimlabels = [ifelse(e < 0, "Over$e", "Under-$e") for e in errors]
 replace!(optimlabels, "Under-0.0" => "True-0.0")
+STEP = (OUTDIR == "dev" ? 50 : 5)
 monitored_estimations = focal_monitoring(
     nets_dict,
     sp,
@@ -227,7 +239,7 @@ monitored_estimations = focal_monitoring(
     name="ranges",
     type=[:realized],
     sampler=[BalancedAcceptance],
-    nbons=1:5:500,
+    nbons=1:STEP:500,
     nrep=NREP,
     combined=false,
 )
