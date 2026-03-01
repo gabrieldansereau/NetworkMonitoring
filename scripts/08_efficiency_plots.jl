@@ -13,9 +13,6 @@ import SpeciesDistributionToolkit as SDT
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
 
 # Load data
-sims_samplers = CSV.read(datadir("sims_efficiency_samplers.csv"), DataFrame)
-sims_optimized = CSV.read(datadir("sims_efficiency_optimized.csv"), DataFrame)
-sims_species = CSV.read(datadir("sims_efficiency_species.csv"), DataFrame)
 effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
 effs_optimized = CSV.read(datadir("efficiency_optimized.csv"), DataFrame)
 effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
