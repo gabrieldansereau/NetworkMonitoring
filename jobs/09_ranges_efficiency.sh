@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --account=ctb-tpoisot
-#SBATCH --array=1-100
+#SBATCH --array=24,44,59,74,83
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
-#SBATCH --time=02:00:00
+#SBATCH --time=05:00:00
 #SBATCH --job-name=09_ranges_efficiency
 #SBATCH --output=jobs/out/%x-%J.out
 
