@@ -153,10 +153,10 @@ fig = let bs = sim1_samplers, b = monitored_samplers
         b.low,
         b.upp;
         alpha=0.4,
-        color=Makie.wong_colors()[2],
+        color=colours["Uncertainty Sampling"],
         label="90% percentile",
     )
-    scatter!(b.nbon, b.med; color=Makie.wong_colors()[2], label="median points")
+    scatter!(b.nbon, b.med; color=colours["Uncertainty Sampling"], label="median points")
     lines!(
         b.nbon,
         saturation(eff)(b.nbon);

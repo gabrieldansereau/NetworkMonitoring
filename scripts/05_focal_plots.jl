@@ -17,26 +17,6 @@ end
 # Load & summarize test results
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
 monitored_test = summarize_focal(monitored_test_all; id=idp)
-
-# Define colors for all plots
-cols = Dict{Any,Any}(
-    # Interaction types
-    "possible" => Makie.wong_colors()[2],
-    "realized" => Makie.wong_colors()[3],
-    "detected" => Makie.wong_colors()[4],
-    # Samplers
-    "Uncertainty Sampling" => Makie.wong_colors()[2],
-    "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
-    "Simple Random" => Makie.wong_colors()[1],
-    "Balanced Acceptance" => :grey,
-    "Simple Random Mask" => Makie.wong_colors()[1],
-    # Layers
-    "Focal species range" => Makie.wong_colors()[2],
-    "Species richness" => Makie.wong_colors()[4],
-    "Realized interactions" => Makie.wong_colors()[5],
-    "Probabilistic range" => Makie.wong_colors()[6],
-)
-cols
 ## Monitored types
 
 # Load & summarize results
@@ -60,8 +40,8 @@ fig_types = let
     for v in vals
         b = filter(var => ==(v), res)
         deg = maximum(b.deg)
-        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=cols[v])
-        lines!(b.nbon, b.med * deg; label=v, color=cols[v])
+        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
+        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
     end
     hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:rc, merge=true)
@@ -84,9 +64,9 @@ fig_types2 = let
     for v in vals
         b = filter(var => ==(v), res)
         deg = maximum(b.deg)
-        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=cols[v])
-        lines!(b.nbon, b.med * deg; label=v, color=cols[v])
-        hlines!(deg; linestyle=:dash, color=cols[v])
+        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
+        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
+        hlines!(deg; linestyle=:dash, color=colours[v])
     end
     hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:rb, merge=true)
@@ -195,8 +175,8 @@ fig_samplers = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -204,7 +184,7 @@ fig_samplers = let
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3], vals)
         heatmap!(a, ifelse(v == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
     # Subpanel labels
@@ -248,8 +228,8 @@ fig_mask = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -257,7 +237,7 @@ fig_mask = let
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3], vals)
         heatmap!(a, ifelse(v == "Uncertainty Sampling", focal_sp_range, focal_sp_mask))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
     # Subpanel labels
@@ -356,8 +336,8 @@ fig_optimized = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -366,7 +346,7 @@ fig_optimized = let
     example_layers = filter(!=("Probabilistic range"), vals)
     for (a, l) in zip([ax1, ax2, ax3], example_layers)
         heatmap!(a, layers[l])
-        scatter!(a, coordinates(bons[l]); markersize=5, color=cols[l], strokewidth=0.5)
+        scatter!(a, coordinates(bons[l]); markersize=5, color=colours[l], strokewidth=0.5)
         a.ylabel = l
     end
     # Subpanel labels
@@ -448,14 +428,14 @@ fig_joined = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
         heatmap!(a, ifelse(v == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
 
@@ -512,14 +492,14 @@ fig_joined = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
         heatmap!(a, layers[v])
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
 
@@ -593,11 +573,11 @@ fig_estimation = let
     range_true = estimated_ranges[set[2]]
     range_under = estimated_ranges[set[3]]
 
-    if !(@isdefined cols)
-        cols = Dict()
+    if !(@isdefined colours)
+        colours = Dict()
     end
     for (i, s) in enumerate(set)
-        cols[s] = Makie.wong_colors()[i]
+        colours[s] = Makie.wong_colors()[i]
     end
 
     # Create figure
@@ -629,7 +609,7 @@ fig_estimation = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=cols[v], label=v)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=v)
         lines!(ax, b.nbon, b.med; label=v)
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
@@ -641,7 +621,7 @@ fig_estimation = let
     heatmap!(ax3, range_true; colormap=:viridis, alpha=0.5)
     heatmap!(ax3, range_under; colormap=:viridis)
     for (a, v) in zip([ax1, ax2, ax3], vals)
-        scatter!(a, coordinates(bons[v]); markersize=5, strokewidth=0.5, color=cols[v])
+        scatter!(a, coordinates(bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
         a.ylabel = v
     end
 

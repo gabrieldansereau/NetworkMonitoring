@@ -76,25 +76,6 @@ monitored_optimized = @chain sims_optimized begin
         :uppmed = median(:uppdiff),
     )
 end
-
-## Define labels and colors for all plots
-
-# Colors
-cols = Dict{Any,Any}(
-    # Interaction types
-    "possible" => Makie.wong_colors()[2],
-    "realized" => Makie.wong_colors()[3],
-    "detected" => Makie.wong_colors()[4],
-    # Samplers
-    "UncertaintySampling" => Makie.wong_colors()[2],
-    "WeightedBalancedAcceptance" => Makie.wong_colors()[3],
-    "SimpleRandom" => Makie.wong_colors()[1],
-    # Layers
-    "Focal species range" => Makie.wong_colors()[2],
-    "Species richness" => Makie.wong_colors()[4],
-    "Realized interactions" => Makie.wong_colors()[5],
-)
-
 ## Explore variations with different sampler
 
 # Load one set of focal layers for illustration
@@ -142,8 +123,8 @@ begin
         b = filter(:sampler => ==(s), res)
         for sim in unique(res.sim)
             bsim = filter(:sim => ==(sim), b)
-            band!(ax, bsim.nbon, bsim.low, bsim.upp; alpha=0.3, label=s, color=cols[s])
-            lines!(ax, bsim.nbon, bsim.med; label=s, color=cols[s])
+            band!(ax, bsim.nbon, bsim.low, bsim.upp; alpha=0.3, label=s, color=colours[s])
+            lines!(ax, bsim.nbon, bsim.med; label=s, color=colours[s])
         end
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
@@ -152,7 +133,7 @@ begin
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, focal_sp_range)
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -192,8 +173,8 @@ begin
         b = filter(:sampler => ==(s), res)
         for sim in unique(res.sim)
             bsim = filter(:sim => ==(sim), b)
-            # band!(ax, bsim.nbon, bsim.low, bsim.upp; alpha=0.3, label=s, color=cols[s])
-            lines!(ax, bsim.nbon, bsim.med; label=s, color=cols[s])
+            # band!(ax, bsim.nbon, bsim.low, bsim.upp; alpha=0.3, label=s, color=colours[s])
+            lines!(ax, bsim.nbon, bsim.med; label=s, color=colours[s])
         end
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
@@ -202,7 +183,7 @@ begin
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, focal_sp_range)
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -240,8 +221,10 @@ begin
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
-        band!(ax, b.nbon, b.med .- b.low, b.med .+ b.upp; alpha=0.4, label=s, color=cols[s])
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+        band!(
+            ax, b.nbon, b.med .- b.low, b.med .+ b.upp; alpha=0.4, label=s, color=colours[s]
+        )
+        lines!(ax, b.nbon, b.med; label=s, color=colours[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -249,7 +232,7 @@ begin
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, focal_sp_range)
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -294,9 +277,9 @@ begin
             b.med .+ b.uppmed;
             alpha=0.4,
             label=s,
-            color=cols[s],
+            color=colours[s],
         )
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+        lines!(ax, b.nbon, b.med; label=s, color=colours[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -304,7 +287,7 @@ begin
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, focal_sp_range)
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -370,8 +353,8 @@ begin
         b = filter(:sampler => ==(s), res)
         for sim in unique(res.sim)
             bsim = filter(:sim => ==(sim), b)
-            # band!(ax, bsim.nbon, bsim.low, bsim.upp; alpha=0.3, label=s, color=cols[s])
-            lines!(ax, bsim.nbon, bsim.med; label=s, color=cols[s])
+            # band!(ax, bsim.nbon, bsim.low, bsim.upp; alpha=0.3, label=s, color=colours[s])
+            lines!(ax, bsim.nbon, bsim.med; label=s, color=colours[s])
         end
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
@@ -379,7 +362,7 @@ begin
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, layers[s])
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -419,15 +402,17 @@ begin
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
-        band!(ax, b.nbon, b.med - b.low, b.med + b.upp; alpha=0.4, label=s, color=cols[s])
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+        band!(
+            ax, b.nbon, b.med - b.low, b.med + b.upp; alpha=0.4, label=s, color=colours[s]
+        )
+        lines!(ax, b.nbon, b.med; label=s, color=colours[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, layers[s])
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -474,16 +459,16 @@ begin
             b.med + b.uppmed;
             alpha=0.4,
             label=s,
-            color=cols[s],
+            color=colours[s],
         )
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+        lines!(ax, b.nbon, b.med; label=s, color=colours[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, layers[s])
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -580,8 +565,8 @@ begin
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=colours[s])
+        lines!(ax, b.nbon, b.med; label=s, color=colours[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -589,7 +574,7 @@ begin
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, focal_sp_range)
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
@@ -627,15 +612,15 @@ begin
     # Sampling results
     for s in unique(res.sampler)
         b = filter(:sampler => ==(s), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=cols[s])
-        lines!(ax, b.nbon, b.med; label=s, color=cols[s])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=s, color=colours[s])
+        lines!(ax, b.nbon, b.med; label=s, color=colours[s])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(ax; position=:lt, merge=true, labelsize=14)
     # Heatmaps & BON example
     for (a, s) in zip([ax1, ax2, ax3], unique(res.sampler))
         heatmap!(a, layers[s])
-        scatter!(a, coordinates(bons[s]); markersize=5, color=cols[s], strokewidth=0.5)
+        scatter!(a, coordinates(bons[s]); markersize=5, color=colours[s], strokewidth=0.5)
         a.ylabel = s
     end
     # Subpanel labels
