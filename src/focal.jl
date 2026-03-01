@@ -1,3 +1,80 @@
+function generate_focal_simulation(d; seed=rand(1:10_000))
+    # Generate networks using simulations
+    Random.seed!(seed)
+    nets_dict = generate_networks(d)
+    nets_dict[:possible] = nets_dict[:pos]
+    @unpack detected, realized, pos, metaweb, ranges = nets_dict
+
+    # Generate probabilistic ranges
+    # We need to run operations in the same order
+    Random.seed!(seed)
+    _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
+    probranges = generate(
+        AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites)), d.ns
+    )
+
+    # Get species with highest degree
+    deg, sp = findmax(degree(metaweb.metaweb))
+
+    # Extract species range
+    sp_range = SDT.SDMLayer(
+        occurrence(ranges)[indexin([sp], ranges.species)...];
+        x=(0.0, d.nsites),
+        y=(0.0, d.nsites),
+    )
+
+    # Create species range mask
+    sp_mask = SDT.nodata(sp_range, 0)
+
+    # Extract richness layers
+    richness_spp = SDT.SDMLayer(
+        sum(occurrence(ranges)); x=(0.0, d.nsites), y=(0.0, d.nsites)
+    )
+    richness_int = SDT.SDMLayer(
+        extract(SIN.links, realized); x=(0.0, d.nsites), y=(0.0, d.nsites)
+    )
+    richness_pos = SDT.SDMLayer(
+        extract(SIN.links, pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
+    )
+
+    # Extract richness of interacting species for focal species
+    degree_possible = SDT.SDMLayer(
+        extract(x -> degree(render(Binary, x), sp), pos);
+        x=(0.0, d.nsites),
+        y=(0.0, d.nsites),
+    )
+    degree_realized = SDT.SDMLayer(
+        extract(x -> degree(render(Binary, x), sp), realized);
+        x=(0.0, d.nsites),
+        y=(0.0, d.nsites),
+    )
+
+    # Extract probabilistic range
+    probsp_range = SDT.SDMLayer(
+        occurrence(probranges)[indexin([sp], probranges.species)...];
+        x=(0.0, d.nsites),
+        y=(0.0, d.nsites),
+    )
+
+    # Extract thresholds
+    begin
+        Random.seed!(seed)
+        thresholds = []
+        _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
+        for n in 1:(d.ns)
+            ar = AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites))
+            H, sz, thres, bin = ar.autocorrelation, ar.dims, rand(ar.threshold), ar.binary
+            range_mat = rand(DiamondSquare(H), sz) # kept to match random seed
+            push!(thresholds, thres)
+        end
+        thresholds
+    end
+
+    sims_dict = @dict probranges deg sp sp_range sp_mask richness_spp richness_int richness_pos degree_possible degree_realized probsp_range thresholds
+
+    return (nets_dict, sims_dict)
+end
+
 function focal_monitoring(
     nets_dict,
     sp::Symbol,

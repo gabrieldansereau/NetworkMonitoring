@@ -52,6 +52,6 @@ export BON, SDT, SSL, SIS, SIN
 export metawebify, extract, heatmapcb, monitor
 export DefaultParams, generate_networks, generate_bon, evaluate_monitoring, runsim
 export AutocorrelatedProbabilisticRange, generate
-export focal_monitoring
+export focal_monitoring, generate_focal_simulation
 
 end # module NetworkMonitoring

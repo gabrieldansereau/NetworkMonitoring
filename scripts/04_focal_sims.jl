@@ -4,39 +4,15 @@ using DrWatson
 using BiodiversityObservationNetworks:
     UncertaintySampling, BalancedAcceptance, WeightedBalancedAcceptance, SimpleRandom
 
-# Set default parameters for network simulations
-d = DefaultParams()
-
 # Set directory to export results
 if !(@isdefined OUTDIR)
     const OUTDIR = "dev" # dev (local), focal_array or efficiency (remote)
 end
 mkpath(datadir(OUTDIR))
 
-# Use job id to vary parameters
+# Use job id to random results
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
 idp = lpad(id, 2, "0")
-
-# Generate networks using simulations
-Random.seed!(id * 42)
-nets_dict = generate_networks(d)
-nets_dict[:possible] = nets_dict[:pos]
-@unpack detected, realized, pos, metaweb, ranges = nets_dict
-
-# Generate probabilistic ranges
-# We need to run operations in the same order
-begin
-    Random.seed!(id * 42)
-    _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
-    probranges = generate(
-        AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites)), d.ns
-    )
-end
-
-## Test focal monitoring for a single species
-
-# Get species with highest degree for test run
-deg, sp = findmax(degree(metaweb.metaweb))
 
 # Set number of replicates for short interactive run
 if !(@isdefined NREP)
@@ -44,6 +20,30 @@ if !(@isdefined NREP)
 end
 # For longer, non-interactive runs, set the number of replicates with:
 # julia --project -e 'const NREP = 100; include("scripts/04_focal_sims.jl")'
+
+# Generate networks using simulations
+d = DefaultParams()
+seed = id * 42
+nets_dict, sims_dict = generate_focal_simulation(d; seed=seed);
+@unpack detected, realized, pos, metaweb, ranges = nets_dict
+@unpack probranges, deg, sp, sp_range, sp_mask = sims_dict
+@unpack richness_spp, richness_int, richness_pos, degree_possible, degree_realized =
+    sims_dict
+@unpack probsp_range, thresholds = sims_dict
+
+# Export individual layers only for focal array simulations
+if OUTDIR == "focal_array"
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"), richness_spp)
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_int-$idp.tiff"), richness_int)
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_pos-$idp.tiff"), richness_pos)
+    SDT.SimpleSDMLayers.save(
+        datadir(OUTDIR, "layer_degree_realized-$idp.tiff"), degree_realized
+    )
+    SDT.SimpleSDMLayers.save(
+        datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
+    )
+    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
+end
 
 # Test run focal monitoring
 Random.seed!(333)
@@ -60,9 +60,8 @@ end
 
 #=
 
-Random.seed!(id * 33)
-
 # Run for all types
+Random.seed!(id * 33)
 types = [:possible, :realized, :detected]
 monitored_types = focal_monitoring(
     nets_dict, sp; name="types", type=types, nrep=NREP, nbons=1:5:101, combined=false
@@ -111,7 +110,8 @@ monitored_spp = focal_monitoring(
 
 # Extract species ranges
 speciesranges = [
-    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
+    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for
+    id in idx
 ]
 
 # Get layer occupancy
@@ -128,16 +128,6 @@ CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
 ## Explore variations with different sampler
 
 #=
-
-# Extract species range
-sp_range = SDT.SDMLayer(
-    occurrence(ranges)[indexin([sp], ranges.species)...];
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Create species range mask
-sp_mask = SDT.nodata(sp_range, 0)
 
 # Run with replicates
 Random.seed!(id * 22)
@@ -182,30 +172,6 @@ SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
 
 #=
 
-# Extract richness layers
-richness_spp = SDT.SDMLayer(sum(occurrence(ranges)); x=(0.0, d.nsites), y=(0.0, d.nsites))
-richness_int = SDT.SDMLayer(
-    extract(SIN.links, realized); x=(0.0, d.nsites), y=(0.0, d.nsites)
-)
-richness_pos = SDT.SDMLayer(extract(SIN.links, pos); x=(0.0, d.nsites), y=(0.0, d.nsites))
-
-# Extract richness of interacting species for focal species
-degree_possible = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
-)
-degree_realized = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), sp), realized);
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Extract probabilistic range
-probsp_range = SDT.SDMLayer(
-    occurrence(probranges)[indexin([sp], probranges.species)...];
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
 # Optimize with UncertaintySampling
 Random.seed!(id * 44)
 optim = [richness_spp, degree_realized, probsp_range]
@@ -239,47 +205,12 @@ end
 # Export
 CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
 
-# Export individual layers only for focal array simulations
-if OUTDIR == "focal_array"
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"), richness_spp)
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_int-$idp.tiff"), richness_int)
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_pos-$idp.tiff"), richness_pos)
-    SDT.SimpleSDMLayers.save(
-        datadir(OUTDIR, "layer_degree_realized-$idp.tiff"), degree_realized
-    )
-    SDT.SimpleSDMLayers.save(
-        datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
-    )
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
-end
-
 =#
 
 ## Range estimation
 
-# Extract thresholds
-begin
-    Random.seed!(id * 42)
-    thresholds = []
-    _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
-    for n in 1:(d.ns)
-        ar = AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites))
-        H, sz, thres, bin = ar.autocorrelation, ar.dims, rand(ar.threshold), ar.binary
-        range_mat = rand(DiamondSquare(H), sz) # kept to match random seed
-        push!(thresholds, thres)
-    end
-    thresholds
-end
-threshold = thresholds[indexin([sp], probranges.species)...]
-
-# Extract layers
-probsp_range = SDT.SDMLayer(
-    occurrence(probranges)[indexin([sp], probranges.species)...];
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
 # Misestimate ranges
+threshold = thresholds[indexin([sp], probranges.species)...]
 errors = -0.2:0.05:0.2
 layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in errors]
 SDT.nodata!.(layers, 0)
