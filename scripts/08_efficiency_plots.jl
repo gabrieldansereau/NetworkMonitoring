@@ -1,16 +1,7 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Random
-using Statistics
-import SpeciesDistributionToolkit as SDT
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
 effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
