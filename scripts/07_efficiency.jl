@@ -108,7 +108,7 @@ end
 CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
 CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
 CSV.write(datadir("efficiency_species.csv"), effs_species);
-CSV.write(datadir("efficiency_estimations.csv"), effs_species);
+CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
 
 ## Within-simulation variation
 
