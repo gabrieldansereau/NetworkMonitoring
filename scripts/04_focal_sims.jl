@@ -224,6 +224,7 @@ if OUTDIR == "efficiency"
 else
     errors = -0.2:0.05:0.2
 end
+threshold = thresholds[indexin([sp], probranges.species)...]
 layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in errors]
 SDT.nodata!.(layers, 0)
 
