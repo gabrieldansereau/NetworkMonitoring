@@ -95,3 +95,89 @@ begin
     f
 end
 save(plotsdir("ranges_efficiencies.png"), f)
+
+## Within-simulation comparison
+
+# Separate results per simulation
+within_combined_dif = comparewithin(
+    effs_estimations,
+    ["True-0.00", "Under-0.10", "Over-0.10"];
+    labels=Dict("True-0.00" => "True"),
+    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+)
+
+# Count positive and negative comparisons per set and variable (across simulations/replicates)
+unique_df = @chain within_combined_dif begin
+    @groupby(:set, :variable)
+    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+end
+
+# Visualize
+sortedcomps = unique(unique_df.variable)
+begin
+    m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
+    rains = visual(
+        RainClouds;
+        markersize=7,
+        jitter_width=0.15,
+        plot_boxplots=false,
+        clouds=nothing,
+        orientation=:horizontal,
+    )
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+end
+let d = within_combined_dif, u = unique_df
+    Random.seed!(42)
+
+    # Figure & grid
+    f = Figure(; size=(600, 300))
+    g1 = GridLayout(f[1:6, 1:3])
+    g3 = GridLayout(f[1:6, end + 1])
+
+    # Main panels
+    d1 = @rsubset(d, :set == "ranges")
+    m = mapping(
+        :variable => sorter(sortedcomps) => "",
+        :value => "Efficiency difference";
+        color=:value => (x -> x <= 0.0),
+    )
+    # xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
+    # xlog2 = (; axis=(; xtickformat=xlog2f))
+    # xaxis = (; axis=(; xticks=0:2:10))
+    fg1 = draw!(g1, data(d1) * m * rains + vline;)
+    pad = (-100, 0, 10, 0)
+    Label(
+        g1[1, 1, Top()],
+        "Range estimation comparisons";
+        halign=:left,
+        font=:bold,
+        padding=pad,
+    )
+
+    # Summary panels
+    d3 = @rsubset(u, :set == "ranges")
+    ax3 = Axis(g3[1, 1])
+    m34 = mapping(
+        :variable => sorter(sortedcomps),
+        [1];
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
+        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:x,
+        bar_labels=["$v" for v in d3.count],
+        label_position=:center,
+        label_color=:white,
+    )
+    draw!(ax3, data(d3) * m34 * v3)
+
+    hidedecorations!(ax3)
+    hidespines!(ax3)
+    pad = (0, 0, 10, 0)
+    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+
+    f
+end
+save(plotsdir("ranges_comparison.png"), current_figure())
