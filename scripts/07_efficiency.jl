@@ -80,30 +80,35 @@ end
 occupdf = DataFrame(; sim=ids, occ=[occup[i] for i in ids])
 
 # Calculate efficiency & assign occupancy
+effs_species = @chain sims_species begin
+    @groupby(:sim, :set, :sp, :deg, :rank, :occ)
+    @combine(:eff = efficiency(:nbon, :med))
+    rename(:sp => :variable)
+end
 effs_samplers = @chain sims_samplers begin
     @groupby(:sim, :set, :sampler)
     @combine(:eff = efficiency(:nbon, :med))
     @rtransform(:occ = occup[:sim])
+    rename(:sampler => :variable)
 end
 effs_optimized = @chain sims_optimized begin
-    @groupby(:sim, :set, :sampler, :layer)
+    @groupby(:sim, :set, :layer)
     @combine(:eff = efficiency(:nbon, :med))
     @rtransform(:occ = occup[:sim])
-end
-effs_species = @chain sims_species begin
-    @groupby(:sim, :set, :sampler, :sp, :deg, :rank, :occ)
-    @combine(:eff = efficiency(:nbon, :med))
+    rename(:layer => :variable)
 end
 effs_estimations = @chain sims_estimations begin
-    @groupby(:sim, :set, :sampler, :layer)
+    @groupby(:sim, :set, :layer)
     @combine(:eff = efficiency(:nbon, :med))
+    @rtransform(:occ = occup[:sim])
+    rename(:layer => :variable)
 end
 
 # Export
-CSV.write(datadir("efficiency_samplers.csv"), effs_samplers)
-CSV.write(datadir("efficiency_optimized.csv"), effs_optimized)
-CSV.write(datadir("efficiency_species.csv"), effs_species)
-CSV.write(datadir("efficiency_estimations.csv"), effs_species)
+CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
+CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
+CSV.write(datadir("efficiency_species.csv"), effs_species);
+CSV.write(datadir("efficiency_estimations.csv"), effs_species);
 
 ## Within-simulation variation
 

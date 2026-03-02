@@ -34,7 +34,7 @@ begin
     Random.seed!(42) # for jitter
     eff = :eff => "efficiency"
     layer =
-        mapping(:sampler => sorter(sortedlayout) => "", eff; color=:sampler) *
+        mapping(:variable => sorter(sortedlayout) => "", eff; color=:variable) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
@@ -85,16 +85,16 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 # Scatter & smooth
 begin
     occ = :occ => "occupancy"
-    layout = mapping(occ, eff; color=:sampler) * (visual(Scatter) + linear())
+    layout = mapping(occ, eff; color=:variable) * (visual(Scatter) + linear())
     scl = scales(; Color=(; palette=colourpal))
     legend = (; position=:bottom)
-    f1 = data(effs_samplers) * layout * mapping(; col=:sampler => sorter(sortedlayout))
-    f2 = data(effs_optimized) * layout * mapping(; col=:sampler => sorter(sortedlayout))
+    f1 = data(effs_samplers) * layout * mapping(; col=:variable => sorter(sortedlayout))
+    f2 = data(effs_optimized) * layout * mapping(; col=:variable => sorter(sortedlayout))
 end
 draw(f1, scl; legend=legend)
 draw(f2, scl; legend=legend)
 fig = draw(
-    data(effs_combined) * layout * mapping(; layout=:sampler => sorter(sortedlayout)),
+    data(effs_combined) * layout * mapping(; layout=:variable => sorter(sortedlayout)),
     scales(; Color=(; palette=colourpal, legend=false));
     figure=(; size=(800, 450)),
 )
@@ -155,7 +155,7 @@ save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 # Separate results per simulation
 function comparewithin(effs_combined; f=(x, y) -> -(x, y))
     within_combined = @chain effs_combined begin
-        unstack(:sampler, :eff)
+        unstack(:variable, :eff)
         @rtransform(
             :ΔSRM_BA = f($("Simple Random Mask"), $("Balanced Acceptance")),
             :ΔUS_BA = f($("Uncertainty Sampling"), $("Balanced Acceptance")),
@@ -230,8 +230,8 @@ let d = within_combined_dif, u = unique_df
     g4 = GridLayout(f[7:end, end])
 
     # Main panels
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
+    d1 = @rsubset(d, :set == "samplers")
+    d2 = @rsubset(d, :set == "layers")
     m = mapping(
         :variable => sorter(sortedcomps) => "comparison",
         :value => "Efficiency difference";
@@ -248,8 +248,8 @@ let d = within_combined_dif, u = unique_df
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
-    d3 = @rsubset(u, :set == "Samplers")
-    d4 = @rsubset(u, :set == "Layers")
+    d3 = @rsubset(u, :set == "samplers")
+    d4 = @rsubset(u, :set == "layers")
     ax3 = Axis(g3[1, 1])
     ax4 = Axis(g4[1, 1])
     m34 = mapping(
@@ -326,8 +326,8 @@ let d = within_combined_dif2, u = unique_df2
     g4 = GridLayout(f[5:end, end])
 
     # Main panels
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
+    d1 = @rsubset(d, :set == "samplers")
+    d2 = @rsubset(d, :set == "layers")
     m = mapping(
         :variable => "",
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
@@ -349,8 +349,8 @@ let d = within_combined_dif2, u = unique_df2
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
-    d3 = @rsubset(u, :set == "Samplers")
-    d4 = @rsubset(u, :set == "Layers")
+    d3 = @rsubset(u, :set == "samplers")
+    d4 = @rsubset(u, :set == "layers")
     ax3 = Axis(g3[1, 1])
     ax4 = Axis(g4[1, 1])
     m34 = mapping(

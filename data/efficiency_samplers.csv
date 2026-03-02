@@ -1,4 +1,4 @@
-sim,set,sampler,eff,occ
+sim,set,variable,eff,occ
 1,samplers,Uncertainty Sampling,5.829082908290829,0.4021
 1,samplers,Weighted Balanced Acceptance,6.2571257125712565,0.4021
 1,samplers,Simple Random,6.741174117411741,0.4021
