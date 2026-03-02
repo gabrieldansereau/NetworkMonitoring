@@ -1,54 +1,15 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Random
-using Statistics
-import SpeciesDistributionToolkit as SDT
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
 effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
 effs_optimized = CSV.read(datadir("efficiency_optimized.csv"), DataFrame)
 effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 
-# Rename
-effs_samplers.sampler =
-    replace.(
-        effs_samplers.sampler,
-        "UncertaintySampling" => "Uncertainty Sampling",
-        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
-        "BalancedAcceptance" => "Balanced Acceptance",
-        "SimpleRandomMask" => "Simple Random Mask",
-        "SimpleRandom" => "Simple Random",
-    )
-
 # Combine for convenience
-effs_combined = vcat(effs_samplers, effs_optimized)
-
-# Define color sets
-cols = [
-    # Interaction types
-    "possible" => Makie.wong_colors()[2],
-    "realized" => Makie.wong_colors()[3],
-    "detected" => Makie.wong_colors()[4],
-    # Samplers
-    "Uncertainty Sampling" => Makie.wong_colors()[2],
-    "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
-    "Simple Random" => Makie.wong_colors()[1],
-    "Balanced Acceptance" => "grey",
-    "Simple Random Mask" => "turquoise",
-    # Layers
-    "Focal species range" => Makie.wong_colors()[2],
-    "Species richness" => Makie.wong_colors()[4],
-    "Realized interactions" => Makie.wong_colors()[5],
-    "Probabilistic range" => Makie.wong_colors()[6],
-]
+effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
 ## Efficiency only
 
@@ -78,7 +39,7 @@ begin
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
     f = Figure(; size=(700, 700))
-    sc = scales(; Color=(; palette=cols))
+    sc = scales(; Color=(; palette=colourpal))
     ylog2f = (; ytickformat=vs -> [rich("2", superscript("$(Int(v))")) for v in vs])
     ylog2 = (; axis=(; yticks=2:2:100))
     fg1 = draw!(f[1, 1], f1, sc; ylog2...)
@@ -125,7 +86,7 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 begin
     occ = :occ => "occupancy"
     layout = mapping(occ, eff; color=:sampler) * (visual(Scatter) + linear())
-    scl = scales(; Color=(; palette=cols))
+    scl = scales(; Color=(; palette=colourpal))
     legend = (; position=:bottom)
     f1 = data(effs_samplers) * layout * mapping(; col=:sampler => sorter(sortedlayout))
     f2 = data(effs_optimized) * layout * mapping(; col=:sampler => sorter(sortedlayout))
@@ -134,7 +95,7 @@ draw(f1, scl; legend=legend)
 draw(f2, scl; legend=legend)
 fig = draw(
     data(effs_combined) * layout * mapping(; layout=:sampler => sorter(sortedlayout)),
-    scales(; Color=(; palette=cols, legend=false));
+    scales(; Color=(; palette=colourpal, legend=false));
     figure=(; size=(800, 450)),
 )
 
@@ -190,16 +151,6 @@ fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend, y
 save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 
 ## Within-simulation comparison
-
-# NDI
-ndi(x, y) = (x - y) / (x + y)
-
-# Efficiency difference
-function efficiency_difference(n, n2; k=10_000)
-    n = exp(n)
-    n2 = exp(n2)
-    return ((n * log(n) - n * log(n + k) + k) - (n2 * log(n2) - n2 * log(n2 + k) + k))
-end
 
 # Separate results per simulation
 function comparewithin(effs_combined; f=(x, y) -> -(x, y))
@@ -337,7 +288,6 @@ end
 save(plotsdir("efficiency_comparison.png"), current_figure())
 
 # Reduce number of comparisons
-logit(p) = 1 / (1 + exp(-p))
 comps_dict = Dict(
     "ΔUS_SR" => "Simple Random",
     "ΔUS_WBA" => "Weighted Balanced Acceptance",
@@ -359,7 +309,6 @@ within_combined_dif2 = @chain within_combined_dif begin
             :variable == "Realized Interactions" ? countmax - :count_neg : :count_neg,
     )
     @rtransform(:value = -:value)
-    # @rtransform(:value = logit(:value))
 end
 unique_df2 = @chain within_combined_dif2 begin
     unique([:set, :variable])

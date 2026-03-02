@@ -1,39 +1,9 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Random
-using Statistics
-import SpeciesDistributionToolkit as SDT
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
 
 ## Summarize efficiency simulations
-
-# Summmarize results not combined previously
-function summarize_monitored(df; id=0)
-    if "layer" in names(df)
-        cols = [:set, :sp, :type, :sampler, :layer, :nbon]
-    else
-        cols = [:set, :sp, :type, :sampler, :nbon]
-    end
-    monitored = @chain df begin
-        groupby(cols)
-        @combine(
-            :low = quantile(:monitored, 0.05),
-            :med = median(:monitored),
-            :upp = quantile(:monitored, 0.95),
-            :deg = maximum(:deg)
-        )
-        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg,)
-        @select(:sim = id, All())
-    end
-    return monitored
-end
 
 # Use job id to vary parameters
 files = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))
@@ -51,7 +21,7 @@ for set in sets
         monitored_all = CSV.read(datadir(file), DataFrame)
 
         # Summmarize results not combined previously
-        monitored = summarize_monitored(monitored_all; id=id)
+        monitored = summarize_focal(monitored_all; id=id)
 
         # Add species rank and occupancy
         if set == "spp"
@@ -71,19 +41,6 @@ sims_species = sims_dict["spp"]
 sims_estimations = sims_dict["estimations"]
 
 ## Efficiency
-
-# Saturation equation
-saturation(a) = (x) -> x ./ (exp(a) .+ x)
-
-# Efficiency grid search
-function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000))
-    err = zeros(length(A))
-    for i in eachindex(A)
-        f = saturation(A[i])
-        err[i] = sqrt(sum((y .- f(x)) .^ 2.0))
-    end
-    return A[last(findmin(err))]
-end
 
 # Select UncertaintySampling only as example
 sims_set = @rsubset(sims_samplers, :sampler == "Uncertainty Sampling")
@@ -111,9 +68,6 @@ end
 save(plotsdir("efficiency_example.png"), f)
 
 ## Occupancy
-
-# Get layer occupancy
-occupancy(l) = length(findall(isone, l)) / length(l)
 
 # Calculate occupancy
 ids = sort(unique(sims_samplers.sim))
@@ -199,10 +153,10 @@ fig = let bs = sim1_samplers, b = monitored_samplers
         b.low,
         b.upp;
         alpha=0.4,
-        color=Makie.wong_colors()[2],
+        color=colours["Uncertainty Sampling"],
         label="90% percentile",
     )
-    scatter!(b.nbon, b.med; color=Makie.wong_colors()[2], label="median points")
+    scatter!(b.nbon, b.med; color=colours["Uncertainty Sampling"], label="median points")
     lines!(
         b.nbon,
         saturation(eff)(b.nbon);

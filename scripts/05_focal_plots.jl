@@ -14,66 +14,16 @@ if !(@isdefined OUTDIR)
     const OUTDIR = "focal_array" # dev(local), focal_array or efficiency
 end
 
-# Load test results
+# Load & summarize test results
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
-
-# Summmarize results not combined previously
-function summarize_monitored(df)
-    if "layer" in names(df)
-        cols = [:set, :sp, :type, :sampler, :layer, :nbon]
-    else
-        cols = [:set, :sp, :type, :sampler, :nbon]
-    end
-    monitored = @chain df begin
-        groupby(cols)
-        @combine(
-            :low = quantile(:monitored, 0.05),
-            :med = median(:monitored),
-            :upp = quantile(:monitored, 0.95),
-            :deg = maximum(:deg)
-        )
-        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg)
-        @select(:sim = idp, All())
-    end
-    monitored.sampler =
-        replace.(
-            monitored.sampler,
-            "UncertaintySampling" => "Uncertainty Sampling",
-            "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
-            "BalancedAcceptance" => "Balanced Acceptance",
-            "SimpleRandomMask" => "Simple Random Mask",
-            "SimpleRandom" => "Simple Random",
-        )
-    return monitored
-end
-monitored_test = summarize_monitored(monitored_test_all)
-
-# Define colors for all plots
-cols = Dict{Any,Any}(
-    # Interaction types
-    "possible" => Makie.wong_colors()[2],
-    "realized" => Makie.wong_colors()[3],
-    "detected" => Makie.wong_colors()[4],
-    # Samplers
-    "Uncertainty Sampling" => Makie.wong_colors()[2],
-    "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
-    "Simple Random" => Makie.wong_colors()[1],
-    "Balanced Acceptance" => :grey,
-    "Simple Random Mask" => Makie.wong_colors()[1],
-    # Layers
-    "Focal species range" => Makie.wong_colors()[2],
-    "Species richness" => Makie.wong_colors()[4],
-    "Realized interactions" => Makie.wong_colors()[5],
-    "Probabilistic range" => Makie.wong_colors()[6],
-)
-cols
+monitored_test = summarize_focal(monitored_test_all; id=idp)
 ## Monitored types
 
 # Load & summarize results
 monitored_types_all = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
 monitored_types2_all = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
-monitored_types = summarize_monitored(monitored_types_all)
-monitored_types2 = summarize_monitored(monitored_types2_all)
+monitored_types = summarize_focal(monitored_types_all; id=idp)
+monitored_types2 = summarize_focal(monitored_types2_all; id=idp)
 
 # Visualize
 fig_types = let
@@ -90,8 +40,8 @@ fig_types = let
     for v in vals
         b = filter(var => ==(v), res)
         deg = maximum(b.deg)
-        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=cols[v])
-        lines!(b.nbon, b.med * deg; label=v, color=cols[v])
+        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
+        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
     end
     hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:rc, merge=true)
@@ -114,9 +64,9 @@ fig_types2 = let
     for v in vals
         b = filter(var => ==(v), res)
         deg = maximum(b.deg)
-        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=cols[v])
-        lines!(b.nbon, b.med * deg; label=v, color=cols[v])
-        hlines!(deg; linestyle=:dash, color=cols[v])
+        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
+        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
+        hlines!(deg; linestyle=:dash, color=colours[v])
     end
     hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     axislegend(; position=:rb, merge=true)
@@ -128,7 +78,7 @@ save(plotsdir("focal_types2.png"), fig_types2)
 
 # Load & summarize results
 monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
-monitored_spp = summarize_monitored(monitored_spp_all)
+monitored_spp = summarize_focal(monitored_spp_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_spp.csv"), monitored_spp)
 end
@@ -169,7 +119,7 @@ save(plotsdir("focal_spp.png"), fig_spp)
 
 # Load & summarize results
 monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
-monitored_samplers = summarize_monitored(monitored_samplers_all)
+monitored_samplers = summarize_focal(monitored_samplers_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
 end
@@ -225,8 +175,8 @@ fig_samplers = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -234,7 +184,7 @@ fig_samplers = let
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3], vals)
         heatmap!(a, ifelse(v == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
     # Subpanel labels
@@ -278,8 +228,8 @@ fig_mask = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -287,7 +237,7 @@ fig_mask = let
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3], vals)
         heatmap!(a, ifelse(v == "Uncertainty Sampling", focal_sp_range, focal_sp_mask))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
     # Subpanel labels
@@ -304,7 +254,7 @@ save(plotsdir("focal_samplers_mask.png"), fig_mask)
 monitored_optimized_all = CSV.read(
     datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
 )
-monitored_optimized = summarize_monitored(monitored_optimized_all)
+monitored_optimized = summarize_focal(monitored_optimized_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
 end
@@ -386,8 +336,8 @@ fig_optimized = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
     # axislegend(ax; position=:lt, merge=true, labelsize=14)
@@ -396,7 +346,7 @@ fig_optimized = let
     example_layers = filter(!=("Probabilistic range"), vals)
     for (a, l) in zip([ax1, ax2, ax3], example_layers)
         heatmap!(a, layers[l])
-        scatter!(a, coordinates(bons[l]); markersize=5, color=cols[l], strokewidth=0.5)
+        scatter!(a, coordinates(bons[l]); markersize=5, color=colours[l], strokewidth=0.5)
         a.ylabel = l
     end
     # Subpanel labels
@@ -478,14 +428,14 @@ fig_joined = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
         heatmap!(a, ifelse(v == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
 
@@ -542,14 +492,14 @@ fig_joined = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=cols[v])
-        lines!(ax, b.nbon, b.med; label=v, color=cols[v])
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
         heatmap!(a, layers[v])
-        scatter!(a, coordinates(bons[v]); markersize=5, color=cols[v], strokewidth=0.5)
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
 
@@ -587,7 +537,7 @@ save(plotsdir("focal_joined.png"), fig_joined)
 monitored_estimations_all = CSV.read(
     datadir(OUTDIR, "monitored_estimations-$idp.csv"), DataFrame
 )
-monitored_estimations = summarize_monitored(monitored_estimations_all)
+monitored_estimations = summarize_focal(monitored_estimations_all; id=idp)
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
@@ -623,11 +573,11 @@ fig_estimation = let
     range_true = estimated_ranges[set[2]]
     range_under = estimated_ranges[set[3]]
 
-    if !(@isdefined cols)
-        cols = Dict()
+    if !(@isdefined colours)
+        colours = Dict()
     end
     for (i, s) in enumerate(set)
-        cols[s] = Makie.wong_colors()[i]
+        colours[s] = Makie.wong_colors()[i]
     end
 
     # Create figure
@@ -659,7 +609,7 @@ fig_estimation = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=cols[v], label=v)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=v)
         lines!(ax, b.nbon, b.med; label=v)
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
@@ -671,7 +621,7 @@ fig_estimation = let
     heatmap!(ax3, range_true; colormap=:viridis, alpha=0.5)
     heatmap!(ax3, range_under; colormap=:viridis)
     for (a, v) in zip([ax1, ax2, ax3], vals)
-        scatter!(a, coordinates(bons[v]); markersize=5, strokewidth=0.5, color=cols[v])
+        scatter!(a, coordinates(bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
         a.ylabel = v
     end
 
