@@ -46,3 +46,19 @@ function comparewithin(effs_combined, set; labels=Dict(set .=> set), f=(x, y) ->
     end
     return within_combined
 end
+
+# Flip some comparison values
+function flipthatcomp!(df, toflip)
+    for comp in toflip
+        # Arrange new comparison
+        v1, v2 = split(replace(comp, "Δ" => ""), "_")
+        newcomp = "Δ$(v2)_$(v1)"
+        # Get current indices
+        inds = findall(==(comp), df.variable)
+        # Update
+        new = @view df[inds, :]
+        @rtransform!(new, :variable = newcomp)
+        @rtransform!(new, :value = -(:value))
+    end
+    return df
+end
