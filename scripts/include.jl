@@ -8,6 +8,7 @@
 
 using AlgebraOfGraphics
 using CairoMakie
+using Combinatorics
 using CSV
 using DataFramesMeta
 using DrWatson

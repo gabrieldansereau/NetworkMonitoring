@@ -28,6 +28,12 @@ sortedlayers = [
     "Species richness",
 ]
 sortedlayout = [sortedsamplers..., sortedlayers...]
+sorteddict = Dict(v => i for (i, v) in enumerate(sortedlayout))
+
+# Sort dataframes
+sort!(effs_samplers, order(:variable; by=x -> sorteddict[x]))
+sort!(effs_optimized, order(:variable; by=x -> sorteddict[x]))
+sort!(effs_combined, order(:variable; by=x -> sorteddict[x]))
 
 # Violin
 begin
@@ -153,34 +159,28 @@ save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 ## Within-simulation comparison
 
 # Separate results per simulation
-function comparewithin(effs_combined; f=(x, y) -> -(x, y))
-    within_combined = @chain effs_combined begin
-        unstack(:variable, :eff)
-        @rtransform(
-            :ΔSRM_BA = f($("Simple Random Mask"), $("Balanced Acceptance")),
-            :ΔUS_BA = f($("Uncertainty Sampling"), $("Balanced Acceptance")),
-            :ΔUS_SRM = f($("Uncertainty Sampling"), $("Simple Random Mask")),
-            :ΔUS_SR = f($("Uncertainty Sampling"), $("Simple Random")),
-            :ΔUS_WBA = f($("Uncertainty Sampling"), $("Weighted Balanced Acceptance")),
-            :ΔWBA_SR = f($("Weighted Balanced Acceptance"), $("Simple Random")),
-            :ΔRI_SR = f($("Realized interactions"), $("Species richness")),
-            :ΔRI_FR = f($("Realized interactions"), $("Focal species range")),
-            :ΔFR_SR = f($("Focal species range"), $("Species richness")),
-            :ΔRI_PR = f($("Realized interactions"), $("Probabilistic range")),
-            :ΔFR_PR = f($("Focal species range"), $("Probabilistic range")),
-            :ΔPR_SR = f($("Probabilistic range"), $("Species richness")),
-        )
-        select(:sim, :set, :occ, r"Δ")
-        stack(r"Δ")
-        dropmissing()
-    end
-    return within_combined
-end
-within_combined = comparewithin(effs_combined)
-within_combined_ndi = comparewithin(effs_combined; f=ndi)
-within_combined_log = comparewithin(effs_combined; f=(x, y) -> (x / y))
+compsdict = Dict(
+    "Uncertainty Sampling" => "US",
+    "Weighted Balanced Acceptance" => "WBA",
+    "Simple Random" => "RS",
+    "Balanced Acceptance" => "BA",
+    "Simple Random Mask" => "SRM",
+    "Focal species range" => "FR",
+    "Realized interactions" => "RI",
+    "Probabilistic range" => "PR",
+    "Species richness" => "SR",
+)
+set = unique(effs_combined.variable)
+within_combined = comparewithin(effs_combined, set; labels=compsdict)
+within_combined_ndi = comparewithin(effs_combined, set; labels=compsdict, f=ndi)
+within_combined_log = comparewithin(
+    effs_combined, set; labels=compsdict, f=(x, y) -> (x / y)
+)
 within_combined_dif = comparewithin(
-    effs_combined; f=(n, n2) -> efficiency_difference(n, n2; k=10_000)
+    effs_combined,
+    set;
+    labels=compsdict,
+    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
 @chain within_combined_dif begin
     @groupby(:set, :variable)
@@ -194,12 +194,12 @@ end
 
 # Visualize
 sortedcomps = [
-    "ΔSRM_BA"
+    "ΔBA_SRM"
     "ΔUS_BA"
     "ΔUS_SRM"
-    "ΔUS_SR"
+    "ΔUS_RS"
     "ΔUS_WBA"
-    "ΔWBA_SR"
+    "ΔWBA_RS"
     "ΔRI_SR"
     "ΔRI_FR"
     "ΔFR_SR"
@@ -221,6 +221,8 @@ begin
 end
 let d = within_combined_dif, u = unique_df
     Random.seed!(42)
+    d0 = @rsubset(d, :variable in sortedcomps)
+    u0 = @rsubset(u, :variable in sortedcomps)
 
     # Figure & grid
     f = Figure()
@@ -230,8 +232,8 @@ let d = within_combined_dif, u = unique_df
     g4 = GridLayout(f[7:end, end])
 
     # Main panels
-    d1 = @rsubset(d, :set == "samplers")
-    d2 = @rsubset(d, :set == "layers")
+    d1 = @rsubset(d0, :set == "samplers")
+    d2 = @rsubset(d0, :set == "layers")
     m = mapping(
         :variable => sorter(sortedcomps) => "comparison",
         :value => "Efficiency difference";
@@ -248,8 +250,8 @@ let d = within_combined_dif, u = unique_df
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
-    d3 = @rsubset(u, :set == "samplers")
-    d4 = @rsubset(u, :set == "layers")
+    d3 = @rsubset(u0, :set == "samplers")
+    d4 = @rsubset(u0, :set == "layers")
     ax3 = Axis(g3[1, 1])
     ax4 = Axis(g4[1, 1])
     m34 = mapping(
@@ -288,8 +290,8 @@ end
 save(plotsdir("efficiency_comparison.png"), current_figure())
 
 # Reduce number of comparisons
-comps_dict = Dict(
-    "ΔUS_SR" => "Simple Random",
+reducedcomps_dict = Dict(
+    "ΔUS_RS" => "Simple Random",
     "ΔUS_WBA" => "Weighted Balanced Acceptance",
     "ΔUS_BA" => "Balanced Acceptance",
     "ΔUS_SRM" => "Simple Random Mask",
@@ -299,8 +301,8 @@ comps_dict = Dict(
 )
 countmax = maximum(unique_df.count)
 within_combined_dif2 = @chain within_combined_dif begin
-    @rsubset(:variable in keys(comps_dict))
-    @rtransform(:variable = comps_dict[:variable])
+    @rsubset(:variable in keys(reducedcomps_dict))
+    @rtransform(:variable = reducedcomps_dict[:variable])
     @rtransform(
         :value = :variable == "Realized Interactions" ? -(:value) : :value,
         :count_pos =
