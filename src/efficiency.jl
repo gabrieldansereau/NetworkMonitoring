@@ -68,11 +68,6 @@ function comparewithin(
         stack(r"Δ")
         dropmissing()
     end
-    # Count number of positive and negative comparisons
-    @chain within_combined begin
-        @groupby(:set, :variable)
-        @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
-    end
     return within_combined
 end
 
@@ -86,11 +81,8 @@ function flipthatcomp!(df, toflip)
         inds = findall(==(comp), df.variable)
         # Update
         new = @view df[inds, :]
-        @chain new begin
-            @rtransform!(:variable = newcomp, :value = -(:value))
-            @aside total = _.count_pos + _.count_neg
-            @transform!(:count_pos = total .- :count_pos, :count_neg = total .- :count_neg)
-        end
+        @rtransform!(new, :variable = newcomp)
+        @rtransform!(new, :value = -(:value))
     end
     return df
 end
