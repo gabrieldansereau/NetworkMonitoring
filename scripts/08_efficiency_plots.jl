@@ -182,30 +182,39 @@ within_combined_dif = comparewithin(
     labels=compsdict,
     f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
+
+# Let's flip a comparison for illustration
+toflip = ["ΔFR_RI"]
+flipthatcomp!(within_combined_dif, toflip)
+
+# Count number of positive and negative comparisons
 @chain within_combined_dif begin
     @groupby(:set, :variable)
     @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
 end
-unique_df = @chain within_combined_dif begin
+unique_df2 = @chain within_combined_dif begin
     @groupby(:set, :variable)
-    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    combine(first)
+    select(Not(:sim, :occ, :value))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
 
 # Visualize
 sortedcomps = [
+    # Samplers
     "ΔBA_SRM"
     "ΔUS_BA"
     "ΔUS_SRM"
     "ΔUS_RS"
     "ΔUS_WBA"
     "ΔWBA_RS"
-    "ΔRI_SR"
-    "ΔRI_FR"
-    "ΔFR_SR"
-    "ΔRI_PR"
+    # Layers
     "ΔFR_PR"
+    "ΔFR_SR"
     "ΔPR_SR"
+    "ΔRI_FR"
+    "ΔRI_PR"
+    "ΔRI_SR"
 ]
 begin
     m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
@@ -291,11 +300,13 @@ save(plotsdir("efficiency_comparison.png"), current_figure())
 
 # Reduce number of comparisons
 reducedcomps_dict = Dict(
+    # Samplers
     "ΔUS_RS" => "Simple Random",
     "ΔUS_WBA" => "Weighted Balanced Acceptance",
     "ΔUS_BA" => "Balanced Acceptance",
     "ΔUS_SRM" => "Simple Random Mask",
-    "ΔRI_FR" => "Realized Interactions",
+    # Layers
+    "ΔFR_RI" => "Realized Interactions",
     "ΔFR_SR" => "Species Richness",
     "ΔFR_PR" => "Probabilistic Range",
 )
