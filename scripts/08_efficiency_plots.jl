@@ -188,14 +188,9 @@ toflip = ["ΔFR_RI"]
 flipthatcomp!(within_combined_dif, toflip)
 
 # Count number of positive and negative comparisons
-@chain within_combined_dif begin
-    @groupby(:set, :variable)
-    @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
-end
 unique_df = @chain within_combined_dif begin
     @groupby(:set, :variable)
-    combine(first)
-    select(Not(:sim, :occ, :value))
+    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
 
@@ -310,7 +305,6 @@ reducedcomps_dict = Dict(
     "ΔFR_SR" => "Species Richness",
     "ΔFR_PR" => "Probabilistic Range",
 )
-countmax = maximum(unique_df.count)
 within_combined_dif2 = comparewithin(
     effs_combined,
     set;
@@ -318,11 +312,15 @@ within_combined_dif2 = comparewithin(
     labels=compsdict,
     f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
+
+# Count number of positive and negative comparisons
 unique_df2 = @chain within_combined_dif2 begin
-    unique([:set, :variable])
-    select(Not(:sim, :occ))
+    @groupby(:set, :variable)
+    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
+
+# Visualize
 let d = within_combined_dif2, u = unique_df2
     Random.seed!(42)
 
@@ -337,9 +335,9 @@ let d = within_combined_dif2, u = unique_df2
     d1 = @rsubset(d, :set == "samplers")
     d2 = @rsubset(d, :set == "layers")
     m = mapping(
-        :variable => "",
+        :variable => renamer(collect(reducedcomps_dict)) => "",
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
-        color=:value => (x -> x >= 0.0),
+        color=:value => (x -> x <= 0.0),
     )
 
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
@@ -352,7 +350,7 @@ let d = within_combined_dif2, u = unique_df2
         axis=(; xlabel="Efficiency compared to reference (Focal Range)"),
     )
     linkxaxes!(fg1..., fg2...)
-    pad = (-100, 0, 10, 0)
+    pad = (-150, 0, 10, 0)
     Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
@@ -362,9 +360,9 @@ let d = within_combined_dif2, u = unique_df2
     ax3 = Axis(g3[1, 1])
     ax4 = Axis(g4[1, 1])
     m34 = mapping(
-        :variable,
+        :variable => renamer(collect(reducedcomps_dict)),
         [1];
-        color=:countmeasure => sorter(["count_neg", "count_pos"]),
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
         stack=:countmeasure => sorter(["count_neg", "count_pos"]),
     )
     v3 = visual(
