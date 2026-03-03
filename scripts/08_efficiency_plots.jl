@@ -192,7 +192,7 @@ flipthatcomp!(within_combined_dif, toflip)
     @groupby(:set, :variable)
     @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
 end
-unique_df2 = @chain within_combined_dif begin
+unique_df = @chain within_combined_dif begin
     @groupby(:set, :variable)
     combine(first)
     select(Not(:sim, :occ, :value))
@@ -311,18 +311,13 @@ reducedcomps_dict = Dict(
     "ΔFR_PR" => "Probabilistic Range",
 )
 countmax = maximum(unique_df.count)
-within_combined_dif2 = @chain within_combined_dif begin
-    @rsubset(:variable in keys(reducedcomps_dict))
-    @rtransform(:variable = reducedcomps_dict[:variable])
-    @rtransform(
-        :value = :variable == "Realized Interactions" ? -(:value) : :value,
-        :count_pos =
-            :variable == "Realized Interactions" ? countmax - :count_pos : :count_pos,
-        :count_neg =
-            :variable == "Realized Interactions" ? countmax - :count_neg : :count_neg,
-    )
-    @rtransform(:value = -:value)
-end
+within_combined_dif2 = comparewithin(
+    effs_combined,
+    set;
+    to=["Uncertainty Sampling", "Focal species range"],
+    labels=compsdict,
+    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+)
 unique_df2 = @chain within_combined_dif2 begin
     unique([:set, :variable])
     select(Not(:sim, :occ))

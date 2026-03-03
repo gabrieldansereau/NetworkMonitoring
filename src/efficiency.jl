@@ -25,20 +25,44 @@ function efficiency_difference(n, n2; k=10_000)
 end
 
 # Compare efficiencies within simulations
-function comparewithin(effs_combined, set; labels=Dict(set .=> set), f=(x, y) -> -(x, y))
+function comparewithin(
+    effs_combined, set; to=nothing, labels=Dict(set .=> set), f=(x, y) -> -(x, y)
+)
+    # Make sure all labels are defined
+    all_labels = Dict(s in keys(labels) ? s => labels[s] : s => s for s in set)
     # Select variables in set & prepare for comparison
     within_combined = @chain effs_combined begin
         @rsubset(:variable in set)
-        @rtransform(:variable = :variable in keys(labels) ? labels[:variable] : :variable)
+        @rtransform(:variable = all_labels[:variable])
         unstack(:variable, :eff)
     end
-    # Compare unique combinations
-    labs = [s in keys(labels) ? labels[s] : s for s in set]
-    for (l1, l2) in collect(combinations(labs, 2))
+    # Define combinations to compare
+    if isnothing(to)
+        # By default we select all unique combinations
+        comps = collect(combinations(set, 2))
+    else
+        # With the `to` keyword we can select a specific variable for all comparisons
+        comps = []
+        if !(to isa Vector)
+            to = [to]
+        end
+        for t in to
+            @assert t in set "variables selected with `to` must be in `set`"
+            allcomps = vec([[v2, v1] for v1 in set, v2 in set])
+            comp = filter(x -> first(x) == t, allcomps)
+            filter!(x -> x[1] != x[2], comp)
+            push!(comps, comp)
+        end
+        comps = reduce(vcat, comps)
+    end
+    # Compare efficiencies
+    for (c1, c2) in comps
+        l1 = all_labels[c1]
+        l2 = all_labels[c2]
         complabel = "Δ$(l1)_$(l2)"
         @rtransform!(within_combined, $complabel = f($(l1), $(l2)))
     end
-    # Select comparison variables only
+    # Select only the variables from the comparison
     within_combined = @chain within_combined begin
         select(:sim, :set, :occ, r"Δ")
         stack(r"Δ")
