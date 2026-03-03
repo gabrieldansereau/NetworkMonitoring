@@ -187,6 +187,11 @@ within_combined_dif = comparewithin(
 toflip = ["ΔFR_RI"]
 flipthatcomp!(within_combined_dif, toflip)
 
+toflip = ["ΔUS_WBA"]
+@rsubset(within_combined_dif, :variable in toflip)
+flipthatcomp!(within_combined_dif, toflip);
+@rsubset(within_combined_dif, :variable in ["ΔWBA_US"])
+
 # Count number of positive and negative comparisons
 @chain within_combined_dif begin
     @groupby(:set, :variable)
