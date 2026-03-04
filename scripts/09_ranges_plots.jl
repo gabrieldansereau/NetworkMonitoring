@@ -225,12 +225,20 @@ within_bands = @chain within_combined_all begin
     @rtransform(:offset = parse(Float64, replace(:offset, "Over-" => "", "Under" => "")))
 end
 
+# Add an Entry for offset of zero
+push!(
+    within_bands,
+    (; set="ranges", variable="True-0.0", offset=0.0, low=0.0, med=0.0, upp=0.0),
+)
+sort!(within_bands, :offset)
+
 # Bands
 tickdict = Dict(within_bands.offset .=> within_bands.variable)
 tickdict[0.0] = "0.0"
 fig_types = begin
     res = within_bands
     var = :offset
+
     fig = Figure(; size=(700, 450))
     ax = Axis(
         fig[1, 1];
