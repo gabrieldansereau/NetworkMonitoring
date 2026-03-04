@@ -226,16 +226,19 @@ within_bands = @chain within_combined_all begin
 end
 
 # Bands
+tickdict = Dict(within_bands.offset .=> within_bands.variable)
+tickdict[0.0] = "0.0"
 fig_types = begin
     res = within_bands
     var = :offset
-    fig = Figure()
+    fig = Figure(; size=(700, 450))
     ax = Axis(
         fig[1, 1];
         xlabel="Offset",
         ylabel="Efficiency difference with True range",
         xticks=-0.3:0.1:0.3,
-        # limits=((-0.3, 0.0), (nothing, nothing)),
+        xtickformat=x -> [tickdict[tick] for tick in x],
+        # xticklabelrotation=pi / 8,
     )
     col1 = Makie.wong_colors()[1]
     col2 = Makie.wong_colors()[2]
