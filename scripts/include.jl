@@ -19,6 +19,7 @@ using Statistics
 import SpeciesDistributionToolkit as SDT
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
+CairoMakie.activate!(; type="svg")
 
 includet(srcdir("colours.jl"))
 includet(srcdir("efficiency.jl"))
