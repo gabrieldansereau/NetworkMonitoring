@@ -254,16 +254,30 @@ fig_types = begin
     x = res.offset
     limpos = [l <= 0 ? 0.0 : l for l in res.low]
     limneg = [l <= 0 ? l : 0.0 for l in res.low]
-    # band!(x, limpos, res.upp; alpha=0.4, label="Positive quantile range", color=col1)
-    # band!(x, limneg, fill(0, length(x)); alpha=0.5, label="Negative quantile range", color=col2)
-    band!(x, res.low, res.upp; alpha=0.4, label=lab, color=col1)
-    lines!(x, res.low; linewidth=0.5, alpha=0.5, color=col1)
+
+    # Single band color option
+    # band!(x, res.low, res.upp; alpha=0.4, label=lab, color=col1)
+    # lines!(x, res.low; linewidth=0.5, alpha=0.5, color=col1)
+    # lines!(x, res.upp; linewidth=0.5, alpha=0.5, color=col1)
+
+    # Two band color option
+    uppneg = fill(0, length(x))
+    band!(x, limpos, res.upp; alpha=0.4, label="Positive range values", color=col1)
+    band!(x, limneg, uppneg; alpha=0.5, label="Negative range values", color=col2)
     lines!(x, res.upp; linewidth=0.5, alpha=0.5, color=col1)
-    lines!(res.offset, res.med; label="median", color=col1)
-    vlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:grey, label="True Range")
+    lowinds = findall(<=(0), res.low)
+    notlowinds = Not(lowinds[Not(end)])
+    lines!(x[lowinds], res.low[lowinds]; linewidth=0.5, alpha=0.5, color=col2)
+    lines!(x[notlowinds], res.low[notlowinds]; linewidth=0.5, alpha=0.5, color=col1)
+
+    # Common options
+    lines!(res.offset, res.med; label="Median", color=col1)
+    vlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:grey, label="True species range")
     hlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:black)
-    # hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(; position=:rt, merge=true)
+
+    # Legend
+    # axislegend(; position=:rt, merge=true)
+    axislegend("90% Interpercentile range"; position=:rt, merge=true)
     fig
 end
 save(plotsdir("ranges_bands.png"), current_figure())
