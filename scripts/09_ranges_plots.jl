@@ -242,13 +242,15 @@ fig_types = begin
     )
     col1 = Makie.wong_colors()[1]
     col2 = Makie.wong_colors()[2]
-    lab = "95% quantile range"
+    lab = "90% interpercentile range"
     x = res.offset
     limpos = [l <= 0 ? 0.0 : l for l in res.low]
     limneg = [l <= 0 ? l : 0.0 for l in res.low]
     # band!(x, limpos, res.upp; alpha=0.4, label="Positive quantile range", color=col1)
     # band!(x, limneg, fill(0, length(x)); alpha=0.5, label="Negative quantile range", color=col2)
     band!(x, res.low, res.upp; alpha=0.4, label=lab, color=col1)
+    lines!(x, res.low; linewidth=0.5, alpha=0.5, color=col1)
+    lines!(x, res.upp; linewidth=0.5, alpha=0.5, color=col1)
     lines!(res.offset, res.med; label="median", color=col1)
     vlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:grey, label="True Range")
     hlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:black)
