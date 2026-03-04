@@ -118,7 +118,10 @@ within_combined_dif2 = comparewithin(
     labels=Dict("True-0.00" => "True"),
     f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
-@rtransform!(within_combined_dif2, :variable = replace(:variable, "ΔTrue_" => ""))
+flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
+@rtransform!(
+    within_combined_dif2, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
+)
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
 unique_df2 = @chain within_combined_dif2 begin
@@ -158,13 +161,14 @@ let d = within_combined_dif2, u = unique_df2
     m = mapping(
         :variable => renamer([s => replace(s, "ΔTrue_" => "") for s in sortedcomps]) => "",
         :value => "Efficiency compared to True Range";
-        color=:value => (x -> x <= 0.0),
+        color=:value => (x -> x > 0.0),
     )
     fg1 = draw!(
         g1,
         data(d1) * m * rains +
         vline +
         mapping([(nrow(u) / 4) + 0.5]) * visual(HLines; linestyle=:solid, color=:lightgrey);
+        axis=(; xreversed=true),
     )
     pad = (-80, 0, 10, 0)
     Label(
@@ -181,8 +185,8 @@ let d = within_combined_dif2, u = unique_df2
     m34 = mapping(
         :variable => sorter(sortedcomps),
         [1];
-        color=:countmeasure => sorter(["count_pos", "count_neg"]),
         stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
     )
     v3 = visual(
         BarPlot;
@@ -213,7 +217,10 @@ within_combined_all = comparewithin(
     labels=Dict("True-0.00" => "True"),
     f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
-@rtransform!(within_combined_all, :variable = replace(:variable, "ΔTrue_" => ""))
+flipthatcomp!(within_combined_all, unique(within_combined_all.variable))
+@rtransform!(
+    within_combined_all, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
+)
 
 # Extract quantile range
 within_bands = @chain within_combined_all begin
@@ -238,6 +245,7 @@ tickdict[0.0] = "0.0"
 fig_types = begin
     res = within_bands
     var = :offset
+    rev = true
 
     fig = Figure(; size=(700, 450))
     ax = Axis(
@@ -246,34 +254,37 @@ fig_types = begin
         ylabel="Efficiency difference with True range",
         xticks=-0.3:0.1:0.3,
         xtickformat=x -> [tickdict[tick] for tick in x],
+        yreversed=rev,
         # xticklabelrotation=pi / 8,
     )
-    col1 = Makie.wong_colors()[1]
-    col2 = Makie.wong_colors()[2]
-    lab = "90% interpercentile range"
     x = res.offset
-    limpos = [l <= 0 ? 0.0 : l for l in res.low]
-    limneg = [l <= 0 ? l : 0.0 for l in res.low]
+    low = res.low
+    med = res.med
+    upp = res.upp
 
     # Single band color option
-    # band!(x, res.low, res.upp; alpha=0.4, label=lab, color=col1)
-    # lines!(x, res.low; linewidth=0.5, alpha=0.5, color=col1)
-    # lines!(x, res.upp; linewidth=0.5, alpha=0.5, color=col1)
+    # col = Makie.wong_colors()[1]
+    # band!(x, low, upp; alpha=0.4, label=lab, color=col)
+    # lines!(x, low; linewidth=0.5, alpha=0.5, color=col)
+    # lines!(x, upp; linewidth=0.5, alpha=0.5, color=col)
+    # lines!(x, med; label="Median", color=col)
 
     # Two band color option
-    uppneg = fill(0, length(x))
-    band!(x, limpos, res.upp; alpha=0.4, label="Positive range values", color=col1)
-    band!(x, limneg, uppneg; alpha=0.5, label="Negative range values", color=col2)
-    lines!(x, res.upp; linewidth=0.5, alpha=0.5, color=col1)
-    lowinds = findall(<=(0), res.low)
-    notlowinds = Not(lowinds[Not(end)])
-    lines!(x[lowinds], res.low[lowinds]; linewidth=0.5, alpha=0.5, color=col2)
-    lines!(x[notlowinds], res.low[notlowinds]; linewidth=0.5, alpha=0.5, color=col1)
+    col1 = Makie.wong_colors()[1]
+    col2 = Makie.wong_colors()[2]
+    lowpos = [l <= 0 ? 0.0 : l for l in low]
+    lowneg = [l <= 0 ? l : 0.0 for l in low]
+    upppos = [l <= 0 ? 0.0 : l for l in upp]
+    uppneg = [l <= 0 ? l : 0.0 for l in upp]
+    band!(x, lowneg, uppneg; alpha=0.45, label="Negative range values", color=col1)
+    band!(x, lowpos, upppos; alpha=0.45, label="Positive range values", color=col2)
+    lines!(x, low; linewidth=0.5, alpha=0.5, color=[c <= 0 ? col1 : col2 for c in low])
+    lines!(x, upp; linewidth=0.5, alpha=0.5, color=[c <= 0 ? col1 : col2 for c in upp])
+    lines!(x, med; label="Median", color=col1)
 
     # Common options
-    lines!(res.offset, res.med; label="Median", color=col1)
     vlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:grey, label="True species range")
-    hlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:black)
+    hlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:grey)
 
     # Legend
     # axislegend(; position=:rt, merge=true)
