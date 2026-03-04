@@ -7,7 +7,7 @@ include("include.jl") # see note regarding why we cannot use the module
 # Load data
 effs_estimations = CSV.read(datadir("efficiency_estimations.csv"), DataFrame)
 
-# Rename
+# Rename with same number of digits
 @transform!(
     effs_estimations,
     :variable = [
@@ -50,7 +50,7 @@ begin
         )
     vline = mapping([med]) * visual(VLines; linestyle=:dash)
     f1 = data(effs_estimations) * layer + vline
-    f = Figure(; size=(700, 700))
+    f = Figure(; size=(700, 800))
     # sc = scales(; Color=(; palette=palette))
     ylog2 = (; axis=(;))
     fg1 = draw!(f[1, 1], f1; ylog2...)
@@ -81,8 +81,10 @@ begin
             RainClouds;
             markersize=5,
             jitter_width=0.1,
+            # violin_limits=extrema,
             plot_boxplots=false,
             orientation=:horizontal,
+            gap=0.01,
         )
     vline = mapping([med]) * visual(VLines; linestyle=:dash)
     f1 = data(res) * layer + vline
@@ -99,24 +101,34 @@ save(plotsdir("ranges_efficiencies.png"), f)
 ## Within-simulation comparison
 
 # Separate results per simulation
-within_combined_dif = comparewithin(
+set = [
+    "Under-0.30",
+    "Under-0.20",
+    "Under-0.10",
+    "True-0.00",
+    "Over-0.10",
+    "Over-0.20",
+    "Over-0.30",
+]
+# set = reverse(unique(effs_estimations.variable))
+within_combined_dif2 = comparewithin(
     effs_estimations,
-    ["True-0.00", "Under-0.10", "Over-0.10"];
+    set;
+    to="True-0.00",
     labels=Dict("True-0.00" => "True"),
     f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_df = @chain within_combined_dif begin
+unique_df2 = @chain within_combined_dif2 begin
     @groupby(:set, :variable)
     @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
 
 # Visualize
-sortedcomps = unique(unique_df.variable)
+sortedcomps = unique(unique_df2.variable)
 begin
-    m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
     rains = visual(
         RainClouds;
         markersize=7,
@@ -127,26 +139,33 @@ begin
     )
     vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
 end
-let d = within_combined_dif, u = unique_df
+let d = within_combined_dif2, u = unique_df2
     Random.seed!(42)
 
     # Figure & grid
-    f = Figure(; size=(600, 300))
+    if nrow(u) <= 12
+        f = Figure(; size=(600, 300))
+    else
+        f = Figure(; size=(600, 800))
+    end
+    # f = Figure(; size=(600, 900))
     g1 = GridLayout(f[1:6, 1:3])
     g3 = GridLayout(f[1:6, end + 1])
 
     # Main panels
     d1 = @rsubset(d, :set == "ranges")
     m = mapping(
-        :variable => sorter(sortedcomps) => "",
-        :value => "Efficiency difference";
+        :variable => renamer([s => replace(s, "ΔTrue_" => "") for s in sortedcomps]) => "",
+        :value => "Efficiency compared to True Range";
         color=:value => (x -> x <= 0.0),
     )
-    # xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
-    # xlog2 = (; axis=(; xtickformat=xlog2f))
-    # xaxis = (; axis=(; xticks=0:2:10))
-    fg1 = draw!(g1, data(d1) * m * rains + vline;)
-    pad = (-100, 0, 10, 0)
+    fg1 = draw!(
+        g1,
+        data(d1) * m * rains +
+        vline +
+        mapping([(nrow(u) / 4) + 0.5]) * visual(HLines; linestyle=:solid, color=:lightgrey);
+    )
+    pad = (-80, 0, 10, 0)
     Label(
         g1[1, 1, Top()],
         "Range estimation comparisons";
