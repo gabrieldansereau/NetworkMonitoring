@@ -118,6 +118,7 @@ within_combined_dif2 = comparewithin(
     labels=Dict("True-0.00" => "True"),
     f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
 )
+@rtransform!(within_combined_dif2, :variable = replace(:variable, "ΔTrue_" => ""))
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
 unique_df2 = @chain within_combined_dif2 begin
@@ -200,3 +201,56 @@ let d = within_combined_dif2, u = unique_df2
     f
 end
 save(plotsdir("ranges_comparison.png"), current_figure())
+
+## Plot bands (on the run!)
+
+# Complete set of comparison
+set_all = reverse(unique(effs_estimations.variable))
+within_combined_all = comparewithin(
+    effs_estimations,
+    set_all;
+    to="True-0.00",
+    labels=Dict("True-0.00" => "True"),
+    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+)
+@rtransform!(within_combined_all, :variable = replace(:variable, "ΔTrue_" => ""))
+
+# Extract quantile range
+within_bands = @chain within_combined_all begin
+    groupby([:set, :variable])
+    @combine(
+        :low = quantile(:value, 0.05), :med = median(:value), :upp = quantile(:value, 0.95),
+    )
+    @select(:set, :variable, :offset = :variable, All())
+    @rtransform(:offset = parse(Float64, replace(:offset, "Over-" => "", "Under" => "")))
+end
+
+# Bands
+fig_types = begin
+    res = within_bands
+    var = :offset
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        xlabel="Offset",
+        ylabel="Efficiency difference with True range",
+        xticks=-0.3:0.1:0.3,
+        # limits=((-0.3, 0.0), (nothing, nothing)),
+    )
+    col1 = Makie.wong_colors()[1]
+    col2 = Makie.wong_colors()[2]
+    lab = "95% quantile range"
+    x = res.offset
+    limpos = [l <= 0 ? 0.0 : l for l in res.low]
+    limneg = [l <= 0 ? l : 0.0 for l in res.low]
+    # band!(x, limpos, res.upp; alpha=0.4, label="Positive quantile range", color=col1)
+    # band!(x, limneg, fill(0, length(x)); alpha=0.5, label="Negative quantile range", color=col2)
+    band!(x, res.low, res.upp; alpha=0.4, label=lab, color=col1)
+    lines!(res.offset, res.med; label="median", color=col1)
+    vlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:grey, label="True Range")
+    hlines!(ax, 0.0; linestyle=:dash, alpha=0.5, color=:black)
+    # hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(; position=:rt, merge=true)
+    fig
+end
+save(plotsdir("ranges_bands.png"), current_figure())
