@@ -17,11 +17,13 @@ occupancy(l; f=isone) = length(findall(f, l)) / length(l)
 # NDI
 ndi(x, y) = (x - y) / (x + y)
 
-# Efficiency difference
+# Efficiency integral & difference
+efficiency_integral(n, k=10_000) = ((n * log(n) - n * log(n + k) + k))
+
 function efficiency_difference(n, n2; k=10_000)
     n = exp(n)
     n2 = exp(n2)
-    return ((n * log(n) - n * log(n + k) + k) - (n2 * log(n2) - n2 * log(n2 + k) + k))
+    return efficiency_integral(n, k) - efficiency_integral(n2, k)
 end
 
 # Compare efficiencies within simulations
