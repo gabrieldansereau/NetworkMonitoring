@@ -169,14 +169,10 @@ begin
             orientation=:horizontal,
         )
         vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
-        fg1 = draw!(
-            g1,
-            data(d1) * m * rains +
-            vline +
+        hline =
             mapping([(nrow(u) / 4) + 0.5]) *
-            visual(HLines; linestyle=:solid, color=:lightgrey);
-            axis=(; xreversed=rev),
-        )
+            visual(HLines; linestyle=:solid, color=:lightgrey)
+        fg1 = draw!(g1, data(d1) * m * rains + vline + hline; axis=(; xreversed=rev))
         pad = (-80, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
 
@@ -327,7 +323,7 @@ begin
         l1="A) Efficiency comparison between range estimations",
     )
     ax2 = make_bands_ax!(
-        f[(end + 1):(end + 8), 1:(end - 1)]; res=within_bands, var=:offset, rev=rev
+        f[(end + 1):(end + 10), 1:(end - 1)]; res=within_bands, var=:offset, rev=rev
     )
     Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false)
     Label(
