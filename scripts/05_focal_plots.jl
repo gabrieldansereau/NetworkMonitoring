@@ -631,4 +631,4 @@ fig_estimation = let
     # Show figure
     fig
 end
-save(plotsdir("focal_estimation.png"), fig_estimation)
+save(plotsdir("focal_ranges.png"), fig_estimation)
