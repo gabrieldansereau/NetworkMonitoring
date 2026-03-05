@@ -102,13 +102,13 @@ save(plotsdir("ranges_efficiencies.png"), f)
 
 # Separate results per simulation
 set = [
-    "Under-0.30",
+    # "Under-0.30",
     "Under-0.20",
     "Under-0.10",
     "True-0.00",
     "Over-0.10",
     "Over-0.20",
-    "Over-0.30",
+    # "Over-0.30",
 ]
 # set = reverse(unique(effs_estimations.variable))
 within_combined_dif2 = comparewithin(
@@ -135,6 +135,7 @@ begin
     d = within_combined_dif2
     u = unique_df2
     sortedcomps = unique(u.variable)
+    rev = true
 
     # Figure & grid
     if nrow(u) <= 12
@@ -143,7 +144,7 @@ begin
         f = Figure(; size=(600, 800))
     end
 
-    function make_comps_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1)
+    function make_comps_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1, rev=rev)
         # Random seed for jitter
         Random.seed!(42)
 
@@ -174,14 +175,14 @@ begin
             vline +
             mapping([(nrow(u) / 4) + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey);
-            axis=(; xreversed=true),
+            axis=(; xreversed=rev),
         )
         pad = (-80, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(g3[1, 1])
+        ax3 = Axis(g3[1, 1]; xreversed=!rev) # rev needs to be opposite somehow
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
@@ -194,6 +195,9 @@ begin
             bar_labels=["$v" for v in d3.count],
             label_position=:center,
             label_color=:white,
+            label_font=:bold,
+            label_size=16,
+            alpha=0.85,
         )
         draw!(ax3, data(d3) * m34 * v3)
 
@@ -242,6 +246,9 @@ push!(
 )
 sort!(within_bands, :offset)
 
+# Restrict offset limits
+@rsubset!(within_bands, :offset >= -0.24, :offset <= 0.24)
+
 # Bands
 tickdict = Dict(within_bands.offset .=> within_bands.variable)
 tickdict[0.0] = "0.0"
@@ -252,15 +259,19 @@ fig_types = begin
 
     fig = Figure(; size=(700, 450))
     function make_bands_ax!(f; res=res, var=var, rev=rev)
+        t1, t2 = extrema(res[:, var])
         ax = Axis(
             f;
             xlabel="Offset",
-            ylabel="Efficiency difference with True range",
-            xticks=-0.3:0.1:0.3,
+            ylabel="Efficiency difference with True Range",
+            xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
             xtickformat=x -> [tickdict[tick] for tick in x],
             yreversed=rev,
             # xticklabelrotation=pi / 8,
         )
+        if !rev
+            limits!(ax, (nothing, nothing), (-1500, 1500))
+        end
         x = res.offset
         low = res.low
         med = res.med
@@ -280,8 +291,8 @@ fig_types = begin
         lowneg = [l <= 0 ? l : 0.0 for l in low]
         upppos = [l <= 0 ? 0.0 : l for l in upp]
         uppneg = [l <= 0 ? l : 0.0 for l in upp]
-        band!(ax, x, lowneg, uppneg; alpha=0.45, label="Negative range values", color=col1)
-        band!(ax, x, lowpos, upppos; alpha=0.45, label="Positive range values", color=col2)
+        band!(ax, x, lowneg, uppneg; alpha=0.6, label="Lower efficiency", color=col1)
+        band!(ax, x, lowpos, upppos; alpha=0.6, label="Higher efficiency", color=col2)
         cf(x) = [v <= 0 ? col1 : col2 for v in x]
         lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
         lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
@@ -293,25 +304,32 @@ fig_types = begin
 
         # Legend
         # axislegend(; position=:rt, merge=true)
-        axislegend(ax, "90% Interpercentile range"; position=:rt, merge=true)
+        # axislegend(ax, "90% Interpercentile range"; position=:lt, merge=true)
+
         return ax
     end
-    make_bands_ax!(fig[1, 1])
+    ax = make_bands_ax!(fig[1, 1])
+    Legend(fig[1, 2], ax, "90% Percentile range")
     fig
 end
 save(plotsdir("ranges_bands.png"), current_figure())
 
 # Combine subpanels
 begin
-    f = Figure(; size=(650, 650))
+    rev = true
+    f = Figure(; size=(750, 650))
     g1, g3 = make_comps_ax!(
         f;
         d=within_combined_dif2,
         u=unique_df2,
         sortedcomps=unique(u.variable),
+        rev=rev,
         l1="A) Efficiency comparison between range estimations",
     )
-    ax2 = make_bands_ax!(f[(end + 1):(end + 8), :]; res=within_bands, var=:offset, rev=true)
+    ax2 = make_bands_ax!(
+        f[(end + 1):(end + 8), 1:(end - 1)]; res=within_bands, var=:offset, rev=rev
+    )
+    Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false)
     Label(
         f[7, 1, Top()],
         "B) Percentile range of efficiency differences";
