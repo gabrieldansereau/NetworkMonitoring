@@ -266,7 +266,12 @@ fig_types = begin
             ylabel="Efficiency difference with True Range",
             xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
             xtickformat=x -> [tickdict[tick] for tick in x],
+            xticksize=6.0,
             yreversed=rev,
+            xminorticks=IntervalsBetween(5),
+            xminorticksvisible=true,
+            xminortickcolor=:grey,
+            # xminorticksize=2.0,
             # xticklabelrotation=pi / 8,
         )
         if !rev
