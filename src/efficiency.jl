@@ -12,7 +12,7 @@ function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000))
 end
 
 # Layer occupancy
-occupancy(l; f=isone) = length(findall(f, l)) / length(l)
+occupancy(l; f=isone) = length(findall(f, l)) / length(l.grid)
 
 # NDI
 ndi(x, y) = (x - y) / (x + y)
