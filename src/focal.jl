@@ -128,14 +128,30 @@ function focal_monitoring(
             )
         end
 
-        # Generate monitoring sites on layer given sampler
-        bon = BON.sample(sampler(nbon), layer)
+        # Prevent issues with layers without any presence
+        if iszero(length(layer))
+            monitored_deg = 0
+        else
+            # Make sure the sampler will work
+            len = length(layer)
+            if len < nbon && sampler == BON.SimpleRandom
+                error("SimpleRandom cannot sample fewer sites than present in layer")
+            end
+            if len != length(layer.grid) && sampler == BON.WeightedBalancedAcceptance
+                error(
+                    "WeightedBalancedAcceptance does not work when some pixels have no data"
+                )
+            end
 
-        # Compute degree for focal species across monitored sites
-        monitored_int = monitor(
-            x -> interactions(render(Binary, x)), net, bon; makeunique=true
-        )
-        monitored_deg = sum(in.(sp, monitored_int))
+            # Generate monitoring sites on layer given sampler
+            bon = BON.sample(sampler(nbon), layer)
+
+            # Compute degree for focal species across monitored sites
+            monitored_int = monitor(
+                x -> interactions(render(Binary, x)), net, bon; makeunique=true
+            )
+            monitored_deg = sum(in.(sp, monitored_int))
+        end
 
         # Export results
         info = (

@@ -231,10 +231,6 @@ SDT.nodata!.(layers, 0)
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
-# Some jobs seem to run forever, so we'll fix them by updating the seed
-if id in (24, 44, 59, 74)
-    Random.seed!((id+200) * 832)
-end
 optim = layers
 optimlabels = [ifelse(e < 0, "Over$e", "Under-$e") for e in errors]
 replace!(optimlabels, "Under-0.0" => "True-0.0")
