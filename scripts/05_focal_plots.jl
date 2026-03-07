@@ -2,6 +2,7 @@ using DrWatson
 @quickactivate :NetworkMonitoring
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
+CairoMakie.activate!(; type="svg")
 
 ## Load focal species results
 
@@ -17,6 +18,7 @@ end
 # Load & summarize test results
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
 monitored_test = summarize_focal(monitored_test_all; id=idp)
+
 ## Monitored types
 
 # Load & summarize results
@@ -543,7 +545,7 @@ if id == 1
 end
 
 # Load layers used for optimization
-errors = String.(unique(monitored_estimations.layer))
+errors = string.(unique(monitored_estimations.layer))
 estimated_ranges = Dict()
 for (i, e) in enumerate(errors)
     estimated_ranges[e] = SDT.SDMLayer(

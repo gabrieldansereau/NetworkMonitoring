@@ -225,14 +225,20 @@ else
     errors = -0.2:0.05:0.2
 end
 threshold = thresholds[indexin([sp], probranges.species)...]
-layers = [convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e) for e in errors]
-SDT.nodata!.(layers, 0)
+layers = Dict()
+for e in errors
+    l = convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e)
+    SDT.nodata!(l, 0)
+    layers[e] = l
+end
+layers
 
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
-optim = layers
-optimlabels = [ifelse(e < 0, "Over$e", "Under-$e") for e in errors]
+set = errors
+optim = [layers[s] for s in set]
+optimlabels = [ifelse(s < 0, "Over$s", "Under-$s") for s in set]
 replace!(optimlabels, "Under-0.0" => "True-0.0")
 STEP = (OUTDIR == "dev" ? 50 : 5)
 monitored_estimations = focal_monitoring(
@@ -251,4 +257,4 @@ monitored_estimations = focal_monitoring(
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimations)
-SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), layers)
+SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), optim)
