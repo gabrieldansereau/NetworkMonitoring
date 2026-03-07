@@ -139,7 +139,7 @@ begin
 
     # Figure & grid
     if nrow(u) <= 12
-        f = Figure(; size=(600, 300))
+        f = Figure(; size=(750, 300))
     else
         f = Figure(; size=(600, 800))
     end
@@ -178,7 +178,11 @@ begin
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(g3[1, 1]; xreversed=!rev) # rev needs to be opposite somehow
+        ax3 = Axis(
+            g3[1, 1];
+            xreversed=!rev, # rev needs to be opposite somehow
+            xticks=([0.5, 1.5], ["Negative", "Positive"]),
+        )
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
@@ -188,7 +192,7 @@ begin
         v3 = visual(
             BarPlot;
             direction=:x,
-            bar_labels=["$v" for v in d3.count],
+            bar_labels=["$v %" for v in d3.count],
             label_position=:center,
             label_color=:white,
             label_font=:bold,
@@ -196,11 +200,24 @@ begin
             alpha=0.85,
         )
         draw!(ax3, data(d3) * m34 * v3)
-
-        hidedecorations!(ax3)
+        hideydecorations!(ax3)
+        hidexdecorations!(ax3; ticklabels=false, ticks=false)
         hidespines!(ax3)
+
+        # Align axes
+        ax1 = g1.content[1].content
+        linkyaxes!(ax1, ax3)
+        # Option 1
+        # ax3.xticklabelpad = 7.0 # aligned with ax1
+        # ax3.xticklabelpad = -3.0 # reasonable
+        # Option 2
+        # ax3.xaxisposition = :top
+        # hidexdecorations!(ax3; ticklabels=false)
+        # ax3.xticklabelpad = -5.0
+
+        # Add label
         pad = (0, 0, 10, 0)
-        Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+        Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
 
         return (g1, g3)
     end
@@ -253,7 +270,7 @@ fig_types = begin
     var = :offset
     rev = true
 
-    fig = Figure(; size=(700, 450))
+    fig = Figure(; size=(750, 350))
     function make_bands_ax!(f; res=res, var=var, rev=rev)
         t1, t2 = extrema(res[:, var])
         ax = Axis(
@@ -333,6 +350,6 @@ begin
         font=:bold,
         padding=(-80, 0, 10, 0),
     )
+    save(plotsdir("ranges_combined.png"), f)
     f
 end
-save(plotsdir("ranges_combined.png"), current_figure())
