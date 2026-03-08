@@ -2,13 +2,20 @@
 saturation(a) = (x) -> x ./ (exp(a) .+ x)
 
 # Efficiency grid search
-function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000))
+function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false)
     err = zeros(length(A))
     for i in eachindex(A)
         f = saturation(A[i])
-        err[i] = sqrt(sum((y .- f(x)) .^ 2.0))
+        err[i] = sqrt(mean((y .- f(x)) .^ 2.0))
     end
-    return A[last(findmin(err))]
+    if rmse
+        _err, _ind = findmin(err)
+        # _rmse = _err / length(x)
+        _rmse = _err
+        return (; efficiency=A[_ind], rmse=_rmse)
+    else
+        return A[last(findmin(err))]
+    end
 end
 
 # Layer occupancy
