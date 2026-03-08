@@ -1,5 +1,6 @@
 Manifest.toml
 scripts/_*
+scripts/_notebooks
 plots/_*
 *_xtra*
 data/sim-*

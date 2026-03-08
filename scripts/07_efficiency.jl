@@ -1,100 +1,49 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Random
-using Statistics
-import SpeciesDistributionToolkit as SDT
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
 
 ## Summarize efficiency simulations
-
-# Summmarize results not combined previously
-function summarize_monitored(df)
-    monitored = @chain df begin
-        groupby([:sp, :type, :sampler, :nbon])
-        @combine(
-            :low = quantile(:monitored, 0.05),
-            :med = median(:monitored),
-            :upp = quantile(:monitored, 0.95),
-            :deg = maximum(:deg)
-        )
-        @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg,)
-    end
-    return monitored
-end
 
 # Use job id to vary parameters
 files = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))
 ids = sort(parse.(Int, replace.(files, "monitored_samplers-" => "", ".csv" => "")))
-sims_samplers = DataFrame()
-sims_optimized = DataFrame()
-sims_species = DataFrame()
-for id in ids
-    # Load all results
-    idp = lpad(id, 2, "0")
-    monitored_samplers_all = CSV.read(
-        datadir("efficiency", "monitored_samplers-$idp.csv"), DataFrame
-    )
-    monitored_optimized_all = CSV.read(
-        datadir("efficiency", "monitored_optimized-$idp.csv"), DataFrame
-    )
-    monitored_species_all = CSV.read(
-        datadir("efficiency", "monitored_spp-$idp.csv"), DataFrame
-    )
+sets = ["samplers", "optimized", "spp", "estimations"]
+sims_dict = Dict()
+for set in sets
+    # Create data frame for set results
+    sims_dict[set] = DataFrame()
+    for id in ids
+        # Load all results
+        idp = lpad(id, 2, "0")
+        file = datadir("efficiency", "monitored_$set-$idp.csv")
+        isfile(file) || continue
+        monitored_all = CSV.read(datadir(file), DataFrame)
 
-    # Summmarize results not combined previously
-    monitored_samplers = summarize_monitored(monitored_samplers_all)
-    monitored_optimized = summarize_monitored(monitored_optimized_all)
-    monitored_species = summarize_monitored(monitored_species_all)
+        # Summmarize results not combined previously
+        monitored = summarize_focal(monitored_all; id=id)
 
-    # Add species rank
-    monitored_species_occ = CSV.read(
-        datadir("efficiency", "monitored_spp_occ-$idp.csv"), DataFrame
-    )
-    leftjoin!(monitored_species, monitored_species_occ; on=:sp)
+        # Add species rank and occupancy
+        if set == "spp"
+            monitored_occ = CSV.read(
+                datadir("efficiency", "monitored_spp_occ-$idp.csv"), DataFrame
+            )
+            leftjoin!(monitored, monitored_occ; on=[:sp, :sim])
+        end
 
-    # Add sim id
-    @select!(monitored_samplers, :sim = id, All())
-    @select!(monitored_optimized, :sim = id, All())
-    @select!(monitored_species, :sim = id, All())
-
-    # Collect
-    append!(sims_samplers, monitored_samplers)
-    append!(sims_optimized, monitored_optimized)
-    append!(sims_species, monitored_species)
+        # Collect
+        append!(sims_dict[set], monitored)
+    end
 end
-sims_samplers
-sims_optimized
-sims_species
-
-# Export
-CSV.write(datadir("sims_efficiency_samplers.csv"), sims_samplers)
-CSV.write(datadir("sims_efficiency_optimized.csv"), sims_optimized)
-CSV.write(datadir("sims_efficiency_species.csv"), sims_species)
+sims_samplers = sims_dict["samplers"]
+sims_optimized = sims_dict["optimized"]
+sims_species = sims_dict["spp"]
+sims_estimations = sims_dict["estimations"]
 
 ## Efficiency
 
-# Saturation equation
-saturation(a) = (x) -> x ./ (exp(a) .+ x)
-
-# Efficiency grid search
-function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000))
-    err = zeros(length(A))
-    for i in eachindex(A)
-        f = saturation(A[i])
-        err[i] = sqrt(sum((y .- f(x)) .^ 2.0))
-    end
-    return A[last(findmin(err))]
-end
-
 # Select UncertaintySampling only as example
-sims_set = @rsubset(sims_samplers, :sampler == "UncertaintySampling")
+sims_set = @rsubset(sims_samplers, :sampler == "Uncertainty Sampling")
 @rsubset!(sims_set, :sim <= 10)
 
 # Visualize
@@ -120,55 +69,63 @@ save(plotsdir("efficiency_example.png"), f)
 
 ## Occupancy
 
-# Get layer occupancy
-occupancy(l) = length(findall(isone, l)) / length(l)
-
 # Calculate occupancy
 ids = sort(unique(sims_samplers.sim))
-occup = zeros(length(ids))
+occup = Dict(ids .=> zeros(length(ids)))
 for i in ids
     idp = lpad(i, 2, "0")
     l = SDT.SDMLayer(datadir("efficiency", "layer_sp_range-$idp.tiff"))
     occup[i] = occupancy(l)
 end
-occupdf = DataFrame(; sim=ids, occ=occup)
+occupdf = DataFrame(; sim=ids, occ=[occup[i] for i in ids])
 
 # Calculate efficiency & assign occupancy
-effs_samplers = @chain sims_samplers begin
-    @groupby(:sim, :sampler)
+effs_species = @chain sims_species begin
+    @groupby(:sim, :set, :sp, :deg, :rank, :occ)
     @combine(:eff = efficiency(:nbon, :med))
-    leftjoin(occupdf; on=:sim)
-    @transform(:occ = occup[:sim], :set = "Samplers")
+    rename(:sp => :variable)
+end
+effs_samplers = @chain sims_samplers begin
+    @groupby(:sim, :set, :sampler)
+    @combine(:eff = efficiency(:nbon, :med))
+    @rtransform(:occ = occup[:sim])
+    rename(:sampler => :variable)
 end
 effs_optimized = @chain sims_optimized begin
-    @groupby(:sim, :sampler)
+    @groupby(:sim, :set, :layer)
     @combine(:eff = efficiency(:nbon, :med))
-    leftjoin(occupdf; on=:sim)
-    @transform(:set = "Layers")
+    @rtransform(:occ = occup[:sim])
+    rename(:layer => :variable)
 end
-effs_species = @chain sims_species begin
-    @groupby(:sim, :sampler, :sp, :deg, :rank, :occ)
+effs_estimations = @chain sims_estimations begin
+    @groupby(:sim, :set, :layer)
     @combine(:eff = efficiency(:nbon, :med))
-    @transform(:set = "Species")
+    @rtransform(:occ = occup[:sim])
+    rename(:layer => :variable)
 end
 
 # Export
-CSV.write(datadir("efficiency_samplers.csv"), effs_samplers)
-CSV.write(datadir("efficiency_optimized.csv"), effs_optimized)
-CSV.write(datadir("efficiency_species.csv"), effs_species)
+CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
+CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
+CSV.write(datadir("efficiency_species.csv"), effs_species);
+CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
 
 ## Within-simulation variation
 
 # Load one simulation example
 monitored_samplers = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
-@rsubset!(monitored_samplers, :sampler == "UncertaintySampling")
+@rsubset!(monitored_samplers, :sampler == "Uncertainty Sampling")
 
 # Visualize
 let b = monitored_samplers
     eff = efficiency(b.nbon, b.med)
-    band(b.nbon, b.low, b.upp; alpha=0.4, color=Makie.wong_colors()[2])
-    scatter!(b.nbon, b.med; color=Makie.wong_colors()[2])
-    lines!(b.nbon, saturation(eff)(b.nbon); color=:black, linestyle=:dash)
+    band(b.nbon, b.low, b.upp; alpha=0.4, color=Makie.wong_colors()[2], label="intervals")
+    lines!(b.nbon, b.med; color=Makie.wong_colors()[2], linewidth=1.5, label="median")
+    lines!(
+        b.nbon, saturation(eff)(b.nbon); color=:black, linestyle=:dash, label="efficiency"
+    )
+    hlines!([1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(; position=:rb)
     current_figure()
 end
 
@@ -201,10 +158,10 @@ fig = let bs = sim1_samplers, b = monitored_samplers
         b.low,
         b.upp;
         alpha=0.4,
-        color=Makie.wong_colors()[2],
+        color=colours["Uncertainty Sampling"],
         label="90% percentile",
     )
-    scatter!(b.nbon, b.med; color=Makie.wong_colors()[2], label="median points")
+    scatter!(b.nbon, b.med; color=colours["Uncertainty Sampling"], label="median points")
     lines!(
         b.nbon,
         saturation(eff)(b.nbon);

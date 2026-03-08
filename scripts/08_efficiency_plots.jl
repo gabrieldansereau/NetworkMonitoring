@@ -1,57 +1,15 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Random
-using Statistics
-import SpeciesDistributionToolkit as SDT
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
-sims_samplers = CSV.read(datadir("sims_efficiency_samplers.csv"), DataFrame)
-sims_optimized = CSV.read(datadir("sims_efficiency_optimized.csv"), DataFrame)
-sims_species = CSV.read(datadir("sims_efficiency_species.csv"), DataFrame)
 effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
 effs_optimized = CSV.read(datadir("efficiency_optimized.csv"), DataFrame)
 effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 
-# Rename
-effs_samplers.sampler =
-    replace.(
-        effs_samplers.sampler,
-        "UncertaintySampling" => "Uncertainty Sampling",
-        "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
-        "BalancedAcceptance" => "Balanced Acceptance",
-        "SimpleRandomMask" => "Simple Random Mask",
-        "SimpleRandom" => "Simple Random",
-    )
-
 # Combine for convenience
-effs_combined = vcat(effs_samplers, effs_optimized)
-
-# Define color sets
-cols = [
-    # Interaction types
-    "possible" => Makie.wong_colors()[2],
-    "realized" => Makie.wong_colors()[3],
-    "detected" => Makie.wong_colors()[4],
-    # Samplers
-    "Uncertainty Sampling" => Makie.wong_colors()[2],
-    "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
-    "Simple Random" => Makie.wong_colors()[1],
-    "Balanced Acceptance" => "grey",
-    "Simple Random Mask" => "turquoise",
-    # Layers
-    "Focal species range" => Makie.wong_colors()[2],
-    "Species richness" => Makie.wong_colors()[4],
-    "Realized interactions" => Makie.wong_colors()[5],
-    "Probabilistic range" => Makie.wong_colors()[6],
-]
+effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
 ## Efficiency only
 
@@ -70,18 +28,24 @@ sortedlayers = [
     "Species richness",
 ]
 sortedlayout = [sortedsamplers..., sortedlayers...]
+sorteddict = Dict(v => i for (i, v) in enumerate(sortedlayout))
+
+# Sort dataframes
+sort!(effs_samplers, order(:variable; by=x -> sorteddict[x]))
+sort!(effs_optimized, order(:variable; by=x -> sorteddict[x]))
+sort!(effs_combined, order(:variable; by=x -> sorteddict[x]))
 
 # Violin
 begin
     Random.seed!(42) # for jitter
     eff = :eff => "efficiency"
     layer =
-        mapping(:sampler => sorter(sortedlayout) => "", eff; color=:sampler) *
+        mapping(:variable => sorter(sortedlayout) => "", eff; color=:variable) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
     f = Figure(; size=(700, 700))
-    sc = scales(; Color=(; palette=cols))
+    sc = scales(; Color=(; palette=colourpal))
     ylog2f = (; ytickformat=vs -> [rich("2", superscript("$(Int(v))")) for v in vs])
     ylog2 = (; axis=(; yticks=2:2:100))
     fg1 = draw!(f[1, 1], f1, sc; ylog2...)
@@ -127,17 +91,17 @@ save(plotsdir("efficiency_distribution_species.png"), f)
 # Scatter & smooth
 begin
     occ = :occ => "occupancy"
-    layout = mapping(occ, eff; color=:sampler) * (visual(Scatter) + linear())
-    scl = scales(; Color=(; palette=cols))
+    layout = mapping(occ, eff; color=:variable) * (visual(Scatter) + linear())
+    scl = scales(; Color=(; palette=colourpal))
     legend = (; position=:bottom)
-    f1 = data(effs_samplers) * layout * mapping(; col=:sampler => sorter(sortedlayout))
-    f2 = data(effs_optimized) * layout * mapping(; col=:sampler => sorter(sortedlayout))
+    f1 = data(effs_samplers) * layout * mapping(; col=:variable => sorter(sortedlayout))
+    f2 = data(effs_optimized) * layout * mapping(; col=:variable => sorter(sortedlayout))
 end
 draw(f1, scl; legend=legend)
 draw(f2, scl; legend=legend)
 fig = draw(
-    data(effs_combined) * layout * mapping(; layout=:sampler => sorter(sortedlayout)),
-    scales(; Color=(; palette=cols, legend=false));
+    data(effs_combined) * layout * mapping(; layout=:variable => sorter(sortedlayout)),
+    scales(; Color=(; palette=colourpal, legend=false));
     figure=(; size=(800, 450)),
 )
 
@@ -194,50 +158,36 @@ save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
 
 ## Within-simulation comparison
 
-# NDI
-ndi(x, y) = (x - y) / (x + y)
-
-# Efficiency difference
-function efficiency_difference(n, n2; k=10_000)
-    n = exp(n)
-    n2 = exp(n2)
-    return ((n * log(n) - n * log(n + k) + k) - (n2 * log(n2) - n2 * log(n2 + k) + k))
-end
-
 # Separate results per simulation
-function comparewithin(effs_combined; f=(x, y) -> -(x, y))
-    within_combined = @chain effs_combined begin
-        unstack(:sampler, :eff)
-        @rtransform(
-            :ΔSRM_BA = f($("Simple Random Mask"), $("Balanced Acceptance")),
-            :ΔUS_BA = f($("Uncertainty Sampling"), $("Balanced Acceptance")),
-            :ΔUS_SRM = f($("Uncertainty Sampling"), $("Simple Random Mask")),
-            :ΔUS_SR = f($("Uncertainty Sampling"), $("Simple Random")),
-            :ΔUS_WBA = f($("Uncertainty Sampling"), $("Weighted Balanced Acceptance")),
-            :ΔWBA_SR = f($("Weighted Balanced Acceptance"), $("Simple Random")),
-            :ΔRI_SR = f($("Realized interactions"), $("Species richness")),
-            :ΔRI_FR = f($("Realized interactions"), $("Focal species range")),
-            :ΔFR_SR = f($("Focal species range"), $("Species richness")),
-            :ΔRI_PR = f($("Realized interactions"), $("Probabilistic range")),
-            :ΔFR_PR = f($("Focal species range"), $("Probabilistic range")),
-            :ΔPR_SR = f($("Probabilistic range"), $("Species richness")),
-        )
-        select(:sim, :set, :occ, r"Δ")
-        stack(r"Δ")
-        dropmissing()
-    end
-    return within_combined
-end
-within_combined = comparewithin(effs_combined)
-within_combined_ndi = comparewithin(effs_combined; f=ndi)
-within_combined_log = comparewithin(effs_combined; f=(x, y) -> (x / y))
-within_combined_dif = comparewithin(
-    effs_combined; f=(n, n2) -> efficiency_difference(n, n2; k=10_000)
+compsdict = Dict(
+    "Uncertainty Sampling" => "US",
+    "Weighted Balanced Acceptance" => "WBA",
+    "Simple Random" => "RS",
+    "Balanced Acceptance" => "BA",
+    "Simple Random Mask" => "SRM",
+    "Focal species range" => "FR",
+    "Realized interactions" => "RI",
+    "Probabilistic range" => "PR",
+    "Species richness" => "SR",
 )
-@chain within_combined_dif begin
-    @groupby(:set, :variable)
-    @transform!(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
-end
+set = unique(effs_combined.variable)
+within_combined = comparewithin(effs_combined, set; labels=compsdict)
+within_combined_ndi = comparewithin(effs_combined, set; labels=compsdict, f=ndi)
+within_combined_log = comparewithin(
+    effs_combined, set; labels=compsdict, f=(x, y) -> (x / y)
+)
+within_combined_dif = comparewithin(
+    effs_combined,
+    set;
+    labels=compsdict,
+    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+)
+
+# Let's flip a comparison for illustration
+toflip = ["ΔFR_RI"]
+flipthatcomp!(within_combined_dif, toflip)
+
+# Count number of positive and negative comparisons
 unique_df = @chain within_combined_dif begin
     @groupby(:set, :variable)
     @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
@@ -246,18 +196,20 @@ end
 
 # Visualize
 sortedcomps = [
-    "ΔSRM_BA"
+    # Samplers
+    "ΔBA_SRM"
     "ΔUS_BA"
     "ΔUS_SRM"
-    "ΔUS_SR"
+    "ΔUS_RS"
     "ΔUS_WBA"
-    "ΔWBA_SR"
-    "ΔRI_SR"
-    "ΔRI_FR"
-    "ΔFR_SR"
-    "ΔRI_PR"
+    "ΔWBA_RS"
+    # Layers
     "ΔFR_PR"
+    "ΔFR_SR"
     "ΔPR_SR"
+    "ΔRI_FR"
+    "ΔRI_PR"
+    "ΔRI_SR"
 ]
 begin
     m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
@@ -273,6 +225,8 @@ begin
 end
 let d = within_combined_dif, u = unique_df
     Random.seed!(42)
+    d0 = @rsubset(d, :variable in sortedcomps)
+    u0 = @rsubset(u, :variable in sortedcomps)
 
     # Figure & grid
     f = Figure()
@@ -282,8 +236,8 @@ let d = within_combined_dif, u = unique_df
     g4 = GridLayout(f[7:end, end])
 
     # Main panels
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
+    d1 = @rsubset(d0, :set == "samplers")
+    d2 = @rsubset(d0, :set == "layers")
     m = mapping(
         :variable => sorter(sortedcomps) => "comparison",
         :value => "Efficiency difference";
@@ -300,8 +254,8 @@ let d = within_combined_dif, u = unique_df
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
-    d3 = @rsubset(u, :set == "Samplers")
-    d4 = @rsubset(u, :set == "Layers")
+    d3 = @rsubset(u0, :set == "samplers")
+    d4 = @rsubset(u0, :set == "layers")
     ax3 = Axis(g3[1, 1])
     ax4 = Axis(g4[1, 1])
     m34 = mapping(
@@ -340,35 +294,33 @@ end
 save(plotsdir("efficiency_comparison.png"), current_figure())
 
 # Reduce number of comparisons
-logit(p) = 1 / (1 + exp(-p))
-comps_dict = Dict(
-    "ΔUS_SR" => "Simple Random",
+reducedcomps_dict = Dict(
+    # Samplers
+    "ΔUS_RS" => "Simple Random",
     "ΔUS_WBA" => "Weighted Balanced Acceptance",
     "ΔUS_BA" => "Balanced Acceptance",
     "ΔUS_SRM" => "Simple Random Mask",
-    "ΔRI_FR" => "Realized Interactions",
+    # Layers
+    "ΔFR_RI" => "Realized Interactions",
     "ΔFR_SR" => "Species Richness",
     "ΔFR_PR" => "Probabilistic Range",
 )
-countmax = maximum(unique_df.count)
-within_combined_dif2 = @chain within_combined_dif begin
-    @rsubset(:variable in keys(comps_dict))
-    @rtransform(:variable = comps_dict[:variable])
-    @rtransform(
-        :value = :variable == "Realized Interactions" ? -(:value) : :value,
-        :count_pos =
-            :variable == "Realized Interactions" ? countmax - :count_pos : :count_pos,
-        :count_neg =
-            :variable == "Realized Interactions" ? countmax - :count_neg : :count_neg,
-    )
-    @rtransform(:value = -:value)
-    # @rtransform(:value = logit(:value))
-end
+within_combined_dif2 = comparewithin(
+    effs_combined,
+    set;
+    to=["Uncertainty Sampling", "Focal species range"],
+    labels=compsdict,
+    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+)
+
+# Count number of positive and negative comparisons
 unique_df2 = @chain within_combined_dif2 begin
-    unique([:set, :variable])
-    select(Not(:sim, :occ))
+    @groupby(:set, :variable)
+    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
+
+# Visualize
 let d = within_combined_dif2, u = unique_df2
     Random.seed!(42)
 
@@ -380,12 +332,12 @@ let d = within_combined_dif2, u = unique_df2
     g4 = GridLayout(f[5:end, end])
 
     # Main panels
-    d1 = @rsubset(d, :set == "Samplers")
-    d2 = @rsubset(d, :set == "Layers")
+    d1 = @rsubset(d, :set == "samplers")
+    d2 = @rsubset(d, :set == "layers")
     m = mapping(
-        :variable => "",
+        :variable => renamer(collect(reducedcomps_dict)) => "",
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
-        color=:value => (x -> x >= 0.0),
+        color=:value => (x -> x <= 0.0),
     )
 
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
@@ -398,19 +350,19 @@ let d = within_combined_dif2, u = unique_df2
         axis=(; xlabel="Efficiency compared to reference (Focal Range)"),
     )
     linkxaxes!(fg1..., fg2...)
-    pad = (-100, 0, 10, 0)
+    pad = (-150, 0, 10, 0)
     Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
-    d3 = @rsubset(u, :set == "Samplers")
-    d4 = @rsubset(u, :set == "Layers")
+    d3 = @rsubset(u, :set == "samplers")
+    d4 = @rsubset(u, :set == "layers")
     ax3 = Axis(g3[1, 1])
     ax4 = Axis(g4[1, 1])
     m34 = mapping(
-        :variable,
+        :variable => renamer(collect(reducedcomps_dict)),
         [1];
-        color=:countmeasure => sorter(["count_neg", "count_pos"]),
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
         stack=:countmeasure => sorter(["count_neg", "count_pos"]),
     )
     v3 = visual(

@@ -4,327 +4,32 @@ using DrWatson
 using BiodiversityObservationNetworks:
     UncertaintySampling, BalancedAcceptance, WeightedBalancedAcceptance, SimpleRandom
 
-# Set default parameters for network simulations
-d = DefaultParams()
-
 # Set directory to export results
 if !(@isdefined OUTDIR)
-    const OUTDIR = "dev" # focal_array or efficiency
+    const OUTDIR = "dev" # dev (local), focal_array or efficiency (remote)
 end
+mkpath(datadir(OUTDIR))
 
-# Use job id to vary parameters
+# Use job id to random results
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
 idp = lpad(id, 2, "0")
 
-# Generate networks using simulations
-Random.seed!(id * 42)
-nets_dict = generate_networks(d)
-nets_dict[:possible] = nets_dict[:pos]
-@unpack detected, realized, pos, metaweb, ranges = nets_dict
-
-# Generate probabilistic ranges
-# We need to run operations in the same order
-begin
-    Random.seed!(id * 42)
-    _ = generate(SIS.NicheModel(d.ns, d.C_exp)) # only to match random seed in next function
-    probranges = generate(
-        AutocorrelatedProbabilisticRange(; dims=(d.nsites, d.nsites)), d.ns
-    )
-end
-
-## Test focal monitoring for a single species
-
-# Get species with highest degree for test run
-deg, sp = findmax(degree(metaweb.metaweb))
-
 # Set number of replicates for short interactive run
 if !(@isdefined NREP)
-    const NREP = 5
+    const NREP = 3
 end
 # For longer, non-interactive runs, set the number of replicates with:
 # julia --project -e 'const NREP = 100; include("scripts/04_focal_sims.jl")'
 
-# Set progress bar display time from environment variable on cluster
-const DT = parse(Float64, get(ENV, "PROGRESS_BARS_DT", "0.1"))
-
-# Focal monitoring
-function focal_monitoring(
-    nets_dict,
-    sp::Symbol,
-    layer::Union{Nothing,SDT.SDMLayer}=nothing;
-    nrep::Int=1,
-    nbons::AbstractRange{Int64}=1:100,
-    type::Vector{Symbol}=[:possible],
-    sampler::Vector{UnionAll}=[BON.BalancedAcceptance],
-    combined=false,
-    H_nlm=d.H_nlm,
-    nsites=d.nsites,
-)
-    # Define options for simulations
-    options_dict = Dict(
-        :nrep => collect(1:nrep),
-        :nbon => collect(nbons),
-        :type => type,
-        :sampler => sampler,
-    )
-    options_list = dict_list(options_dict)
-
-    # Run all options
-    monitored = DataFrame()
-    @showprogress dt = DT for opt in options_list
-        @unpack nrep, nbon, type, sampler = opt
-
-        # Select network object
-        net = nets_dict[type]
-
-        # Get degree of focal species
-        if type == :detected
-            # fix for detected where the metaweb subfield is not reajusted to detected int
-            _mw = metawebify(net)
-            _no = parse(Int, replace(string(sp), "node_" => ""))
-            deg = sum(_mw[_no, :]) + sum(_mw[:, _no]) + sum(_mw[_no, _no])
-        else
-            deg = degree(net.metaweb, sp)
-        end
-
-        # Create neutral layer for optimization if none was provided
-        if isnothing(layer)
-            layer = SDT.SDMLayer(
-                MidpointDisplacement(H_nlm),
-                (nsites, nsites);
-                x=(0.0, nsites),
-                y=(0.0, nsites),
-            )
-        end
-
-        # Generate monitoring sites on layer given sampler
-        bon = BON.sample(sampler(nbon), layer)
-
-        # Compute degree for focal species across monitored sites
-        monitored_int = monitor(
-            x -> interactions(render(Binary, x)), net, bon; makeunique=true
-        )
-        monitored_deg = sum(in.(sp, monitored_int))
-
-        # Export results
-        info = (
-            sp=sp,
-            type=type,
-            sampler=sampler,
-            nbon=nbon,
-            rep=nrep,
-            deg=deg,
-            monitored=monitored_deg,
-        )
-        push!(monitored, info)
-    end
-
-    # Combine results across replicates
-    if combined
-        monitored = @chain monitored begin
-            groupby([:sp, :type, :sampler, :nbon])
-            @combine(
-                :low = minimum(:monitored),
-                :med = median(:monitored),
-                :upp = maximum(:monitored),
-                :deg = maximum(:deg)
-            )
-            rename(:type => :var)
-        end
-    end
-
-    return monitored
-end
-function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
-    monitored_vec = Vector{DataFrame}(undef, length(spp))
-    for (i, sp) in enumerate(spp)
-        @info "Monitoring $sp ($i/$(length(spp)))"
-        monitored_vec[i] = focal_monitoring(nets_dict, sp; kw...)
-    end
-    monitored = reduce(vcat, monitored_vec)
-    return monitored
-end
-function focal_monitoring(
-    nets_dict, sp::Symbol, layers::Vector{T}; kw...
-) where {T<:SDT.SDMLayer}
-    monitored_vec = Vector{DataFrame}(undef, length(layers))
-    for (i, layer) in enumerate(layers)
-        @info "Monitoring layer $i/$(length(layers))"
-        monitored_vec[i] = focal_monitoring(nets_dict, sp, layer; kw...)
-        @rtransform!(monitored_vec[i], :layer = i)
-    end
-    monitored = reduce(vcat, monitored_vec)
-    return monitored
-end
-
-# Test run
-monitored_sp = focal_monitoring(nets_dict, sp; type=[:possible], nbons=1:100)
-
-## Repeat focal monitoring by network types
-
-# Random.seed!(id * 33)
-
-# # Run for all types
-# types = [:possible, :realized, :detected]
-# monitored_types = focal_monitoring(nets_dict, sp; type=types, nrep=NREP, combined=false)
-
-# # Re-run for realized and detected with more sites in BON
-# types2 = [:realized, :detected]
-# monitored_types2 = focal_monitoring(
-#     nets_dict, sp; type=types2, nbons=1:500:10_001, nrep=NREP, combined=false
-# )
-
-# # Export
-# CSV.write(datadir(OUTDIR, "monitored_types-$idp.csv"), monitored_types)
-# CSV.write(datadir(OUTDIR, "monitored_types2-$idp.csv"), monitored_types2)
-
-# ## Repeat with 4 species with different degrees
-
-Random.seed!(id * 101)
-
-# Get species to test
-degrees = degree(metaweb.metaweb)
-idx = [1, 25, 50, 70]
-spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
-spp = [sp.first for sp in spp]
-
-# Repeat focal monitoring per species
-monitored_spp = focal_monitoring(
-    nets_dict, spp; type=[:realized], nrep=NREP, nbons=1:5:500, combined=false
-)
-
-# Extract species ranges
-speciesranges = [
-    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
-]
-
-# Get layer occupancy
-occupancy(l) = length(findall(isone, l)) / length(l)
-occupancies = occupancy.(speciesranges)
-monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
-
-# Export
-CSV.write(datadir(OUTDIR, "monitored_spp-$idp.csv"), monitored_spp)
-CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
-
-## Explore variations with different sampler
-
-# Extract species range
-sp_range = SDT.SDMLayer(
-    occurrence(ranges)[indexin([sp], ranges.species)...];
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Create species range mask
-sp_mask = SDT.nodata(sp_range, 0)
-heatmap(sp_mask)
-
-# Run with replicates
-Random.seed!(id * 22)
-samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
-monitored_samplers = focal_monitoring(
-    nets_dict,
-    sp,
-    sp_range;
-    type=[:realized],
-    sampler=samplers,
-    nbons=1:5:500,
-    nrep=NREP,
-    combined=false,
-)
-Random.seed!(id * 23)
-monitored_mask = focal_monitoring(
-    nets_dict,
-    sp,
-    sp_mask;
-    type=[:realized],
-    sampler=[BalancedAcceptance, SimpleRandom],
-    nbons=1:5:500,
-    nrep=NREP,
-    combined=false,
-)
-@rtransform!(monitored_mask, :sampler = string(:sampler))
-replace!(monitored_mask.sampler, "SimpleRandom" => "SimpleRandomMask")
-append!(monitored_samplers, monitored_mask; promote=true)
-
-# Export
-CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
-SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_range-$idp.tiff"), sp_range)
-SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
-
-## Richness-focused sampling
-
-# Extract richness layers
-richness_spp = SDT.SDMLayer(sum(occurrence(ranges)); x=(0.0, d.nsites), y=(0.0, d.nsites))
-richness_int = SDT.SDMLayer(
-    extract(SIN.links, realized); x=(0.0, d.nsites), y=(0.0, d.nsites)
-)
-richness_pos = SDT.SDMLayer(extract(SIN.links, pos); x=(0.0, d.nsites), y=(0.0, d.nsites))
-
-# Extract richness of interacting species for focal species
-degree_possible = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), sp), pos); x=(0.0, d.nsites), y=(0.0, d.nsites)
-)
-degree_realized = SDT.SDMLayer(
-    extract(x -> degree(render(Binary, x), sp), realized);
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Optimize with UncertaintySampling
-optim = [richness_spp, degree_realized]
-optimlabels = ["Species richness", "Realized interactions"]
-monitored_optimized = focal_monitoring(
-    nets_dict,
-    sp,
-    optim;
-    type=[:realized],
-    sampler=[UncertaintySampling],
-    nbons=1:5:500,
-    nrep=NREP,
-    combined=false,
-)
-@rtransform!(monitored_optimized, :sampler = optimlabels[:layer])
-
-# Combine with Uncertainty Sampling on focal species layer
-@chain begin
-    monitored_samplers
-    filter(:sampler => ==(UncertaintySampling), _)
-    @transform!(:sampler = "Focal species range")
-    append!(monitored_optimized, _; promote=true, cols=:subset)
-end
-
-## Probabilistic range sampling
-
-# Extract layers
-probsp_range = SDT.SDMLayer(
-    occurrence(probranges)[indexin([sp], probranges.species)...];
-    x=(0.0, d.nsites),
-    y=(0.0, d.nsites),
-)
-
-# Optimize with UncertaintySampling
-Random.seed!(id * 44)
-optim = [probsp_range]
-optimlabels = ["Probabilistic range"]
-monitored_probabilistic = focal_monitoring(
-    nets_dict,
-    sp,
-    optim;
-    type=[:realized],
-    sampler=[UncertaintySampling],
-    nbons=1:5:500,
-    nrep=NREP,
-    combined=false,
-)
-@rtransform!(monitored_probabilistic, :sampler = optimlabels[:layer])
-
-# Combine with Uncertainty Sampling on focal species layer
-append!(monitored_optimized, monitored_probabilistic; promote=true, cols=:subset)
-
-# Export
-CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
+# Generate networks using simulations
+d = DefaultParams()
+seed = id * 42
+nets_dict, sims_dict = generate_focal_simulation(d; seed=seed);
+@unpack detected, realized, pos, metaweb, ranges = nets_dict
+@unpack probranges, deg, sp, sp_range, sp_mask = sims_dict
+@unpack richness_spp, richness_int, richness_pos, degree_possible, degree_realized =
+    sims_dict
+@unpack probsp_range, thresholds = sims_dict
 
 # Export individual layers only for focal array simulations
 if OUTDIR == "focal_array"
@@ -339,3 +44,217 @@ if OUTDIR == "focal_array"
     )
     SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
 end
+
+# Test run focal monitoring
+@info "Test run"
+Random.seed!(333)
+monitored_sp = focal_monitoring(
+    nets_dict, sp; name="test", type=[:possible], nrep=2, nbons=1:5:100
+)
+
+# Export test for convenience in plot scripts
+if id == 1
+    CSV.write(datadir("monitored_test.csv"), monitored_sp)
+end
+
+## Repeat focal monitoring by network types
+
+#=
+
+# Run for all types
+@info "Network types"
+Random.seed!(id * 33)
+types = [:possible, :realized, :detected]
+STEP = (OUTDIR == "dev" ? 20 : 5)
+monitored_types = focal_monitoring(
+    nets_dict, sp; name="types", type=types, nrep=NREP, nbons=1:STEP:101, combined=false
+)
+
+# Re-run for realized and detected with more sites in BON
+types2 = [:realized, :detected]
+STEP = (OUTDIR == "dev" ? 4000 : 1000)
+monitored_types2 = focal_monitoring(
+    nets_dict,
+    sp;
+    name="types2",
+    type=types2,
+    nbons=1:STEP:10_001,
+    nrep=NREP,
+    combined=false,
+)
+
+# Export
+CSV.write(datadir(OUTDIR, "monitored_types-$idp.csv"), monitored_types)
+CSV.write(datadir(OUTDIR, "monitored_types2-$idp.csv"), monitored_types2)
+
+=#
+
+## Repeat with 4 species with different degrees
+
+#=
+
+Random.seed!(id * 101)
+
+# Get species to test
+degrees = degree(metaweb.metaweb)
+idx = [1, 25, 50, 70]
+spp = sort(collect(degrees); by=x -> x.second, rev=true)[idx]
+spp = [sp.first for sp in spp]
+
+# Repeat focal monitoring per species
+@info "Species"
+STEP = (OUTDIR == "dev" ? 50 : 10)
+monitored_spp = focal_monitoring(
+    nets_dict,
+    spp;
+    name="species",
+    type=[:realized],
+    nrep=NREP,
+    nbons=1:STEP:500,
+    combined=false,
+)
+
+# Extract species ranges
+speciesranges = [
+    SDT.SDMLayer(occurrence(ranges)[id]; x=(0.0, d.nsites), y=(0.0, d.nsites)) for id in idx
+]
+
+# Get layer occupancy
+occupancies = occupancy.(speciesranges)
+monitored_spp_occ = DataFrame(; sim=id, sp=spp, rank=1:4, occ=occupancies)
+
+# Export
+CSV.write(datadir(OUTDIR, "monitored_spp-$idp.csv"), monitored_spp)
+CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
+
+=#
+
+## Explore variations with different sampler
+
+#=
+
+# Run with replicates
+@info "Samplers"
+Random.seed!(id * 22)
+samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
+STEP = (OUTDIR == "dev" ? 50 : 5)
+monitored_samplers = focal_monitoring(
+    nets_dict,
+    sp,
+    sp_range;
+    name="samplers",
+    type=[:realized],
+    sampler=samplers,
+    nbons=1:STEP:500,
+    nrep=NREP,
+    combined=false,
+)
+
+# Variation with focal range mask
+@info "Focal range mask"
+Random.seed!(id * 23)
+monitored_mask = focal_monitoring(
+    nets_dict,
+    sp,
+    sp_mask;
+    name="samplers",
+    type=[:realized],
+    sampler=[BalancedAcceptance, SimpleRandom],
+    nbons=1:STEP:500,
+    nrep=NREP,
+    combined=false,
+)
+@rtransform!(monitored_mask, :sampler = string(:sampler))
+replace!(monitored_mask.sampler, "SimpleRandom" => "SimpleRandomMask")
+append!(monitored_samplers, monitored_mask; promote=true)
+
+# Export
+CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
+SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_range-$idp.tiff"), sp_range)
+SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
+
+=#
+
+## Explore variations with optimization layers
+
+#=
+
+# Optimize with UncertaintySampling
+@info "Optimization layers"
+Random.seed!(id * 44)
+optim = [richness_spp, degree_realized, probsp_range]
+optimlabels = ["Species richness", "Realized interactions", "Probabilistic range"]
+STEP = (OUTDIR == "dev" ? 50 : 5)
+monitored_optimized = focal_monitoring(
+    nets_dict,
+    sp,
+    optim;
+    name="layers",
+    type=[:realized],
+    sampler=[UncertaintySampling],
+    nbons=1:STEP:500,
+    nrep=NREP,
+    combined=false,
+)
+@rtransform!(monitored_optimized, :layer = optimlabels[:layer])
+@select!(monitored_optimized, :set, :sp, :type, :sampler, :layer, All())
+
+# Combine with Uncertainty Sampling on focal species layer
+if !(@isdefined monitored_samplers)
+    @warn "Need to run previous section for Uncertainty Sampling option"
+else
+    @chain begin
+        monitored_samplers
+        filter(:sampler => ==(UncertaintySampling), _)
+        @transform(:layer = "Focal species range", :set = "layers")
+        append!(monitored_optimized, _; promote=true, cols=:subset)
+    end
+end
+
+# Export
+CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
+
+=#
+
+## Range estimation
+
+# Misestimate ranges
+if OUTDIR == "efficiency"
+    errors = -0.3:0.02:0.3
+else
+    errors = -0.2:0.05:0.2
+end
+threshold = thresholds[indexin([sp], probranges.species)...]
+layers = Dict()
+for e in errors
+    l = convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e)
+    SDT.nodata!(l, 0)
+    layers[e] = l
+end
+layers
+
+# Optimize with UncertaintySampling
+@info "Range estimations"
+Random.seed!(id * 832)
+set = errors
+optim = [layers[s] for s in set]
+optimlabels = [ifelse(s < 0, "Over$s", "Under-$s") for s in set]
+replace!(optimlabels, "Under-0.0" => "True-0.0")
+STEP = (OUTDIR == "dev" ? 50 : 5)
+monitored_estimations = focal_monitoring(
+    nets_dict,
+    sp,
+    optim;
+    name="ranges",
+    type=[:realized],
+    sampler=[BalancedAcceptance],
+    nbons=1:STEP:500,
+    nrep=NREP,
+    combined=false,
+)
+@rtransform!(monitored_estimations, :layer = optimlabels[:layer])
+@select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, All())
+
+# Export
+CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimations)
+SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), optim)

@@ -6,7 +6,7 @@ Extract biodiversity information from monitored sites using a BON.
 """
 function monitor(m::T, bon::BON.BiodiversityObservationNetwork) where {T<:Metaweb}
     # Extract sites
-    coords = coordinates(bon)
+    coords = unique(coordinates(bon))
 
     # Extract site indices
     _x, _y = size(m.scale)
@@ -20,7 +20,7 @@ function monitor(m::T, bon::BON.BiodiversityObservationNetwork) where {T<:Metawe
 end
 function monitor(r::T, bon::BON.BiodiversityObservationNetwork) where {T<:Occurrence}
     # Extract sites
-    coords = coordinates(bon)
+    coords = unique(coordinates(bon))
 
     # Extract site indices
     _x, _y = size(r)
