@@ -236,14 +236,11 @@ layers
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
-set = [-0.2, 0.0, 0.2]
+set = errors
 optim = [layers[s] for s in set]
 optimlabels = [ifelse(s < 0, "Over$s", "Under-$s") for s in set]
 replace!(optimlabels, "Under-0.0" => "True-0.0")
 STEP = (OUTDIR == "dev" ? 50 : 5)
-# 40 sec par rep avec 5 step
-STEP = 10
-NREP = 30
 monitored_estimations = focal_monitoring(
     nets_dict,
     sp,
@@ -259,7 +256,5 @@ monitored_estimations = focal_monitoring(
 @select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, All())
 
 # Export
-OUTDIR = "dev"
-EXP = "$(lpad(NREP,3,"0"))-$(lpad(STEP,2,"0"))"
-CSV.write(datadir(OUTDIR, "monitored_estimations-$idp-$EXP.csv"), monitored_estimations)
+CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimations)
 SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), optim)
