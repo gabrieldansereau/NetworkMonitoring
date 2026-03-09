@@ -6,13 +6,13 @@ using InteractiveUtils
 
 # ╔═╡ f8c83bf9-7560-4890-8f10-2dd03cd00b7a
 begin
-	import Pkg
-	Pkg.activate(Base.current_project())
-	using Revise
-	using DrWatson
-	using Printf
-	using NetworkMonitoring
-	update_theme!(; CairoMakie=(; px_per_unit=2.0))
+    using Pkg: Pkg
+    Pkg.activate(Base.current_project())
+    using Revise
+    using DrWatson
+    using Printf
+    using NetworkMonitoring
+    update_theme!(; CairoMakie=(; px_per_unit=2.0))
 end
 
 # ╔═╡ bec626f6-c174-4988-97be-bbb992d16890
@@ -29,15 +29,15 @@ md"""
 
 # ╔═╡ 9da4af9b-07f2-4bf0-8df6-2fefeb8778f8
 begin
-	## Load focal species results
-	
-	# Use job id to vary parameters
-	id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
-	idp = lpad(id, 2, "0")
-	
-	# Load & summarize test results
-	monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
-	monitored_test = summarize_focal(monitored_test_all; id=idp);
+    ## Load focal species results
+
+    # Use job id to vary parameters
+    id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
+    idp = lpad(id, 2, "0")
+
+    # Load & summarize test results
+    monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
+    monitored_test = summarize_focal(monitored_test_all; id=idp)
 end
 
 # ╔═╡ 1ddf24c4-d555-4cff-8381-84359ebc804f
@@ -60,7 +60,7 @@ function load_layers(idp)
             datadir("focal_array", "layer_range_estimations-$idp.tiff"); bandnumber=i
         )
     end
-    estimated_ranges    
+    return estimated_ranges
 end
 
 # ╔═╡ 31614fca-b5b1-4c93-b696-b0ad7a783cc2
@@ -70,7 +70,7 @@ function fix_set(estimated_ranges)
     for (s, v) in zip(set, [-0.2, 0.0, 0.2])
         estimated_ranges[s] = estimated_ranges[v]
     end
-    estimated_ranges    
+    return estimated_ranges
 end
 
 # ╔═╡ f7428070-4e29-4522-8eda-76f4627303d2
@@ -96,23 +96,24 @@ OUTDIR = "dev";
 # Load & summarize results
 function load_sim(exp)
     monitored_estimations_all = CSV.read(
-    datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame)
-    monitored_estimations = summarize_focal(monitored_estimations_all; id=idp)    
+        datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame
+    )
+    return monitored_estimations = summarize_focal(monitored_estimations_all; id=idp)
 end
 
 # ╔═╡ 4bfd447b-b234-4ee7-83a5-abd57d86d224
-NREP=50;
+NREP = 50;
 
 # ╔═╡ 08db2a32-45fd-4839-bb4d-e06483d63713
-STEP=05;
+STEP = 05;
 
 # ╔═╡ cc54a065-4a01-422f-bc34-c93816a37bd8
 EXP = "$(lpad(NREP,3,"0"))-$(lpad(STEP,2,"0"))";
 
 # ╔═╡ 3f64b170-4b62-4786-ac62-ddfe6714d96f
 begin
-	monitored_estimations = load_sim(EXP)
-	first(monitored_estimations, 3)
+    monitored_estimations = load_sim(EXP)
+    first(monitored_estimations, 3)
 end
 
 # ╔═╡ 8c9934a6-77ea-43a9-8d20-35e3b40d1503
@@ -154,8 +155,10 @@ rmse_df = DataFrame();
 
 # ╔═╡ 48ef09f2-279e-49ef-a794-720ddf65303c
 # Plot
-function plot_sim(monitored_estimations, estimated_ranges, EXP; show_eff=true, scatter=false, push=true)
-    fig_estimation = let
+function plot_sim(
+    monitored_estimations, estimated_ranges, EXP; show_eff=true, scatter=false, push=true
+)
+    return fig_estimation = let
         set = ["Over-0.2", "True-0.0", "Under-0.2"]
         var = :layer
         res = filter(var => in(set), monitored_estimations)
@@ -185,13 +188,25 @@ function plot_sim(monitored_estimations, estimated_ranges, EXP; show_eff=true, s
             xticks=0:100:500,
         )
         ax1 = Axis(
-            gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+            gb[1, 1];
+            aspect=1,
+            yaxisposition=:right,
+            ylabelrotation=1.5pi,
+            ylabelsize=10,
         )
         ax2 = Axis(
-            gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+            gb[2, 1];
+            aspect=1,
+            yaxisposition=:right,
+            ylabelrotation=1.5pi,
+            ylabelsize=10,
         )
         ax3 = Axis(
-            gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
+            gb[3, 1];
+            aspect=1,
+            yaxisposition=:right,
+            ylabelrotation=1.5pi,
+            ylabelsize=10,
         )
         # Remove decorations for heatmaps
         hidedecorations!(ax1; label=false)
@@ -199,22 +214,31 @@ function plot_sim(monitored_estimations, estimated_ranges, EXP; show_eff=true, s
         hidedecorations!(ax3; label=false)
 
         # Sampling results
-		nrep,step = split(EXP, "-")
+        nrep, step = split(EXP, "-")
         for v in vals
             b = filter(var => ==(v), res)
-			eff, rmse = efficiency(b.nbon, b.med; rmse=true)
-			lab = "$v, eff=$(@sprintf("%.3f", eff)), rmse=$(@sprintf("%.5f", rmse))"
-			if push
-				push!(rmse_df, (id=idp, nrep=nrep, step=step, value=v, eff=eff, rmse=rmse))
-			end
+            eff, rmse = efficiency(b.nbon, b.med; rmse=true)
+            _eff = efficiency_gridsearch(b.nbon, b.med)
+            lab = "$v, eff=$(@sprintf("%.3f", eff)), rmse=$(@sprintf("%.5f", rmse))"
+            if push
+                push!(rmse_df, (id=idp, nrep=nrep, step=step, value=v, eff_integral=eff, eff_a=_eff, rmse=rmse))
+            end
             band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
-        	if show_eff
-				lines!(ax, b.nbon, saturation(eff)(b.nbon); color=:black, linestyle=:dash, linewidth=1.5, alpha=0.7)
-			end
-			if scatter
-				scatter!(ax, b.nbon, b.med; color=colours[v], label=lab, markersize=5.0)
-			end
-			lines!(ax, b.nbon, b.med; label=lab)
+            if show_eff
+                lines!(
+                    ax,
+                    b.nbon,
+                    saturation(_eff)(b.nbon);
+                    color=:black,
+                    linestyle=:dash,
+                    linewidth=1.5,
+                    alpha=0.7,
+                )
+            end
+            if scatter
+                scatter!(ax, b.nbon, b.med; color=colours[v], label=lab, markersize=5.0)
+            end
+            lines!(ax, b.nbon, b.med; label=lab)
         end
         hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
         Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=3)
@@ -230,7 +254,12 @@ function plot_sim(monitored_estimations, estimated_ranges, EXP; show_eff=true, s
         end
 
         # Subpanel labels
-        Label(ga[1, :, Top()], "Simulation $idp with NREP = $nrep, STEP=$step"; padding=(0, 0, 5, 0), font=:bold)
+        Label(
+            ga[1, :, Top()],
+            "Simulation $idp with NREP = $nrep, STEP=$step";
+            padding=(0, 0, 5, 0),
+            font=:bold,
+        )
         Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
         # Show figure
         save(plotsdir("_xtras", "focal_ranges-$EXP.png"), fig)
@@ -241,7 +270,7 @@ end
 # ╔═╡ e719aef9-9309-497a-a07a-a6747e07265c
 function load_and_plot(EXP, idp)
     monitored_estimations = load_sim(EXP)
-    plot_sim(monitored_estimations, estimated_ranges, EXP)
+    return plot_sim(monitored_estimations, estimated_ranges, EXP)
 end
 
 # ╔═╡ 652d6511-8a73-4e47-8388-5001d6195dac
@@ -290,7 +319,7 @@ CSV.write(datadir("rmse_investigation.csv"), rmse_df);
 # ╟─87db2694-a821-424e-98e9-342624dbffb6
 # ╟─61719ed0-9ed8-45a1-b76a-60e673f1b0a2
 # ╟─31614fca-b5b1-4c93-b696-b0ad7a783cc2
-# ╟─48ef09f2-279e-49ef-a794-720ddf65303c
+# ╠═48ef09f2-279e-49ef-a794-720ddf65303c
 # ╟─e719aef9-9309-497a-a07a-a6747e07265c
 # ╟─f7428070-4e29-4522-8eda-76f4627303d2
 # ╠═3f64b170-4b62-4786-ac62-ddfe6714d96f

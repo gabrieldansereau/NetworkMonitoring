@@ -47,7 +47,7 @@ begin
     f = Figure(; size=(700, 700))
     sc = scales(; Color=(; palette=colourpal))
     ylog2f = (; ytickformat=vs -> [rich("2", superscript("$(Int(v))")) for v in vs])
-    ylog2 = (; axis=(; yticks=2:2:100))
+    ylog2 = (; axis=(;))
     fg1 = draw!(f[1, 1], f1, sc; ylog2...)
     fg2 = draw!(f[2, 1], f2, sc; ylog2...)
     linkyaxes!(fg1..., fg2...)
@@ -71,7 +71,7 @@ begin
         mapping(ranks, eff; color=ranks) *
         visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false),
         scales(; Color=(; palette=sppalette));
-        axis=(; yticks=2:4:100),
+        axis=(; ),
     )
     fg2 = draw!(
         f[2, 1],
@@ -139,7 +139,7 @@ fig = draw(
     scales(; Color=(; palette=sppalette));
     figure=(; size=(800, 300)),
     legend=legend,
-    axis=(; yticks=4:4:100),
+    axis=(; ),
 )
 save(plotsdir("efficiency_occupancy_species.png"), fig)
 
@@ -180,7 +180,8 @@ within_combined_dif = comparewithin(
     effs_combined,
     set;
     labels=compsdict,
-    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    f=(n, n2) -> n - n2,
 )
 
 # Let's flip a comparison for illustration
@@ -310,7 +311,8 @@ within_combined_dif2 = comparewithin(
     set;
     to=["Uncertainty Sampling", "Focal species range"],
     labels=compsdict,
-    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    f=(n, n2) -> n - n2,
 )
 
 # Count number of positive and negative comparisons

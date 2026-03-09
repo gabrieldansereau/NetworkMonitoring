@@ -116,7 +116,8 @@ within_combined_dif2 = comparewithin(
     set;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
-    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    f=(n, n2) -> n - n2,
 )
 flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
 @rtransform!(
@@ -235,7 +236,8 @@ within_combined_all = comparewithin(
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
-    f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
+    f=(n, n2) -> n - n2,
 )
 flipthatcomp!(within_combined_all, unique(within_combined_all.variable))
 @rtransform!(

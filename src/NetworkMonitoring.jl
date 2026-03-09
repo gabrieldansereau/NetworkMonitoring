@@ -55,7 +55,7 @@ export metawebify, extract, heatmapcb, monitor
 export DefaultParams, generate_networks, generate_bon, evaluate_monitoring, runsim
 export AutocorrelatedProbabilisticRange, generate
 export focal_monitoring, generate_focal_simulation, summarize_focal
-export efficiency, saturation, occupancy
+export efficiency, efficiency_gridsearch, efficiency_integral, saturation, occupancy
 export colours
 
 end # module NetworkMonitoring

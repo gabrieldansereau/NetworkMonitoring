@@ -59,7 +59,7 @@ begin
         X₁ = @rsubset(sims_set, :sim == iter)
         x = X₁.nbon
         y = X₁.med
-        eff = efficiency(x, y)
+        eff = efficiency_gridsearch(x, y)
         scatter!(ax, x, y; color=:lightgrey)
         lines!(ax, x, saturation(eff)(x); color=:black, linestyle=:dash)
     end
@@ -118,7 +118,7 @@ monitored_samplers = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
 
 # Visualize
 let b = monitored_samplers
-    eff = efficiency(b.nbon, b.med)
+    eff = efficiency_gridsearch(b.nbon, b.med)
     band(b.nbon, b.low, b.upp; alpha=0.4, color=Makie.wong_colors()[2], label="intervals")
     lines!(b.nbon, b.med; color=Makie.wong_colors()[2], linewidth=1.5, label="median")
     lines!(
@@ -143,7 +143,7 @@ fig = let bs = sim1_samplers, b = monitored_samplers
     for i in 1:100
         bi = @rsubset(bs, :rep == i)
         # lines!(bi.nbon, bi.monitored; color=:grey, linewidth=0.5)
-        eff = efficiency(bi.nbon, bi.monitored; A=LinRange(-12.0, 12.0, 5000))
+        eff = efficiency_gridsearch(bi.nbon, bi.monitored; A=LinRange(-12.0, 12.0, 5000))
         lines!(
             bi.nbon,
             saturation(eff)(bi.nbon);
@@ -152,7 +152,7 @@ fig = let bs = sim1_samplers, b = monitored_samplers
             label="individual saturation curves",
         )
     end
-    eff = efficiency(b.nbon, b.med)
+    eff = efficiency_gridsearch(b.nbon, b.med)
     band!(
         b.nbon,
         b.low,

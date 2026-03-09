@@ -2,7 +2,7 @@
 saturation(a) = (x) -> x ./ (exp(a) .+ x)
 
 # Efficiency grid search
-function efficiency(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false)
+function efficiency_gridsearch(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false)
     err = zeros(length(A))
     for i in eachindex(A)
         f = saturation(A[i])
@@ -27,6 +27,18 @@ ndi(x, y) = (x - y) / (x + y)
 # Efficiency integral & difference
 efficiency_integral(n, k=10_000) = ((n * log(n) - n * log(n + k) + k))
 
+# Efficiency
+function efficiency(x, y; k=10_000, rmse=false, kw...)
+    n, _rmse = efficiency_gridsearch(x, y; rmse=true, kw...)
+    ei = efficiency_integral(exp(n), k)
+    if rmse
+        return (; ei=ei, rmse=_rmse)
+    else
+        return ei
+    end
+end
+
+# Efficiency difference
 function efficiency_difference(n, n2; k=10_000)
     n = exp(n)
     n2 = exp(n2)
