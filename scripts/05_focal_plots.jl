@@ -8,7 +8,7 @@ CairoMakie.activate!(; type="svg")
 
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
-idp = lpad(id, 2, "0")
+idp = lpad(id, 3, "0")
 
 # Set directory to import results
 if !(@isdefined OUTDIR)

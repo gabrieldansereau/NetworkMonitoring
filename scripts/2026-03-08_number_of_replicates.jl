@@ -33,7 +33,7 @@ begin
 
     # Use job id to vary parameters
     id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
-    idp = lpad(id, 2, "0")
+    idp = lpad(id, 3, "0")
 
     # Load & summarize test results
     monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
@@ -221,7 +221,18 @@ function plot_sim(
             _eff = efficiency_gridsearch(b.nbon, b.med)
             lab = "$v, eff=$(@sprintf("%.3f", eff)), rmse=$(@sprintf("%.5f", rmse))"
             if push
-                push!(rmse_df, (id=idp, nrep=nrep, step=step, value=v, eff_integral=eff, eff_a=_eff, rmse=rmse))
+                push!(
+                    rmse_df,
+                    (
+                        id=parse(Int, idp),
+                        nrep=nrep,
+                        step=step,
+                        value=v,
+                        eff_integral=eff,
+                        eff_a=_eff,
+                        rmse=rmse,
+                    ),
+                )
             end
             band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
             if show_eff

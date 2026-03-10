@@ -12,7 +12,7 @@ mkpath(datadir(OUTDIR))
 
 # Use job id to random results
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
-idp = lpad(id, 2, "0")
+idp = lpad(id, 3, "0")
 
 # Set number of replicates for short interactive run
 if !(@isdefined NREP)

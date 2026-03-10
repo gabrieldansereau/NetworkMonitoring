@@ -133,8 +133,9 @@ let b = monitored_samplers
 end
 
 # Load pre-summary results
+file1 = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))[1]
 sim1_samplers = @chain begin
-    CSV.read(datadir("focal_array", "monitored_samplers-01.csv"), DataFrame)
+    CSV.read(datadir("efficiency", file1), DataFrame)
     @rsubset(:sampler == "UncertaintySampling")
     @rtransform(:monitored = :monitored / :deg)
 end

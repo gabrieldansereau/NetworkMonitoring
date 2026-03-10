@@ -26,7 +26,7 @@ sims_samplers = DataFrame()
 sims_optimized = DataFrame()
 for id in ids
     # Load all results
-    idp = lpad(id, 2, "0")
+    idp = lpad(id, 3, "0")
     monitored_samplers_all = CSV.read(
         datadir("focal_array", "monitored_samplers-$idp.csv"), DataFrame
     )
