@@ -6,27 +6,29 @@ include("include.jl") # see note regarding why we cannot use the module
 ## Summarize efficiency simulations
 
 # Use job id to vary parameters
-files = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))
-ids = sort(parse.(Int, replace.(files, "monitored_samplers-" => "", ".csv" => "")))
 sets = ["samplers", "optimized", "spp", "estimations"]
 sims_dict = Dict()
 for set in sets
+    # List available results
+    files = filter(startswith("monitored_$set"), readdir(datadir("efficiency")))
+    ids = sort(
+        replace.(files, "monitored_$set-" => "", ".csv" => ""); by=x -> parse(Int, x)
+    )
     # Create data frame for set results
     sims_dict[set] = DataFrame()
     for id in ids
         # Load all results
-        idp = lpad(id, 2, "0")
-        file = datadir("efficiency", "monitored_$set-$idp.csv")
+        file = datadir("efficiency", "monitored_$set-$id.csv")
         isfile(file) || continue
         monitored_all = CSV.read(datadir(file), DataFrame)
 
         # Summmarize results not combined previously
-        monitored = summarize_focal(monitored_all; id=id)
+        monitored = summarize_focal(monitored_all; id=parse(Int, id))
 
         # Add species rank and occupancy
         if set == "spp"
             monitored_occ = CSV.read(
-                datadir("efficiency", "monitored_spp_occ-$idp.csv"), DataFrame
+                datadir("efficiency", "monitored_sp_occ-$id.csv"), DataFrame
             )
             leftjoin!(monitored, monitored_occ; on=[:sp, :sim])
         end
@@ -70,14 +72,15 @@ save(plotsdir("efficiency_example.png"), f)
 ## Occupancy
 
 # Calculate occupancy
-ids = sort(unique(sims_samplers.sim))
-occup = Dict(ids .=> zeros(length(ids)))
-for i in ids
-    idp = lpad(i, 2, "0")
-    l = SDT.SDMLayer(datadir("efficiency", "layer_sp_range-$idp.tiff"))
+files = filter(startswith("layer_sp_range"), readdir(datadir("efficiency")))
+sort!(files; by=x -> parse(Int, replace(x, "layer_sp_range-" => "", ".tiff" => "")))
+occup = Dict()
+for (i, f) in enumerate(files)
+    l = SDT.SDMLayer(datadir("efficiency", f); bandnumber=1)
     occup[i] = occupancy(l)
 end
-occupdf = DataFrame(; sim=ids, occ=[occup[i] for i in ids])
+occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
+sort!(occupdf, :sim)
 
 # Calculate efficiency & assign occupancy
 effs_species = @chain sims_species begin

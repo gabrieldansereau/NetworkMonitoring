@@ -127,8 +127,8 @@ if id == 1
 end
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
-focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
 
 # Generate BON examples
 begin
@@ -262,11 +262,11 @@ if id == 1
 end
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
-focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
-richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"))
-degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree_realized-$idp.tiff"))
-probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
+probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=2)
+richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness-$idp.tiff"); bandnumber=1)
+degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree-$idp.tiff"); bandnumber=1)
 
 # Generate BON examples
 begin

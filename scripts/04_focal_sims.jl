@@ -32,18 +32,16 @@ nets_dict, sims_dict = generate_focal_simulation(d; seed=seed);
 @unpack probsp_range, thresholds = sims_dict
 
 # Export individual layers only for focal array simulations
-if OUTDIR == "focal_array"
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"), richness_spp)
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_int-$idp.tiff"), richness_int)
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_richness_pos-$idp.tiff"), richness_pos)
-    SDT.SimpleSDMLayers.save(
-        datadir(OUTDIR, "layer_degree_realized-$idp.tiff"), degree_realized
-    )
-    SDT.SimpleSDMLayers.save(
-        datadir(OUTDIR, "layer_degree_possible-$idp.tiff"), degree_possible
-    )
-    SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"), probsp_range)
-end
+SDT.SimpleSDMLayers.save(
+    datadir(OUTDIR, "layer_sp_range-$idp.tiff"), [sp_range, probsp_range, sp_mask]
+)
+SDT.SimpleSDMLayers.save(
+    datadir(OUTDIR, "layer_richness-$idp.tiff"),
+    [convert(SDT.SDMLayer{Int64}, richness_spp), richness_int, richness_pos],
+)
+SDT.SimpleSDMLayers.save(
+    datadir(OUTDIR, "layer_degree-$idp.tiff"), [degree_realized, degree_possible]
+)
 
 # Test run focal monitoring
 @info "Test run"
@@ -170,8 +168,6 @@ append!(monitored_samplers, monitored_mask; promote=true)
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
-SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_range-$idp.tiff"), sp_range)
-SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"), sp_mask)
 
 =#
 
