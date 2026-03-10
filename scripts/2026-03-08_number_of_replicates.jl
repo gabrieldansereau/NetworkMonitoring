@@ -218,8 +218,8 @@ function plot_sim(
         nrep, step = split(EXP, "-")
         for v in vals
             b = filter(var => ==(v), res)
-            eff, rmse = efficiency(b.nbon, b.med; rmse=true)
-            _eff = efficiency_gridsearch(b.nbon, b.med)
+            eff, rmse = efficiency(b.nbon, b.med; rmse=true, f=exp)
+            eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
             lab = "$v, eff=$(@sprintf("%.3f", eff)), rmse=$(@sprintf("%.5f", rmse))"
             if push
                 push!(
@@ -230,7 +230,7 @@ function plot_sim(
                         step=step,
                         value=v,
                         eff_integral=eff,
-                        eff_a=_eff,
+                        log_a=log(eff_a),
                         rmse=rmse,
                     ),
                 )
@@ -240,7 +240,7 @@ function plot_sim(
                 lines!(
                     ax,
                     b.nbon,
-                    saturation(_eff)(b.nbon);
+                    saturation(eff_a)(b.nbon);
                     color=:black,
                     linestyle=:dash,
                     linewidth=1.5,

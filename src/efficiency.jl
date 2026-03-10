@@ -1,8 +1,19 @@
-# Saturation equation
-saturation(a) = (x) -> x ./ (exp(a) .+ x)
+## Related functions
 
-# Efficiency grid search
-function efficiency_gridsearch(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false)
+# Layer occupancy
+occupancy(l; f=isone) = length(findall(f, l)) / length(l.grid)
+
+# NDI
+ndi(x, y) = (x - y) / (x + y)
+
+## Efficiency
+
+# Saturation equation
+saturation(a) = (x) -> x ./ (a .+ x)
+
+# Grid search for best fit
+function efficiency_gridsearch(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false, f=identity)
+    A = f.(A)
     err = zeros(length(A))
     for i in eachindex(A)
         f = saturation(A[i])
@@ -18,31 +29,23 @@ function efficiency_gridsearch(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false)
     end
 end
 
-# Layer occupancy
-occupancy(l; f=isone) = length(findall(f, l)) / length(l.grid)
+# Integral of efficiency curve
+efficiency_integral(a, k=10_000) = ((a * log(a) - a * log(a + k) + k))
 
-# NDI
-ndi(x, y) = (x - y) / (x + y)
+# Difference between two curves
+function efficiency_difference(a1, a2; k=10_000)
+    return efficiency_integral(a1, k) - efficiency_integral(a2, k)
+end
 
-# Efficiency integral & difference
-efficiency_integral(n, k=10_000) = ((n * log(n) - n * log(n + k) + k))
-
-# Efficiency
+# Complete efficiency worklow
 function efficiency(x, y; k=10_000, rmse=false, kw...)
-    n, _rmse = efficiency_gridsearch(x, y; rmse=true, kw...)
-    ei = efficiency_integral(exp(n), k)
+    a, _rmse = efficiency_gridsearch(x, y; rmse=true, kw...) # rmse=true on purpose
+    ei = efficiency_integral(a, k)
     if rmse
         return (; ei=ei, rmse=_rmse)
     else
         return ei
     end
-end
-
-# Efficiency difference
-function efficiency_difference(n, n2; k=10_000)
-    n = exp(n)
-    n2 = exp(n2)
-    return efficiency_integral(n, k) - efficiency_integral(n2, k)
 end
 
 # Compare efficiencies within simulations
