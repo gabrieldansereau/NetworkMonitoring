@@ -37,7 +37,7 @@ begin
 
     # Load & summarize test results
     monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
-    monitored_test = summarize_focal(monitored_test_all; id=idp)
+    monitored_test = summarize_focal(monitored_test_all; id=id)
 end
 
 # ╔═╡ 1ddf24c4-d555-4cff-8381-84359ebc804f
@@ -94,11 +94,12 @@ OUTDIR = "dev";
 
 # ╔═╡ 87db2694-a821-424e-98e9-342624dbffb6
 # Load & summarize results
-function load_sim(exp)
+function load_sim(exp; idp=idp)
     monitored_estimations_all = CSV.read(
         datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame
     )
-    return monitored_estimations = summarize_focal(monitored_estimations_all; id=idp)
+    id = parse(Int, idp)
+    return monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
 end
 
 # ╔═╡ 4bfd447b-b234-4ee7-83a5-abd57d86d224
