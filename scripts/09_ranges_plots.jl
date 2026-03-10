@@ -127,7 +127,10 @@ flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
 unique_df2 = @chain within_combined_dif2 begin
     @groupby(:set, :variable)
-    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    @combine(
+        :count_pos = count(>(0), :value) / length(:value),
+        :count_neg = count(<=(0), :value) / length(:value)
+    )
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
 end
 
@@ -193,7 +196,7 @@ begin
         v3 = visual(
             BarPlot;
             direction=:x,
-            bar_labels=["$v %" for v in d3.count],
+            bar_labels=["$(round(Int, v*100)) %" for v in d3.count],
             label_position=:center,
             label_color=:white,
             label_font=:bold,
