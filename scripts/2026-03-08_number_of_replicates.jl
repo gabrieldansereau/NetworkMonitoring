@@ -96,45 +96,14 @@ end
 
 # ╔═╡ 87db2694-a821-424e-98e9-342624dbffb6
 # Load & summarize results
-begin
-    function _median_confint(x; α=0.05)
-        z = quantile(Normal(0.0, 1.0), 1 - α / 2)
-        n = length(x)
-        L = ceil(Int, 0.5 * n - z * sqrt(0.25 * n))
-        U = ceil(Int, 0.5 * n + z * sqrt(0.25 * n))
-        return (low=sort(x)[L], upp=sort(x)[U])
-    end
-    function summarize_focal_confint(monitored_estimations_all)
-        cols = [:layer, :nbon]
-        monitored_estimations = @chain monitored_estimations_all begin
-            groupby(cols)
-            @combine(
-                :deg = maximum(:deg),
-                :confint_low = Ref(:monitored),
-                :confint_upp = Ref(:monitored),
-            )
-            @rtransform(
-                :confint_low = _median_confint(:confint_low).low,
-                :confint_upp = _median_confint(:confint_upp).upp,
-            )
-            @rtransform(
-                :confint_low = :confint_low / :deg, :confint_upp = :confint_upp / :deg,
-            )
-            @select(Not(:deg))
-        end
-        return monitored_estimations
-    end
-    function load_sim(exp; idp=idp, set=set)
-        monitored_estimations_all = CSV.read(
-            datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame
-        )
-        filter!(:layer => in(set), monitored_estimations_all)
-        id = parse(Int, idp)
-        monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
-        monitored_estimations_confint = summarize_focal_confint(monitored_estimations_all)
-        leftjoin!(monitored_estimations, monitored_estimations_confint; on=[:layer, :nbon])
-        return monitored_estimations
-    end
+function load_sim(exp; idp=idp, set=set)
+    monitored_estimations_all = CSV.read(
+        datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame
+    )
+    filter!(:layer => in(set), monitored_estimations_all)
+    id = parse(Int, idp)
+    monitored_estimations = summarize_focal(monitored_estimations_all; id=id, confint=true)
+    return monitored_estimations
 end
 
 # ╔═╡ 3f64b170-4b62-4786-ac62-ddfe6714d96f

@@ -207,7 +207,15 @@ function focal_monitoring(
     return monitored
 end
 
-function summarize_focal(df; id=0)
+function _median_confint(x; α=0.05)
+    z = quantile(Distributions.Normal(0.0, 1.0), 1 - α / 2)
+    n = length(x)
+    L = ceil(Int, 0.5 * n - z * sqrt(0.25 * n))
+    U = ceil(Int, 0.5 * n + z * sqrt(0.25 * n))
+    return (low=sort(x)[L], upp=sort(x)[U])
+end
+
+function summarize_focal(df; id=0, confint=false)
     if "layer" in names(df)
         cols = [:set, :sp, :type, :sampler, :layer, :nbon]
     else
@@ -223,6 +231,25 @@ function summarize_focal(df; id=0)
         )
         @rtransform(:low = :low / :deg, :med = :med / :deg, :upp = :upp / :deg,)
         @select(:sim = id, All())
+    end
+    if confint
+        monitored_confint = @chain df begin
+            groupby(cols)
+            @combine(
+                :deg = maximum(:deg),
+                :confint_low = Ref(:monitored),
+                :confint_upp = Ref(:monitored),
+            )
+            @rtransform(
+                :confint_low = _median_confint(:confint_low).low,
+                :confint_upp = _median_confint(:confint_upp).upp,
+            )
+            @rtransform(
+                :confint_low = :confint_low / :deg, :confint_upp = :confint_upp / :deg,
+            )
+            @select(Not(:deg))
+        end
+        leftjoin!(monitored, monitored_confint; on=cols)
     end
     monitored.sampler =
         replace.(
