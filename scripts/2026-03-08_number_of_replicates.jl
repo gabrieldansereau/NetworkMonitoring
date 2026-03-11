@@ -220,8 +220,10 @@ function plot_sim(
             b = filter(var => ==(v), res)
             eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
             eff, rmse = efficiency(b.nbon, b.med; rmse=true, f=exp)
-            eff_low, _ = efficiency(b.nbon, b.med .- rmse; rmse=true, f=exp)
-            eff_upp, _ = efficiency(b.nbon, b.med .+ rmse; rmse=true, f=exp)
+            eff_a_low = efficiency_gridsearch(b.nbon, b.med .- rmse; f=exp)
+            eff_a_upp = efficiency_gridsearch(b.nbon, b.med .+ rmse; f=exp)
+            eff_low = efficiency_integral(eff_a_low)
+            eff_upp = efficiency_integral(eff_a_upp)
             lab = "$v, eff=$(@sprintf("%.3f", eff)), rmse=$(@sprintf("%.5f", rmse))"
             if push
                 push!(
@@ -248,6 +250,24 @@ function plot_sim(
                     saturation(eff_a)(b.nbon);
                     color=:black,
                     linestyle=:dash,
+                    linewidth=1.5,
+                    alpha=0.7,
+                )
+                lines!(
+                    ax,
+                    b.nbon,
+                    saturation(eff_a_low)(b.nbon);
+                    color=:black,
+                    linestyle=:dot,
+                    linewidth=1.5,
+                    alpha=0.7,
+                )
+                lines!(
+                    ax,
+                    b.nbon,
+                    saturation(eff_a_upp)(b.nbon);
+                    color=:black,
+                    linestyle=:dot,
                     linewidth=1.5,
                     alpha=0.7,
                 )
