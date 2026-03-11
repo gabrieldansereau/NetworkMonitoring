@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.23
+# v0.20.13
 
 using Markdown
 using InteractiveUtils
@@ -63,16 +63,6 @@ function load_layers(idp)
     return estimated_ranges
 end
 
-# ╔═╡ 31614fca-b5b1-4c93-b696-b0ad7a783cc2
-# The set might differ, so just in case
-function fix_set(estimated_ranges)
-    set = ["Over-0.2", "True-0.0", "Under-0.2"]
-    for (s, v) in zip(set, [-0.2, 0.0, 0.2])
-        estimated_ranges[s] = estimated_ranges[v]
-    end
-    return estimated_ranges
-end
-
 # ╔═╡ f7428070-4e29-4522-8eda-76f4627303d2
 md"""
 ### Load simulation
@@ -80,9 +70,6 @@ md"""
 
 # ╔═╡ dbf0dca1-9eb6-47cf-a750-d3635b87c0ab
 estimated_ranges = load_layers(idp)
-
-# ╔═╡ 2f0a2245-ca81-4b81-9cd4-eb6ce86bc847
-fix_set(estimated_ranges)
 
 # ╔═╡ 99bc889c-068b-43f7-869a-1666a5d07d57
 md"""
@@ -92,18 +79,8 @@ md"""
 # ╔═╡ 25055648-5d6b-4e14-be72-5a0b40364f60
 OUTDIR = "dev";
 
-# ╔═╡ 87db2694-a821-424e-98e9-342624dbffb6
-# Load & summarize results
-function load_sim(exp; idp=idp)
-    monitored_estimations_all = CSV.read(
-        datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame
-    )
-    id = parse(Int, idp)
-    return monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
-end
-
 # ╔═╡ 4bfd447b-b234-4ee7-83a5-abd57d86d224
-NREP = 50;
+NREP = 20;
 
 # ╔═╡ 08db2a32-45fd-4839-bb4d-e06483d63713
 STEP = 05;
@@ -111,14 +88,73 @@ STEP = 05;
 # ╔═╡ cc54a065-4a01-422f-bc34-c93816a37bd8
 EXP = "$(lpad(NREP,3,"0"))-$(lpad(STEP,2,"0"))";
 
+# ╔═╡ 8c9934a6-77ea-43a9-8d20-35e3b40d1503
+begin
+    setdict = Dict("Over-0.2" => -0.2, "True-0.0" => 0.0, "Under-0.2" => 0.2)
+    set = sort(collect(keys(setdict)))
+end
+
+# ╔═╡ 87db2694-a821-424e-98e9-342624dbffb6
+# Load & summarize results
+begin
+    function _median_confint(x; α=0.05)
+        z = quantile(Normal(0.0, 1.0), 1 - α / 2)
+        n = length(x)
+        L = ceil(Int, 0.5 * n - z * sqrt(0.25 * n))
+        U = ceil(Int, 0.5 * n + z * sqrt(0.25 * n))
+        return (low=sort(x)[L], upp=sort(x)[U])
+    end
+    function summarize_focal_confint(monitored_estimations_all)
+        cols = [:layer, :nbon]
+        monitored_estimations = @chain monitored_estimations_all begin
+            groupby(cols)
+            @combine(
+                :deg = maximum(:deg),
+                :confint_low = Ref(:monitored),
+                :confint_upp = Ref(:monitored),
+            )
+            @rtransform(
+                :confint_low = _median_confint(:confint_low).low,
+                :confint_upp = _median_confint(:confint_upp).upp,
+            )
+            @rtransform(
+                :confint_low = :confint_low / :deg, :confint_upp = :confint_upp / :deg,
+            )
+            @select(Not(:deg))
+        end
+        return monitored_estimations
+    end
+    function load_sim(exp; idp=idp, set=set)
+        monitored_estimations_all = CSV.read(
+            datadir(OUTDIR, "monitored_estimations-$idp-$exp.csv"), DataFrame
+        )
+        filter!(:layer => in(set), monitored_estimations_all)
+        id = parse(Int, idp)
+        monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
+        monitored_estimations_confint = summarize_focal_confint(monitored_estimations_all)
+        leftjoin!(monitored_estimations, monitored_estimations_confint; on=[:layer, :nbon])
+        return monitored_estimations
+    end
+end
+
 # ╔═╡ 3f64b170-4b62-4786-ac62-ddfe6714d96f
 begin
     monitored_estimations = load_sim(EXP)
-    first(monitored_estimations, 3)
+    # first(monitored_estimations, 3)
+    select(monitored_estimations, Not([:set, :sp, :type, :sampler]))
 end
 
-# ╔═╡ 8c9934a6-77ea-43a9-8d20-35e3b40d1503
-set = ["Over-0.2", "True-0.0", "Under-0.2"];
+# ╔═╡ 31614fca-b5b1-4c93-b696-b0ad7a783cc2
+# The set might differ, so just in case
+function fix_set(estimated_ranges; set=setdict)
+    for (s, v) in setdict
+        estimated_ranges[s] = estimated_ranges[v]
+    end
+    return estimated_ranges
+end
+
+# ╔═╡ 2f0a2245-ca81-4b81-9cd4-eb6ce86bc847
+fix_set(estimated_ranges)
 
 # ╔═╡ a3bf9f98-f377-4562-8b8e-dbd81819c6ba
 # Generate BON examples
@@ -220,8 +256,10 @@ function plot_sim(
             b = filter(var => ==(v), res)
             eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
             eff, rmse = efficiency(b.nbon, b.med; rmse=true, f=exp)
-            eff_a_low = efficiency_gridsearch(b.nbon, b.med .- rmse; f=exp)
-            eff_a_upp = efficiency_gridsearch(b.nbon, b.med .+ rmse; f=exp)
+            # eff_a_low = efficiency_gridsearch(b.nbon, b.med .- rmse; f=exp)
+            # eff_a_upp = efficiency_gridsearch(b.nbon, b.med .+ rmse; f=exp)
+            eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
+            eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
             eff_low = efficiency_integral(eff_a_low)
             eff_upp = efficiency_integral(eff_a_upp)
             lab = "$v, eff=$(@sprintf("%.3f", eff)), rmse=$(@sprintf("%.5f", rmse))"
@@ -257,19 +295,17 @@ function plot_sim(
                     ax,
                     b.nbon,
                     saturation(eff_a_low)(b.nbon);
-                    color=:black,
+                    color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
-                    alpha=0.7,
                 )
                 lines!(
                     ax,
                     b.nbon,
                     saturation(eff_a_upp)(b.nbon);
-                    color=:black,
+                    color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
-                    alpha=0.7,
                 )
             end
             if scatter
@@ -331,9 +367,6 @@ load_and_plot("030-10", "01")
 # ╔═╡ bea2686e-0a1a-4413-a739-e04fb5943d75
 load_and_plot("020-10", "01")
 
-# ╔═╡ 9345d8c8-0f1d-4fa3-8c3b-d5c182a07676
-plot_sim(monitored_estimations, estimated_ranges, EXP; push=false)
-
 # ╔═╡ 6f56f00c-3bf6-4a45-a784-c922dd672124
 sort(@rsubset(rmse_df, :value == "True-0.0"), :rmse)
 
@@ -344,7 +377,16 @@ sort(@rsubset(rmse_df, :value == "Under-0.2"), :rmse)
 sort(@rsubset(rmse_df, :value == "Over-0.2"), :rmse)
 
 # ╔═╡ 6b00bc1d-02cf-41da-83f6-a1fd3a0904d5
-CSV.write(datadir("rmse_investigation.csv"), rmse_df);
+begin
+    _trigger = true
+    CSV.write(datadir("rmse_investigation.csv"), rmse_df)
+end
+
+# ╔═╡ 9345d8c8-0f1d-4fa3-8c3b-d5c182a07676
+begin
+    _trigger # to ensure it runs last
+    plot_sim(monitored_estimations, estimated_ranges, EXP; push=false)
+end
 
 # ╔═╡ Cell order:
 # ╟─bec626f6-c174-4988-97be-bbb992d16890
