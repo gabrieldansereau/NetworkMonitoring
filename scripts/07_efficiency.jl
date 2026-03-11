@@ -23,7 +23,8 @@ for set in sets
         monitored_all = CSV.read(datadir(file), DataFrame)
 
         # Summmarize results not combined previously
-        monitored = summarize_focal(monitored_all; id=parse(Int, id))
+        _confint = set == "estimations" ? true : false
+        monitored = summarize_focal(monitored_all; id=parse(Int, id), confint=_confint)
 
         # Add species rank and occupancy
         if set == "spp"
@@ -100,9 +101,13 @@ effs_optimized = @chain sims_optimized begin
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
-effs_estimations = @chain sims_estimations begin
+@time effs_estimations = @chain sims_estimations begin
     @groupby(:sim, :set, :layer)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
+    @combine(
+        :eff = efficiency(:nbon, :med; f=exp),
+        :eff_low = efficiency(:nbon, :confint_low; f=exp),
+        :eff_upp = efficiency(:nbon, :confint_upp; f=exp)
+    )
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
