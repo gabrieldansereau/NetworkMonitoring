@@ -215,7 +215,7 @@ function _median_confint(x; α=0.05)
     return (low=sort(x)[L], upp=sort(x)[U])
 end
 
-function summarize_focal(df; id=0, confint=false)
+function summarize_focal(df; id=0, confint=false, α=0.05)
     if "layer" in names(df)
         cols = [:set, :sp, :type, :sampler, :layer, :nbon]
     else
@@ -241,8 +241,8 @@ function summarize_focal(df; id=0, confint=false)
                 :confint_upp = Ref(:monitored),
             )
             @rtransform(
-                :confint_low = _median_confint(:confint_low).low,
-                :confint_upp = _median_confint(:confint_upp).upp,
+                :confint_low = _median_confint(:confint_low; α=α).low,
+                :confint_upp = _median_confint(:confint_upp; α=α).upp,
             )
             @rtransform(
                 :confint_low = :confint_low / :deg, :confint_upp = :confint_upp / :deg,

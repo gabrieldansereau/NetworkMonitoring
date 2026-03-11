@@ -24,7 +24,9 @@ for set in sets
 
         # Summmarize results not combined previously
         _confint = set == "estimations" ? true : false
-        monitored = summarize_focal(monitored_all; id=parse(Int, id), confint=_confint)
+        monitored = summarize_focal(
+            monitored_all; id=parse(Int, id), confint=_confint, α=0.10
+        )
 
         # Add species rank and occupancy
         if set == "spp"

@@ -147,7 +147,7 @@ begin
         )
         pad = (-80, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
-        legend!(g1[1,2], fg1)
+        legend!(g1[1, 2], fg1)
 
         # Add overlap
         pct = round(Int, 100 * mean(d1.overlap))
