@@ -167,7 +167,7 @@ begin
                 text="$pct_v %",
                 font=:bold,
                 align=(:center, :baseline),
-                color=pct_v <= 50 ? col1 : col2,
+                color=col2,
             )
         end
 
