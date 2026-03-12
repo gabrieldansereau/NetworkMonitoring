@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=ctb-tpoisot
-#SBATCH --array=24,44,59,74
+#SBATCH --array=1-200
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
 #SBATCH --time=04:00:00
@@ -13,4 +13,4 @@ cd $HOME/projects/def-tpoisot/gabdans/NetworkMonitoring
 
 export PROGRESS_BARS_DT=60
 
-julia --project -e 'const NREP = 20; const OUTDIR = "efficiency"; include("scripts/04_focal_sims.jl")'
+julia --project -e 'const NREP = 50; const OUTDIR = "efficiency"; include("scripts/04_focal_sims.jl")'

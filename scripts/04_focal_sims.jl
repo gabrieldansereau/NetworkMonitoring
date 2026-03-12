@@ -236,7 +236,7 @@ set = errors
 optim = [layers[s] for s in set]
 optimlabels = [ifelse(s < 0, "Over$s", "Under-$s") for s in set]
 replace!(optimlabels, "Under-0.0" => "True-0.0")
-STEP = (OUTDIR == "dev" ? 50 : 5)
+STEP = (OUTDIR == "dev" ? 50 : 10)
 monitored_estimations = focal_monitoring(
     nets_dict,
     sp,
