@@ -101,18 +101,9 @@ save(plotsdir("ranges_efficiencies.png"), f)
 ## Within-simulation comparison
 
 # Separate results per simulation
-set = [
-    # "Under-0.30",
-    "Under-0.20",
-    "Under-0.10",
-    "True-0.00",
-    "Over-0.10",
-    "Over-0.20",
-    # "Over-0.30",
-]
-select!(effs_estimations, Not(:eff_low, :eff_upp))
+set = ["Under-0.20", "Under-0.10", "True-0.00", "Over-0.10", "Over-0.20"]
 within_combined_dif2 = comparewithin(
-    effs_estimations,
+    select(effs_estimations, Not(:eff_low, :eff_upp)),
     set;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -125,7 +116,7 @@ flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
 )
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_df2 = @chain within_combined_dif2 begin
+df2df2 = @chain within_combined_dif2 begin
     @groupby(:set, :variable)
     @combine(
         :count_pos = count(>=(0), :value) / length(:value),
@@ -184,11 +175,7 @@ begin
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(
-            g3[1, 1];
-            # xreversed=!rev, # rev needs to be opposite somehow
-            xticks=([0.5, 1.5], ["Positive", "Negative"]),
-        )
+        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Positive", "Negative"]))
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
@@ -213,13 +200,6 @@ begin
         # Align axes
         ax1 = g1.content[1].content
         linkyaxes!(ax1, ax3)
-        # Option 1
-        # ax3.xticklabelpad = 7.0 # aligned with ax1
-        # ax3.xticklabelpad = -3.0 # reasonable
-        # Option 2
-        # ax3.xaxisposition = :top
-        # hidexdecorations!(ax3; ticklabels=false)
-        # ax3.xticklabelpad = -5.0
 
         # Add label
         pad = (0, 0, 10, 0)
@@ -237,7 +217,7 @@ save(plotsdir("ranges_comparison.png"), current_figure())
 # Complete set of comparison
 set_all = reverse(unique(effs_estimations.variable))
 within_combined_all = comparewithin(
-    effs_estimations,
+    select(effs_estimations, Not(:eff_low, :eff_upp)),
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -297,13 +277,6 @@ fig_types = begin
         med = res.med
         upp = res.upp
 
-        # Single band color option
-        # col = Makie.wong_colors()[1]
-        # band!(ax, x, low, upp; alpha=0.4, label=lab, color=col)
-        # lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=col)
-        # lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=col)
-        # lines!(ax, x, med; label="Median", color=col)
-
         # Two band color option
         col1 = Makie.wong_colors()[1]
         col2 = Makie.wong_colors()[2]
@@ -321,10 +294,6 @@ fig_types = begin
         # Common options
         vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey)
         hlines!(ax, 0.0; linestyle=:dash, color=:black)
-
-        # Legend
-        # axislegend(; position=:rt, merge=true)
-        # axislegend(ax, "90% Interpercentile range"; position=:lt, merge=true)
 
         return ax
     end
@@ -358,5 +327,139 @@ begin
         padding=(-80, 0, 10, 0),
     )
     save(plotsdir("ranges_combined.png"), f)
+    f
+end
+
+## Confidence intervals
+
+# Calculate intervals
+effs_intervals = @chain effs_estimations begin
+    @rsubset(:variable in set)
+    @rtransform(:min = :eff_low - :eff, :max = :eff_upp - :eff)
+    @select(:sim, :set, :variable, :min, :max)
+end
+effs_intervals_true = @rsubset(effs_intervals, :variable == "True-0.00")
+true_min = Dict(r.sim => r.min for r in eachrow(effs_intervals_true))
+true_max = Dict(r.sim => r.max for r in eachrow(effs_intervals_true))
+
+# Check overlap
+effs_overlap = @chain effs_intervals begin
+    rightjoin(within_combined_dif2; on=[:sim, :set, :variable])
+    @select(Not(:occ))
+    @rtransform(:true_min = true_min[:sim], :true_max = true_max[:sim])
+    @rtransform(
+        :overlap_neg = (:value + abs(:max) + abs(:true_min)) >= 0,
+        :overlap_pos = (:value - abs(:min) - abs(:true_max)) <= 0,
+    )
+    @rtransform(:overlap = :value < 0 ? :overlap_neg : :overlap_pos)
+    @rtransform(
+        :overlap_sign =
+            :overlap == false ? (:value < 0 ? "negative" : "positive") : "overlap"
+    )
+end
+
+# Count positive and negative comparisons per set and variable (across simulations/replicates)
+unique_overlap = @chain effs_overlap begin
+    @groupby(:set, :variable)
+    @combine(
+        :positive = count(==("positive"), :overlap_sign) / length(:overlap_sign),
+        :negative = count(==("negative"), :overlap_sign) / length(:overlap_sign),
+        :overlap = count(==("overlap"), :overlap_sign) / length(:overlap_sign),
+    )
+    stack([:positive, :negative, :overlap]; variable_name=:countmeasure, value_name=:count)
+    @rtransform(:label = "$(round(Int, :count *100)) %")
+    @rtransform(:label = (:label == "0 %" && :count > 0.0) ? "< 1 %" : :label)
+    @rtransform(:label = (:label == "1 %" && :count < 1.0) ? "< 1 %" : :label)
+end
+
+# Visualize
+begin
+    d = effs_overlap
+    u = unique_overlap
+    sortedcomps = unique(u.variable)
+    rev = true
+
+    # Figure & grid
+    if nrow(u) <= 12
+        f = Figure(; size=(750, 300))
+    else
+        f = Figure(; size=(600, 800))
+    end
+
+    function make_overlap_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1, rev=rev)
+        # Random seed for jitter
+        Random.seed!(42)
+
+        # Define grid layouts
+        g1 = GridLayout(f[1:6, 1:2])
+        g3 = GridLayout(f[1:6, end + 1])
+
+        # Main panel
+        d1 = @rsubset(d, :set == "ranges")
+        m = mapping(
+            :variable =>
+                renamer([s => replace(s, "ΔTrue_" => "") for s in sortedcomps]) => "",
+            :value => "Efficiency compared to True Range";
+            color=:overlap_sign,
+        )
+        rains = visual(
+            RainClouds;
+            markersize=6,
+            jitter_width=0.30,
+            plot_boxplots=false,
+            clouds=nothing,
+            orientation=:horizontal,
+        )
+        vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+        hline =
+            mapping([(nrow(u) / 4) + 0.5]) *
+            visual(HLines; linestyle=:solid, color=:lightgrey)
+        pal = [
+            "negative" => Makie.wong_colors()[3],
+            "overlap" => Makie.wong_colors()[4],
+            "positive" => :grey,
+        ]
+        scl = scales(; Color=(; palette=pal))
+        fg1 = draw!(g1, data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
+        pad = (-80, 0, 10, 0)
+        Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
+
+        # Summary panels
+        d3 = @rsubset(u, :set == "ranges")
+        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], ["Positive", "Overlap", "Negative"]))
+        sortedmeasures = reverse(first.(pal))
+        m34 = mapping(
+            :variable => sorter(sortedcomps),
+            [1];
+            stack=:countmeasure => sorter(sortedmeasures),
+            bar_labels=:label => verbatim,
+            color=:countmeasure,
+        )
+        v3 = visual(
+            BarPlot;
+            direction=:x,
+            label_position=:center,
+            label_color=:white,
+            label_font=:bold,
+            label_size=16,
+            alpha=0.85,
+        )
+        draw!(ax3, data(d3) * m34 * v3, scl)
+        hideydecorations!(ax3)
+        hidexdecorations!(ax3; ticklabels=false, ticks=false)
+        hidespines!(ax3)
+
+        # Align axes
+        ax1 = g1.content[1].content
+        linkyaxes!(ax1, ax3)
+
+        # Add label
+        pad = (0, 0, 10, 0)
+        Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
+
+        return (g1, g3)
+    end
+    make_overlap_ax!(f; l1="Range estimation comparisons")
+    save(plotsdir("ranges_confidence_interval.png"), current_figure())
     f
 end
