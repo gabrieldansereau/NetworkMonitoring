@@ -99,7 +99,8 @@ unique_df2 = @chain newtmp begin
     )
     stack([:positive, :negative, :overlap]; variable_name=:countmeasure, value_name=:count)
     @rtransform(:label = "$(round(Int, :count *100)) %")
-    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
+    @rtransform(:label = (:label == "0 %" && :count > 0.0) ? "< 1 %" : :label)
+    @rtransform(:label = (:label == "1 %" && :count < 1.0) ? "< 1 %" : :label)
 end
 
 # Visualize
