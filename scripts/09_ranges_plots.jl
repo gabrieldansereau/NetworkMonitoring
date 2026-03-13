@@ -128,8 +128,8 @@ flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
 unique_df2 = @chain within_combined_dif2 begin
     @groupby(:set, :variable)
     @combine(
-        :count_pos = count(>(0), :value) / length(:value),
-        :count_neg = count(<=(0), :value) / length(:value)
+        :count_pos = count(>=(0), :value) / length(:value),
+        :count_neg = count(<(0), :value) / length(:value)
     )
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
     @rtransform(:label = "$(round(Int, :count *100)) %")
@@ -307,13 +307,13 @@ fig_types = begin
         # Two band color option
         col1 = Makie.wong_colors()[1]
         col2 = Makie.wong_colors()[2]
-        lowpos = [l <= 0 ? 0.0 : l for l in low]
-        lowneg = [l <= 0 ? l : 0.0 for l in low]
-        upppos = [l <= 0 ? 0.0 : l for l in upp]
-        uppneg = [l <= 0 ? l : 0.0 for l in upp]
+        lowpos = [l < 0 ? 0.0 : l for l in low]
+        lowneg = [l < 0 ? l : 0.0 for l in low]
+        upppos = [l < 0 ? 0.0 : l for l in upp]
+        uppneg = [l < 0 ? l : 0.0 for l in upp]
         band!(ax, x, lowneg, uppneg; alpha=0.6, label="Lower efficiency", color=col1)
         band!(ax, x, lowpos, upppos; alpha=0.6, label="Higher efficiency", color=col2)
-        cf(x) = [v <= 0 ? col1 : col2 for v in x]
+        cf(x) = [v < 0 ? col1 : col2 for v in x]
         lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
         lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
         lines!(ax, x, med; label="Median", color=col1)
