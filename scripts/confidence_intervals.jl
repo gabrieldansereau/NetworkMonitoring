@@ -72,12 +72,17 @@ newtmp = @chain tmp begin
         :overlap_pos = (:value - abs(:min) - abs(:true_max)) <= 0,
     )
     @rtransform(:overlap = :value < 0 ? :overlap_neg : :overlap_pos)
+    @rtransform(
+        :overlap_sign =
+            :overlap == false ? (:value < 0 ? "negative" : "positive") : "overlap"
+    )
 end
 
 # How'z it?
 @rsubset(newtmp, :overlap == true)
 @rsubset(newtmp, :overlap == true, abs(:value) > 1000)
 @rsubset(newtmp, :overlap == false, abs(:value) < 100)
+@rsubset(newtmp, :overlap == false, :value > 0.0)
 @chain begin
     newtmp
     @groupby(:variable)
@@ -88,10 +93,13 @@ end
 unique_df2 = @chain newtmp begin
     @groupby(:set, :variable)
     @combine(
-        :count_pos = count(>(0), :value) / length(:value),
-        :count_neg = count(<=(0), :value) / length(:value)
+        :positive = count(==("positive"), :overlap_sign) / length(:overlap_sign),
+        :negative = count(==("negative"), :overlap_sign) / length(:overlap_sign),
+        :overlap = count(==("overlap"), :overlap_sign) / length(:overlap_sign),
     )
-    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+    stack([:positive, :negative, :overlap]; variable_name=:countmeasure, value_name=:count)
+    @rtransform(:label = "$(round(Int, :count *100)) %")
+    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
 end
 
 # Visualize
@@ -113,7 +121,7 @@ begin
         Random.seed!(42)
 
         # Define grid layouts
-        g1 = GridLayout(f[1:6, 1:3])
+        g1 = GridLayout(f[1:6, 1:2])
         g3 = GridLayout(f[1:6, end + 1])
 
         # Main panel
@@ -122,8 +130,7 @@ begin
             :variable =>
                 renamer([s => replace(s, "ΔTrue_" => "") for s in sortedcomps]) => "",
             :value => "Efficiency compared to True Range";
-            # color=:value => (x -> x > 0.0),
-            color=:overlap,
+            color=:overlap_sign,
         )
         rains = visual(
             RainClouds;
@@ -137,64 +144,41 @@ begin
         hline =
             mapping([(nrow(u) / 4) + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey)
-        col1 = Makie.wong_colors()[3]
-        col2 = Makie.wong_colors()[4]
-        fg1 = draw!(
-            g1,
-            data(d1) * m * rains + vline + hline,
-            scales(; Color=(; palette=[col1, col2]));
-            axis=(; xreversed=rev),
-        )
+        pal = [
+            "negative" => Makie.wong_colors()[3],
+            "overlap" => Makie.wong_colors()[4],
+            "positive" => :grey,
+        ]
+        scl = scales(; Color=(; palette=pal))
+        fg1 = draw!(g1, data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
         pad = (-80, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
-        legend!(g1[1, 2], fg1)
-
-        # Add overlap
-        pct = round(Int, 100 * mean(d1.overlap))
-        Label(
-            g1[1, 1, TopRight()],
-            "Overlap: $pct %";
-            tellheight=false,
-            tellwidth=false,
-            padding=pad,
-        )
-        for (i, v) in enumerate(sortedcomps)
-            _df = @rsubset(d1, :variable == v)
-            pct_v = round(Int, 100 * mean(_df.overlap))
-            text!(
-                -3500,
-                i;
-                text="$pct_v %",
-                font=:bold,
-                align=(:center, :baseline),
-                color=col2,
-            )
-        end
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
         ax3 = Axis(
             g3[1, 1];
-            xreversed=!rev, # rev needs to be opposite somehow
-            xticks=([0.5, 1.5], ["Negative", "Positive"]),
+            # xreversed=rev, # rev needs to be opposite somehow
+            xticks=([0.5, 1.5, 2.5], ["Positive", "Overlap", "Negative"]),
         )
+        sortedmeasures = reverse(first.(pal))
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
-            stack=:countmeasure => sorter(["count_neg", "count_pos"]),
-            color=:countmeasure => sorter(["count_pos", "count_neg"]),
+            stack=:countmeasure => sorter(sortedmeasures),
+            bar_labels=:label => verbatim,
+            color=:countmeasure,
         )
         v3 = visual(
             BarPlot;
             direction=:x,
-            bar_labels=["$(round(Int, v*100)) %" for v in d3.count],
             label_position=:center,
             label_color=:white,
             label_font=:bold,
             label_size=16,
             alpha=0.85,
         )
-        draw!(ax3, data(d3) * m34 * v3)
+        draw!(ax3, data(d3) * m34 * v3, scl)
         hideydecorations!(ax3)
         hidexdecorations!(ax3; ticklabels=false, ticks=false)
         hidespines!(ax3)
