@@ -110,7 +110,7 @@ set = [
     "Over-0.20",
     # "Over-0.30",
 ]
-# set = reverse(unique(effs_estimations.variable))
+select!(effs_estimations, Not(:eff_low, :eff_upp))
 within_combined_dif2 = comparewithin(
     effs_estimations,
     set;
@@ -132,6 +132,8 @@ unique_df2 = @chain within_combined_dif2 begin
         :count_neg = count(<=(0), :value) / length(:value)
     )
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+    @rtransform(:label = "$(round(Int, :count *100)) %")
+    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
 end
 
 # Visualize
@@ -184,19 +186,19 @@ begin
         d3 = @rsubset(u, :set == "ranges")
         ax3 = Axis(
             g3[1, 1];
-            xreversed=!rev, # rev needs to be opposite somehow
-            xticks=([0.5, 1.5], ["Negative", "Positive"]),
+            # xreversed=!rev, # rev needs to be opposite somehow
+            xticks=([0.5, 1.5], ["Positive", "Negative"]),
         )
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
-            stack=:countmeasure => sorter(["count_neg", "count_pos"]),
-            color=:countmeasure => sorter(["count_pos", "count_neg"]),
+            stack=:countmeasure => sorter(["count_pos", "count_neg"]),
+            color=:countmeasure => sorter(["count_neg", "count_pos"]),
+            bar_labels=:label => verbatim,
         )
         v3 = visual(
             BarPlot;
             direction=:x,
-            bar_labels=["$(round(Int, v*100)) %" for v in d3.count],
             label_position=:center,
             label_color=:white,
             label_font=:bold,
