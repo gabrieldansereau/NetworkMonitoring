@@ -11,6 +11,7 @@ using CairoMakie
 using Combinatorics
 using CSV
 using DataFramesMeta
+using Distributions
 using DrWatson
 using ProgressMeter
 using Random

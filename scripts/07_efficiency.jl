@@ -6,27 +6,32 @@ include("include.jl") # see note regarding why we cannot use the module
 ## Summarize efficiency simulations
 
 # Use job id to vary parameters
-files = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))
-ids = sort(parse.(Int, replace.(files, "monitored_samplers-" => "", ".csv" => "")))
 sets = ["samplers", "optimized", "spp", "estimations"]
 sims_dict = Dict()
 for set in sets
+    # List available results
+    files = filter(startswith("monitored_$set"), readdir(datadir("efficiency")))
+    ids = sort(
+        replace.(files, "monitored_$set-" => "", ".csv" => ""); by=x -> parse(Int, x)
+    )
     # Create data frame for set results
     sims_dict[set] = DataFrame()
     for id in ids
         # Load all results
-        idp = lpad(id, 2, "0")
-        file = datadir("efficiency", "monitored_$set-$idp.csv")
+        file = datadir("efficiency", "monitored_$set-$id.csv")
         isfile(file) || continue
         monitored_all = CSV.read(datadir(file), DataFrame)
 
         # Summmarize results not combined previously
-        monitored = summarize_focal(monitored_all; id=id)
+        _confint = set == "estimations" ? true : false
+        monitored = summarize_focal(
+            monitored_all; id=parse(Int, id), confint=_confint, α=0.10
+        )
 
         # Add species rank and occupancy
         if set == "spp"
             monitored_occ = CSV.read(
-                datadir("efficiency", "monitored_spp_occ-$idp.csv"), DataFrame
+                datadir("efficiency", "monitored_sp_occ-$id.csv"), DataFrame
             )
             leftjoin!(monitored, monitored_occ; on=[:sp, :sim])
         end
@@ -59,7 +64,7 @@ begin
         X₁ = @rsubset(sims_set, :sim == iter)
         x = X₁.nbon
         y = X₁.med
-        eff = efficiency(x, y)
+        eff = efficiency_gridsearch(x, y; f=exp)
         scatter!(ax, x, y; color=:lightgrey)
         lines!(ax, x, saturation(eff)(x); color=:black, linestyle=:dash)
     end
@@ -70,36 +75,41 @@ save(plotsdir("efficiency_example.png"), f)
 ## Occupancy
 
 # Calculate occupancy
-ids = sort(unique(sims_samplers.sim))
-occup = Dict(ids .=> zeros(length(ids)))
-for i in ids
-    idp = lpad(i, 2, "0")
-    l = SDT.SDMLayer(datadir("efficiency", "layer_sp_range-$idp.tiff"))
+files = filter(startswith("layer_sp_range"), readdir(datadir("efficiency")))
+sort!(files; by=x -> parse(Int, replace(x, "layer_sp_range-" => "", ".tiff" => "")))
+occup = Dict()
+for (i, f) in enumerate(files)
+    l = SDT.SDMLayer(datadir("efficiency", f); bandnumber=1)
     occup[i] = occupancy(l)
 end
-occupdf = DataFrame(; sim=ids, occ=[occup[i] for i in ids])
+occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
+sort!(occupdf, :sim)
 
 # Calculate efficiency & assign occupancy
 effs_species = @chain sims_species begin
     @groupby(:sim, :set, :sp, :deg, :rank, :occ)
-    @combine(:eff = efficiency(:nbon, :med))
+    @combine(:eff = efficiency(:nbon, :med; f=exp))
     rename(:sp => :variable)
 end
 effs_samplers = @chain sims_samplers begin
     @groupby(:sim, :set, :sampler)
-    @combine(:eff = efficiency(:nbon, :med))
+    @combine(:eff = efficiency(:nbon, :med; f=exp))
     @rtransform(:occ = occup[:sim])
     rename(:sampler => :variable)
 end
 effs_optimized = @chain sims_optimized begin
     @groupby(:sim, :set, :layer)
-    @combine(:eff = efficiency(:nbon, :med))
+    @combine(:eff = efficiency(:nbon, :med; f=exp))
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
-effs_estimations = @chain sims_estimations begin
+@time effs_estimations = @chain sims_estimations begin
     @groupby(:sim, :set, :layer)
-    @combine(:eff = efficiency(:nbon, :med))
+    @combine(
+        :eff = efficiency(:nbon, :med; f=exp),
+        :eff_low = efficiency(:nbon, :confint_low; f=exp),
+        :eff_upp = efficiency(:nbon, :confint_upp; f=exp)
+    )
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
@@ -116,22 +126,10 @@ CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
 monitored_samplers = CSV.read(datadir("monitored_samplers.csv"), DataFrame)
 @rsubset!(monitored_samplers, :sampler == "Uncertainty Sampling")
 
-# Visualize
-let b = monitored_samplers
-    eff = efficiency(b.nbon, b.med)
-    band(b.nbon, b.low, b.upp; alpha=0.4, color=Makie.wong_colors()[2], label="intervals")
-    lines!(b.nbon, b.med; color=Makie.wong_colors()[2], linewidth=1.5, label="median")
-    lines!(
-        b.nbon, saturation(eff)(b.nbon); color=:black, linestyle=:dash, label="efficiency"
-    )
-    hlines!([1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(; position=:rb)
-    current_figure()
-end
-
 # Load pre-summary results
+file1 = filter(startswith("monitored_samplers"), readdir(datadir("efficiency")))[1]
 sim1_samplers = @chain begin
-    CSV.read(datadir("focal_array", "monitored_samplers-01.csv"), DataFrame)
+    CSV.read(datadir("efficiency", file1), DataFrame)
     @rsubset(:sampler == "UncertaintySampling")
     @rtransform(:monitored = :monitored / :deg)
 end
@@ -143,7 +141,9 @@ fig = let bs = sim1_samplers, b = monitored_samplers
     for i in 1:100
         bi = @rsubset(bs, :rep == i)
         # lines!(bi.nbon, bi.monitored; color=:grey, linewidth=0.5)
-        eff = efficiency(bi.nbon, bi.monitored; A=LinRange(-12.0, 12.0, 5000))
+        eff = efficiency_gridsearch(
+            bi.nbon, bi.monitored; A=LinRange(-12.0, 12.0, 5000), f=exp
+        )
         lines!(
             bi.nbon,
             saturation(eff)(bi.nbon);
@@ -152,7 +152,7 @@ fig = let bs = sim1_samplers, b = monitored_samplers
             label="individual saturation curves",
         )
     end
-    eff = efficiency(b.nbon, b.med)
+    eff = efficiency_gridsearch(b.nbon, b.med; f=exp)
     band!(
         b.nbon,
         b.low,

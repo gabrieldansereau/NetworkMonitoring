@@ -26,7 +26,7 @@ sims_samplers = DataFrame()
 sims_optimized = DataFrame()
 for id in ids
     # Load all results
-    idp = lpad(id, 2, "0")
+    idp = lpad(id, 3, "0")
     monitored_samplers_all = CSV.read(
         datadir("focal_array", "monitored_samplers-$idp.csv"), DataFrame
     )
@@ -79,9 +79,11 @@ end
 ## Explore variations with different sampler
 
 # Load one set of focal layers for illustration
-focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-01.tiff"))
-richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-01.tiff"))
-degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-01.tiff"))
+focal_sp_range = SDT.SDMLayer(
+    datadir("focal_array", "layer_sp_range-01.tiff"); bandnumber=1
+)
+richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness-01.tiff"); bandnumber=1)
+degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree-01.tiff"); bandnumber=1)
 
 # Generate BON examples
 begin
@@ -502,8 +504,8 @@ end
 onetruemed_samplers = @rsubset(sims_samplers, :sim == medsim)
 onetruemed_optimized = @rsubset(sims_optimized, :sim == medsim)
 focal_sp_range = SDT.SDMLayer(datadir("focal_array", "layer_sp_range-$medsim.tiff"))
-richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness_spp-$medsim.tiff"))
-degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree_realized-$medsim.tiff"))
+richness_spp = SDT.SDMLayer(datadir("focal_array", "layer_richness-$medsim.tiff"))
+degree_realized = SDT.SDMLayer(datadir("focal_array", "layer_degree-$medsim.tiff"))
 
 # Re-generate BON examples
 begin

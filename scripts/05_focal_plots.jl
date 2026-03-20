@@ -8,7 +8,7 @@ CairoMakie.activate!(; type="svg")
 
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
-idp = lpad(id, 2, "0")
+idp = lpad(id, 3, "0")
 
 # Set directory to import results
 if !(@isdefined OUTDIR)
@@ -17,15 +17,15 @@ end
 
 # Load & summarize test results
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
-monitored_test = summarize_focal(monitored_test_all; id=idp)
+monitored_test = summarize_focal(monitored_test_all; id=id)
 
 ## Monitored types
 
 # Load & summarize results
 monitored_types_all = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
 monitored_types2_all = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
-monitored_types = summarize_focal(monitored_types_all; id=idp)
-monitored_types2 = summarize_focal(monitored_types2_all; id=idp)
+monitored_types = summarize_focal(monitored_types_all; id=id)
+monitored_types2 = summarize_focal(monitored_types2_all; id=id)
 
 # Visualize
 fig_types = let
@@ -80,7 +80,7 @@ save(plotsdir("focal_types2.png"), fig_types2)
 
 # Load & summarize results
 monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
-monitored_spp = summarize_focal(monitored_spp_all; id=idp)
+monitored_spp = summarize_focal(monitored_spp_all; id=id)
 if id == 1
     CSV.write(datadir("monitored_spp.csv"), monitored_spp)
 end
@@ -127,8 +127,8 @@ if id == 1
 end
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
-focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
 
 # Generate BON examples
 begin
@@ -256,17 +256,17 @@ save(plotsdir("focal_samplers_mask.png"), fig_mask)
 monitored_optimized_all = CSV.read(
     datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
 )
-monitored_optimized = summarize_focal(monitored_optimized_all; id=idp)
+monitored_optimized = summarize_focal(monitored_optimized_all; id=id)
 if id == 1
     CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
 end
 
 # Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"))
-focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_mask-$idp.tiff"))
-richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness_spp-$idp.tiff"))
-degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree_realized-$idp.tiff"))
-probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_probsp_range-$idp.tiff"))
+focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
+focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
+probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=2)
+richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness-$idp.tiff"); bandnumber=1)
+degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree-$idp.tiff"); bandnumber=1)
 
 # Generate BON examples
 begin
@@ -539,7 +539,7 @@ save(plotsdir("focal_joined.png"), fig_joined)
 monitored_estimations_all = CSV.read(
     datadir(OUTDIR, "monitored_estimations-$idp.csv"), DataFrame
 )
-monitored_estimations = summarize_focal(monitored_estimations_all; id=idp)
+monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
