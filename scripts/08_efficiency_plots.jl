@@ -172,8 +172,13 @@ flipthatcomp!(within_combined_dif, toflip)
 # Count number of positive and negative comparisons
 unique_df = @chain within_combined_dif begin
     @groupby(:set, :variable)
-    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    @combine(
+        :count_pos = count(>(0), :value) / length(:value),
+        :count_neg = count(<=(0), :value) / length(:value)
+    )
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+    @rtransform(:label = "$(round(Int, :count *100)) %")
+    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
 end
 
 # Visualize
@@ -199,7 +204,7 @@ let d = within_combined_dif, u = unique_df
     u0 = @rsubset(u, :variable in sortedcomps)
 
     # Figure & grid
-    f = Figure()
+    f = Figure(; size=(700, 450))
     g1 = GridLayout(f[1:4, 1:3])
     g2 = GridLayout(f[5:10, 1:3])
     g3 = GridLayout(f[1:4, end + 1])
@@ -235,38 +240,47 @@ let d = within_combined_dif, u = unique_df
     # Summary panels
     d3 = @rsubset(u0, :set == "samplers")
     d4 = @rsubset(u0, :set == "layers")
-    ax3 = Axis(g3[1, 1])
-    ax4 = Axis(g4[1, 1])
+    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
+    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
     m34 = mapping(
         :variable => sorter(sortedcomps),
         [1];
-        color=:countmeasure => sorter(["count_pos", "count_neg"]),
         stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
+        bar_labels=:label => verbatim,
     )
     v3 = visual(
         BarPlot;
         direction=:x,
-        bar_labels=["$v" for v in d3.count],
         label_position=:center,
         label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
     )
     v4 = visual(
         BarPlot;
         direction=:x,
-        bar_labels=["$v" for v in d4.count],
         label_position=:center,
         label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
     )
     draw!(ax3, data(d3) * m34 * v3)
     draw!(ax4, data(d4) * m34 * v4)
 
-    hidedecorations!(ax3)
+    hideydecorations!(ax3)
+    hidexdecorations!(ax3; ticklabels=false, ticks=false)
     hidespines!(ax3)
-    hidedecorations!(ax4)
+
+    hideydecorations!(ax4)
+    hidexdecorations!(ax4; ticklabels=false, ticks=false)
     hidespines!(ax4)
+
     pad = (0, 0, 10, 0)
-    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
-    Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+    Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
 
     save(plotsdir("efficiency_comparison.png"), current_figure())
     f
@@ -277,14 +291,14 @@ end
 # Reduce number of comparisons
 reducedcomps_dict = Dict(
     # Samplers
-    "ΔUS_RS" => "Simple Random",
-    "ΔUS_WBA" => "Weighted Balanced Acceptance",
-    "ΔUS_BA" => "Balanced Acceptance",
-    "ΔUS_SRM" => "Simple Random Mask",
+    "ΔRS_US" => "Simple Random",
+    "ΔWBA_US" => "Weighted Balanced Acceptance",
+    "ΔBA_US" => "Balanced Acceptance",
+    "ΔSRM_US" => "Simple Random Mask",
     # Layers
-    "ΔFR_RI" => "Realized Interactions",
-    "ΔFR_SR" => "Species Richness",
-    "ΔFR_PR" => "Probabilistic Range",
+    "ΔRI_FR" => "Realized Interactions",
+    "ΔSR_FR" => "Species Richness",
+    "ΔPR_FR" => "Probabilistic Range",
 )
 within_combined_dif2 = comparewithin(
     effs_combined,
@@ -294,30 +308,37 @@ within_combined_dif2 = comparewithin(
     # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
     f=(n, n2) -> n - n2,
 )
+flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
+@rtransform!(within_combined_dif2, :variable = reducedcomps_dict[:variable])
 
 # Count number of positive and negative comparisons
 unique_df2 = @chain within_combined_dif2 begin
     @groupby(:set, :variable)
-    @combine(:count_pos = count(>(0), :value), :count_neg = count(<=(0), :value))
+    @combine(
+        :count_pos = count(>(0), :value) / length(:value),
+        :count_neg = count(<=(0), :value) / length(:value)
+    )
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
+    @rtransform(:label = "$(round(Int, :count *100)) %")
+    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
 end
 
 # Visualize
-let d = within_combined_dif2, u = unique_df2
+let d = within_combined_dif2, u = unique_df2, sortedcomps = unique(u.variable)
     Random.seed!(42)
 
     # Figure
-    f = Figure(; size=(700, 450))
-    g1 = GridLayout(f[1:3, 1:3])
-    g2 = GridLayout(f[4:6, 1:3])
-    g3 = GridLayout(f[1:3, end + 1])
-    g4 = GridLayout(f[4:end, end])
+    f = Figure(; size=(750, 450))
+    g1 = GridLayout(f[1:3, 1:5])
+    g2 = GridLayout(f[4:6, 1:5])
+    g3 = GridLayout(f[1:3, (end + 1):(end + 2)])
+    g4 = GridLayout(f[4:end, (end - 1):end])
 
     # Main panels
     d1 = @rsubset(d, :set == "samplers")
     d2 = @rsubset(d, :set == "layers")
     m = mapping(
-        :variable => renamer(collect(reducedcomps_dict)) => "",
+        :variable => sorter(sortedcomps) => "",
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
         color=:value => (x -> x <= 0.0),
     )
@@ -348,38 +369,47 @@ let d = within_combined_dif2, u = unique_df2
     # Summary panels
     d3 = @rsubset(u, :set == "samplers")
     d4 = @rsubset(u, :set == "layers")
-    ax3 = Axis(g3[1, 1])
-    ax4 = Axis(g4[1, 1])
+    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
+    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
     m34 = mapping(
-        :variable => renamer(collect(reducedcomps_dict)),
+        :variable => sorter(sortedcomps),
         [1];
-        color=:countmeasure => sorter(["count_pos", "count_neg"]),
         stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+        color=:countmeasure => sorter(["count_pos", "count_neg"]),
+        bar_labels=:label => verbatim,
     )
     v3 = visual(
         BarPlot;
         direction=:x,
-        bar_labels=["$v" for v in d3.count],
         label_position=:center,
         label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
     )
     v4 = visual(
         BarPlot;
         direction=:x,
-        bar_labels=["$v" for v in d4.count],
         label_position=:center,
         label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
     )
     draw!(ax3, data(d3) * m34 * v3)
     draw!(ax4, data(d4) * m34 * v4)
 
-    hidedecorations!(ax3)
+    hideydecorations!(ax3)
+    hidexdecorations!(ax3; ticklabels=false, ticks=false)
     hidespines!(ax3)
-    hidedecorations!(ax4)
+
+    hideydecorations!(ax4)
+    hidexdecorations!(ax4; ticklabels=false, ticks=false)
     hidespines!(ax4)
+
     pad = (0, 0, 10, 0)
-    Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
-    Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
+    Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
 
     save(plotsdir("efficiency_comparison_reduced.png"), current_figure())
     f
