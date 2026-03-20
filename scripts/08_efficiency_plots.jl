@@ -8,6 +8,9 @@ effs_samplers = CSV.read(datadir("efficiency_samplers.csv"), DataFrame)
 effs_optimized = CSV.read(datadir("efficiency_optimized.csv"), DataFrame)
 effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 
+# Remove Simple Random Mask
+@rsubset!(effs_samplers, :variable != "Simple Random Mask")
+
 # Combine for convenience
 effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
@@ -40,8 +43,17 @@ begin
     Random.seed!(42) # for jitter
     eff = :eff => "efficiency"
     layer =
-        mapping(:variable => sorter(sortedlayout) => "", eff; color=:variable) *
-        visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false)
+        mapping(:variable => sorter(reverse(sortedlayout)) => "", eff; color=:variable) *
+        visual(
+            RainClouds;
+            markersize=5,
+            jitter_width=0.25,
+            plot_boxplots=false,
+            orientation=:horizontal,
+            # dodge_gap=0.2, # not working
+            gap=0.1,
+            cloud_width=1.0,
+        )
     f1 = data(effs_samplers) * layer
     f2 = data(effs_optimized) * layer
     f = Figure(; size=(700, 700))
@@ -54,24 +66,30 @@ begin
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+    save(plotsdir("efficiency_distribution.png"), f)
     f
 end
-save(plotsdir("efficiency_distribution.png"), f)
 
 # Efficiency given species degree
 begin
     Random.seed!(42)
-    ranknames = renamer(1 => "1.0", 2 => "0.66", 3 => "0.33", 4 => "0.07")
+    ranknames = renamer(4 => "0.07", 3 => "0.33", 2 => "0.66", 1 => "1.0")
     ranks = :rank => ranknames => "Within-simulation Degree Percentile Rank"
-    sppalette = from_continuous(cgrad(:viridis; rev=true))
+    sppalette = from_continuous(cgrad(:viridis; rev=false))
     f = Figure(; size=(650, 650))
     fg1 = draw!(
-        f[1, 1:2],
+        f[1, 1],
         data(effs_species) *
         mapping(ranks, eff; color=ranks) *
-        visual(RainClouds; markersize=5, jitter_width=0.1, plot_boxplots=false),
+        visual(
+            RainClouds;
+            markersize=5,
+            jitter_width=0.1,
+            plot_boxplots=false,
+            # orientation=:horizontal,
+        ),
         scales(; Color=(; palette=sppalette));
-        axis=(; ),
+        axis=(;),
     )
     fg2 = draw!(
         f[2, 1],
@@ -82,13 +100,13 @@ begin
         ylog2...,
     )
     legend!(f[2, 2], fg2)
+    save(plotsdir("efficiency_distribution_species.png"), f)
     f
 end
-save(plotsdir("efficiency_distribution_species.png"), f)
 
 ## Efficiency & Occupancy
 
-# Scatter & smooth
+# Scatter & smooth with independent subfigures
 begin
     occ = :occ => "occupancy"
     layout = mapping(occ, eff; color=:variable) * (visual(Scatter) + linear())
@@ -96,65 +114,33 @@ begin
     legend = (; position=:bottom)
     f1 = data(effs_samplers) * layout * mapping(; col=:variable => sorter(sortedlayout))
     f2 = data(effs_optimized) * layout * mapping(; col=:variable => sorter(sortedlayout))
-end
-draw(f1, scl; legend=legend)
-draw(f2, scl; legend=legend)
-fig = draw(
-    data(effs_combined) * layout * mapping(; layout=:variable => sorter(sortedlayout)),
-    scales(; Color=(; palette=colourpal, legend=false));
-    figure=(; size=(800, 450)),
-)
-
-# Same with independent subfigures
-fig = let
-    f = Figure(; size=(800, 500))
-    fg1 = draw!(f[1, 1:5], f1, scl; ylog2...)
+    f = Figure(; size=(900, 500))
+    fg1 = draw!(f[1, 1:4], f1, scl; ylog2...)
     fg2 = draw!(f[2, 1:4], f2, scl; ylog2...)
     linkaxes!(fg1..., fg2...)
     pad = (-50, 0, 30, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+    save(plotsdir("efficiency_occupancy.png"), f)
     f
 end
-save(plotsdir("efficiency_occupancy.png"), fig)
-
-# Group columns in single panel
-fig = let
-    f = Figure(; size=(800, 450))
-    fg1 = draw!(f[1, 1], f1 * mapping(; col=:set), scl; ylog2...)
-    legend!(f[2, 1], fg1; position=:bottom, tellheight=true, tellwidth=false)
-    fg2 = draw!(f[1, 2], f2 * mapping(; col=:set), scl; ylog2...)
-    legend!(f[2, 2], fg2; position=:bottom, tellheight=true, tellwidth=false)
-    linkyaxes!(fg1..., fg2...)
-    f
-end
-save(plotsdir("_xtras/", "efficiency_occupancy_scatter.png"), fig)
 
 ## Efficiency & Occupancy with species degree
 
 # Scatter & smooth with percentile rank
-sppalette = from_continuous(cgrad(:viridis; rev=true))
-fig = draw(
-    data(effs_species) * layout * mapping(; color=ranks, col=ranks),
-    scales(; Color=(; palette=sppalette));
-    figure=(; size=(800, 300)),
-    legend=legend,
-    axis=(; ),
-)
-save(plotsdir("efficiency_occupancy_species.png"), fig)
-
-# Group all ranks in single figure
-fig = draw(
-    data(effs_species) * layout * mapping(; color=ranks),
-    scales(; Color=(; palette=sppalette));
-    legend=legend,
-    ylog2...,
-)
-save(plotsdir("_xtras", "efficiency_occupancy_species_rank.png"), fig)
-
-# Species degree & efficiency-occupancy
-fig = draw(data(effs_species) * layout * mapping(; color=:deg); legend=legend, ylog2...)
-save(plotsdir("_xtras/", "efficiency_occupancy_species_degree.png"), fig)
+begin
+    sppalette = from_continuous(cgrad(:viridis; rev=false))
+    layout = mapping(occ, eff; color=:variable) * (visual(Scatter) + linear())
+    f = draw(
+        data(effs_species) * layout * mapping(; color=ranks, col=ranks),
+        scales(; Color=(; palette=sppalette));
+        figure=(; size=(800, 300)),
+        legend=legend,
+        axis=(;),
+    )
+    save(plotsdir("efficiency_occupancy_species.png"), f)
+    f
+end
 
 ## Within-simulation comparison
 
@@ -171,11 +157,6 @@ compsdict = Dict(
     "Species richness" => "SR",
 )
 set = unique(effs_combined.variable)
-within_combined = comparewithin(effs_combined, set; labels=compsdict)
-within_combined_ndi = comparewithin(effs_combined, set; labels=compsdict, f=ndi)
-within_combined_log = comparewithin(
-    effs_combined, set; labels=compsdict, f=(x, y) -> (x / y)
-)
 within_combined_dif = comparewithin(
     effs_combined,
     set;
@@ -212,18 +193,6 @@ sortedcomps = [
     "ΔRI_PR"
     "ΔRI_SR"
 ]
-begin
-    m = mapping(:variable, :value => "Δefficiency"; color=:value => (x -> x >= 0.0))
-    rains = visual(
-        RainClouds;
-        markersize=7,
-        jitter_width=0.15,
-        plot_boxplots=false,
-        clouds=nothing,
-        orientation=:horizontal,
-    )
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
-end
 let d = within_combined_dif, u = unique_df
     Random.seed!(42)
     d0 = @rsubset(d, :variable in sortedcomps)
@@ -231,10 +200,10 @@ let d = within_combined_dif, u = unique_df
 
     # Figure & grid
     f = Figure()
-    g1 = GridLayout(f[1:6, 1:3])
-    g2 = GridLayout(f[7:12, 1:3])
-    g3 = GridLayout(f[1:6, end + 1])
-    g4 = GridLayout(f[7:end, end])
+    g1 = GridLayout(f[1:4, 1:3])
+    g2 = GridLayout(f[5:10, 1:3])
+    g3 = GridLayout(f[1:4, end + 1])
+    g4 = GridLayout(f[5:end, end])
 
     # Main panels
     d1 = @rsubset(d0, :set == "samplers")
@@ -244,6 +213,15 @@ let d = within_combined_dif, u = unique_df
         :value => "Efficiency difference";
         color=:value => (x -> x <= 0.0),
     )
+    rains = visual(
+        RainClouds;
+        markersize=5,
+        jitter_width=0.4,
+        plot_boxplots=false,
+        clouds=nothing,
+        orientation=:horizontal,
+    )
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
     # xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     # xlog2 = (; axis=(; xtickformat=xlog2f))
     # xaxis = (; axis=(; xticks=0:2:10))
@@ -290,9 +268,11 @@ let d = within_combined_dif, u = unique_df
     Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
     Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
 
+    save(plotsdir("efficiency_comparison.png"), current_figure())
     f
 end
-save(plotsdir("efficiency_comparison.png"), current_figure())
+
+## Reduced number of comparison
 
 # Reduce number of comparisons
 reducedcomps_dict = Dict(
@@ -327,11 +307,11 @@ let d = within_combined_dif2, u = unique_df2
     Random.seed!(42)
 
     # Figure
-    f = Figure()
-    g1 = GridLayout(f[1:4, 1:3])
-    g2 = GridLayout(f[5:8, 1:3])
-    g3 = GridLayout(f[1:4, end + 1])
-    g4 = GridLayout(f[5:end, end])
+    f = Figure(; size=(700, 450))
+    g1 = GridLayout(f[1:3, 1:3])
+    g2 = GridLayout(f[4:6, 1:3])
+    g3 = GridLayout(f[1:3, end + 1])
+    g4 = GridLayout(f[4:end, end])
 
     # Main panels
     d1 = @rsubset(d, :set == "samplers")
@@ -341,6 +321,15 @@ let d = within_combined_dif2, u = unique_df2
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
         color=:value => (x -> x <= 0.0),
     )
+    rains = visual(
+        RainClouds;
+        markersize=5,
+        jitter_width=0.3,
+        plot_boxplots=false,
+        clouds=nothing,
+        orientation=:horizontal,
+    )
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
 
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     xlog2 = (; axis=(; xtickformat=xlog2f))
@@ -392,6 +381,6 @@ let d = within_combined_dif2, u = unique_df2
     Label(g3[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
     Label(g4[1, 1, Top()], "Frequency"; font=:bold, padding=pad)
 
+    save(plotsdir("efficiency_comparison_reduced.png"), current_figure())
     f
 end
-save(plotsdir("efficiency_comparison_reduced.png"), current_figure())
