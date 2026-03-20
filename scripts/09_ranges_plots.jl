@@ -116,7 +116,7 @@ flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
 )
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-df2df2 = @chain within_combined_dif2 begin
+unique_df2 = @chain within_combined_dif2 begin
     @groupby(:set, :variable)
     @combine(
         :count_pos = count(>=(0), :value) / length(:value),
@@ -159,15 +159,15 @@ begin
         )
         rains = visual(
             RainClouds;
-            markersize=7,
-            jitter_width=0.15,
+            markersize=6,
+            jitter_width=0.30,
             plot_boxplots=false,
             clouds=nothing,
             orientation=:horizontal,
         )
         vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
         hline =
-            mapping([(nrow(u) / 4) + 0.5]) *
+            mapping([length(unique(u.variable)) / 2 + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey)
         fg1 = draw!(g1, data(d1) * m * rains + vline + hline; axis=(; xreversed=rev))
         pad = (-80, 0, 10, 0)
@@ -412,7 +412,7 @@ begin
         )
         vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
         hline =
-            mapping([(nrow(u) / 4) + 0.5]) *
+            mapping([length(unique(u.variable)) / 2 + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey)
         pal = [
             "negative" => Makie.wong_colors()[3],
