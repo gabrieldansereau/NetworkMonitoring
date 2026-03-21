@@ -566,7 +566,7 @@ end
 
 # Plot
 fig_estimation = let
-    set = ["Over-0.2", "True-0.0", "Under-0.2"]
+    set = ["Over-0.5", "True-0.0", "Under-0.5"]
     var = :layer
     res = filter(var => in(set), monitored_estimations)
     vals = unique(res[:, var])
@@ -631,6 +631,6 @@ fig_estimation = let
     Label(ga[1, :, Top()], "Range estimation"; padding=(0, 0, 5, 0), font=:bold)
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
+    save(plotsdir("focal_ranges.png"), fig)
     fig
 end
-save(plotsdir("focal_ranges.png"), fig_estimation)

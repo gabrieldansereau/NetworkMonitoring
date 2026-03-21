@@ -214,28 +214,62 @@ CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
 
 ## Range estimation
 
-# Misestimate ranges
-if OUTDIR == "efficiency"
-    errors = -0.3:0.02:0.3
-else
-    errors = -0.2:0.05:0.2
-end
+# Extract the current threshold
 threshold = thresholds[indexin([sp], probranges.species)...]
+
+# Define the estimation errors to explore (percentage of range)
+if OUTDIR == "efficiency"
+    errors = collect([-0.5:0.05:1.0..., 2.0])
+else
+    errors = -0.5:0.5:0.5
+end
+
+# Create the layers with the right percentages
 layers = Dict()
 for e in errors
-    l = convert(SDT.SDMLayer{Float64}, probsp_range .> threshold + e)
+    # Convert the error / percentage to a number of cells
+    ncell = length(sp_mask)
+    ntarget = (1.0 + e) * ncell
+    n = round(Int, ntarget)
+
+    # Select the threshold based on the number of cells
+    ind = n < length(probsp_range) ? n : length(probsp_range)
+    ind = iszero(ind) ? 1 : ind
+    thresh = sort(values(probsp_range); rev=true)[ind]
+
+    # Create the masked layer with the closest percentage
+    l = convert(SDT.SDMLayer{Float64}, probsp_range .>= thresh)
     SDT.nodata!(l, 0)
     layers[e] = l
+end
+layers
+
+# Remove cases where layers have the same number of cells (i.e. the exact same
+# cells) This should mostly apply for species with high occupancy when the range
+# overestimation is too high. Unless we remove them, we'll end running multiple
+# times the exact same similation. It's better to deal with it later on when
+# summarizing the results.
+for i in length(errors):-1:2 # needs to run backwards
+    # Errors to compare
+    e = errors[i]
+    eprev = errors[i - 1]
+    # Layers
+    l = layers[e]
+    lprev = layers[eprev]
+    # Delete if the same as previous
+    if length(l) == length(lprev)
+        delete!(layers, e)
+    end
 end
 layers
 
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
-set = errors
+set = reverse(errors) # to match order from earlier sims
 optim = [layers[s] for s in set]
-optimlabels = [ifelse(s < 0, "Over$s", "Under-$s") for s in set]
-replace!(optimlabels, "Under-0.0" => "True-0.0")
+optimlabels = [ifelse(s < 0, "Under$s", "Over-$s") for s in set]
+replace!(optimlabels, "Over-0.0" => "True-0.0")
 STEP = (OUTDIR == "dev" ? 50 : 10)
 monitored_estimations = focal_monitoring(
     nets_dict,
@@ -244,7 +278,7 @@ monitored_estimations = focal_monitoring(
     name="ranges",
     type=[:realized],
     sampler=[BalancedAcceptance],
-    nbons=1:STEP:500,
+    nbons=[1, STEP:STEP:500...],
     nrep=NREP,
     combined=false,
 )
