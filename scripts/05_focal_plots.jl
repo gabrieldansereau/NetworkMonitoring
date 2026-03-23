@@ -535,10 +535,21 @@ save(plotsdir("focal_joined.png"), fig_joined)
 
 ## Range estimation
 
+# Use job id to vary parameters
+# id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
+# idp = lpad(id, 3, "0")
+
+# Default to efficiency results for illustration
+if !(@isdefined OUTDIR)
+    const OUTDIR = "efficiency" # dev(local), focal_array or efficiency
+end
+
 # Load & summarize results
 monitored_estimations_all = CSV.read(
     datadir(OUTDIR, "monitored_estimations-$idp.csv"), DataFrame
 )
+monitored_missings = filter(:monitored => ismissing, monitored_estimations_all)
+filter!(:monitored => !ismissing, monitored_estimations_all)
 monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
@@ -571,10 +582,29 @@ fig_estimation = let
     res = filter(var => in(set), monitored_estimations)
     vals = unique(res[:, var])
 
+    # Replace set for illustration when overestimation is not available.
+    replaced = false
+    if !(all([s in errors for s in set]))
+        _errs = filter(startswith("Over-"), errors)
+        _max = parse.(Float64, replace.(_errs, "Over-" => "")) |> maximum |> string
+        _orig_set = set
+        set = ["Over-$_max", "True-0.0", "Under-$_max"]
+        if all([s in errors for s in set])
+            @warn "Requested set not available in exported layers. Replacing by closest set: $set"
+            replaced = true
+            res = filter(var => in(set), monitored_estimations)
+            vals = unique(res[:, var])
+        else
+            @error "Requested set $set not available in exported layers"
+        end
+    end
+
+    # Set layers
     range_over = estimated_ranges[set[1]]
     range_true = estimated_ranges[set[2]]
     range_under = estimated_ranges[set[3]]
 
+    # Set colours
     if !(@isdefined colours)
         colours = Dict()
     end
@@ -594,15 +624,15 @@ fig_estimation = let
         ylabel="Monitored interactions",
         xticks=0:100:500,
     )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
+    yopts = (; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10)
+    ax1 = Axis(gb[1, 1]; yopts...)
+    ax2 = Axis(gb[2, 1]; yopts...)
+    ax3 = Axis(gb[3, 1]; yopts...)
+    # Highlight replaced set values
+    if replaced
+        ax1.ylabelcolor = :red
+        ax3.ylabelcolor = :red
+    end
     # Remove decorations for heatmaps
     hidedecorations!(ax1; label=false)
     hidedecorations!(ax2; label=false)
@@ -628,7 +658,7 @@ fig_estimation = let
     end
 
     # Subpanel labels
-    Label(ga[1, :, Top()], "Range estimation"; padding=(0, 0, 5, 0), font=:bold)
+    Label(ga[1, :, Top()], "Range estimation, id=$idp"; padding=(0, 0, 5, 0), font=:bold)
     Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
     save(plotsdir("focal_ranges.png"), fig)
