@@ -221,7 +221,7 @@ threshold = thresholds[indexin([sp], probranges.species)...]
 if OUTDIR == "efficiency"
     errors = collect([-0.5:0.05:1.0..., 2.0])
 else
-    errors = -0.5:0.5:0.5
+    errors = [-0.5:0.5:0.5..., 2.0, 4.0, 8.0]
 end
 
 # Create the layers with the right percentages
@@ -249,6 +249,7 @@ layers
 # overestimation is too high. Unless we remove them, we'll end running multiple
 # times the exact same similation. It's better to deal with it later on when
 # summarizing the results.
+removed = []
 for i in length(errors):-1:2 # needs to run backwards
     # Errors to compare
     e = errors[i]
@@ -258,7 +259,9 @@ for i in length(errors):-1:2 # needs to run backwards
     lprev = layers[eprev]
     # Delete if the same as previous
     if length(l) == length(lprev)
+        @info "Removing error = $e from the set of layers as it duplicates another layer"
         delete!(layers, e)
+        push!(removed, e)
     end
 end
 layers
@@ -266,7 +269,7 @@ layers
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
-set = reverse(errors) # to match order from earlier sims
+set = filter(in(collect(keys(layers))), reverse(errors)) # to match order from earlier sims
 optim = [layers[s] for s in set]
 optimlabels = [ifelse(s < 0, "Under$s", "Over-$s") for s in set]
 replace!(optimlabels, "Over-0.0" => "True-0.0")
@@ -284,6 +287,24 @@ monitored_estimations = focal_monitoring(
 )
 @rtransform!(monitored_estimations, :layer = optimlabels[:layer])
 @select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, All())
+
+# Add an entry with missing values for monitored estimations
+for r in reverse(removed)
+    @info "Adding row for duplicated layer $r"
+    row = (
+        set="ranges",
+        sp=sp,
+        type=:realized,
+        sampler=BalancedAcceptance,
+        layer="Over-$r",
+        nbon=missing,
+        rep=missing,
+        deg=unique(monitored_estimations.deg)[1],
+        monitored=missing,
+    )
+    pushfirst!(monitored_estimations, row; promote=true)
+end
+monitored_estimations
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimations)
