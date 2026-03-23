@@ -56,13 +56,15 @@ begin
     fg1 = draw!(f[1, 1], f1; ylog2...)
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "Range estimations"; halign=:left, font=:bold, padding=pad)
-save(plotsdir("ranges_efficiencies_all.png"), f)
+    save(plotsdir("ranges_efficiencies_all.png"), f)
     f
 end
 
 # Plot subset
 begin
     set = [
+        "Under-0.50",
+        "Under-0.40",
         "Under-0.30",
         "Under-0.20",
         "Under-0.10",
@@ -70,6 +72,8 @@ begin
         "Over-0.10",
         "Over-0.20",
         "Over-0.30",
+        "Over-0.40",
+        "Over-0.50",
     ]
     res = filter(:variable => in(set), effs_estimations)
     Random.seed!(42) # for jitter
@@ -94,14 +98,27 @@ begin
     fg1 = draw!(f[1, 1], f1; ylog2...)
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "Range estimations"; halign=:left, font=:bold, padding=pad)
-save(plotsdir("ranges_efficiencies.png"), f)
+    save(plotsdir("ranges_efficiencies.png"), f)
     f
 end
 
 ## Within-simulation comparison
 
 # Separate results per simulation
-set = ["Under-0.20", "Under-0.10", "True-0.00", "Over-0.10", "Over-0.20"]
+set = [
+    "Under-0.50",
+    "Under-0.40",
+    "Under-0.30",
+    "Under-0.20",
+    "Under-0.10",
+    "True-0.00",
+    "Over-0.10",
+    "Over-0.20",
+    "Over-0.30",
+    "Over-0.40",
+    "Over-0.50",
+]
+set = ["Under-0.40", "Under-0.20", "True-0.00", "Over-0.20", "Over-0.40"]
 within_combined_dif2 = comparewithin(
     select(effs_estimations, Not(:eff_low, :eff_upp)),
     set;
@@ -247,7 +264,7 @@ push!(
 sort!(within_bands, :offset)
 
 # Restrict offset limits
-@rsubset!(within_bands, :offset >= -0.24, :offset <= 0.24)
+@rsubset!(within_bands, :offset >= -0.4, :offset <= 0.4)
 
 # Bands
 tickdict = Dict(within_bands.offset .=> string.(within_bands.offset))
