@@ -56,9 +56,9 @@ begin
     fg1 = draw!(f[1, 1], f1; ylog2...)
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "Range estimations"; halign=:left, font=:bold, padding=pad)
+save(plotsdir("ranges_efficiencies_all.png"), f)
     f
 end
-save(plotsdir("ranges_efficiencies_all.png"), f)
 
 # Plot subset
 begin
@@ -94,9 +94,9 @@ begin
     fg1 = draw!(f[1, 1], f1; ylog2...)
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "Range estimations"; halign=:left, font=:bold, padding=pad)
+save(plotsdir("ranges_efficiencies.png"), f)
     f
 end
-save(plotsdir("ranges_efficiencies.png"), f)
 
 ## Within-simulation comparison
 
@@ -208,9 +208,9 @@ begin
         return (g1, g3)
     end
     make_comps_ax!(f; l1="Range estimation comparisons")
+    save(plotsdir("ranges_comparison.png"), current_figure())
     f
 end
-save(plotsdir("ranges_comparison.png"), current_figure())
 
 ## Plot bands (on the run!)
 
@@ -250,7 +250,7 @@ sort!(within_bands, :offset)
 @rsubset!(within_bands, :offset >= -0.24, :offset <= 0.24)
 
 # Bands
-tickdict = Dict(within_bands.offset .=> within_bands.variable)
+tickdict = Dict(within_bands.offset .=> string.(within_bands.offset))
 tickdict[0.0] = "0.0"
 fig_types = begin
     res = within_bands
@@ -299,9 +299,9 @@ fig_types = begin
     end
     ax = make_bands_ax!(fig[1, 1])
     Legend(fig[1, 2], ax, "90% Percentile range")
+    save(plotsdir("ranges_bands.png"), current_figure())
     fig
 end
-save(plotsdir("ranges_bands.png"), current_figure())
 
 # Combine subpanels
 begin

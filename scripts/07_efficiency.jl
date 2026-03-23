@@ -22,6 +22,10 @@ for set in sets
         isfile(file) || continue
         monitored_all = CSV.read(datadir(file), DataFrame)
 
+        # Separate results with missing values
+        monitored_missings = filter(:monitored => ismissing, monitored_all)
+        filter!(:monitored => !ismissing, monitored_all)
+
         # Summmarize results not combined previously
         _confint = set == "estimations" ? true : false
         monitored = summarize_focal(
