@@ -62,7 +62,7 @@ fig =
         legend=(; framevisible=false),
         figure=(; size=(700, 450)),
     )
-save(plotsdir("nbon.png"), fig)
+save(plotsdir("supp", "nbon.png"), fig)
 
 # Summarize results across replicates
 param_combined = @chain param_stack begin
@@ -176,4 +176,4 @@ fig =
         legend=(; framevisible=false),
         # figure=(; size=(700,450))
     )
-save(plotsdir("betadiversity.png"), fig; px_per_unit=2.0)
+save(plotsdir("supp", "betadiversity.png"), fig; px_per_unit=2.0)
