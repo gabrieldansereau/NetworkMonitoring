@@ -74,7 +74,7 @@ begin
     end
     f
 end
-save(plotsdir("efficiency_example.png"), f)
+save(plotsdir("supp", "efficiency_example.png"), f)
 
 ## Occupancy
 
@@ -176,4 +176,4 @@ fig = let bs = sim1_samplers, b = monitored_samplers
     axislegend(; position=:rb, unique=true)
     current_figure()
 end
-save(plotsdir("efficiency_within_example.png"), fig)
+save(plotsdir("supp", "efficiency_within_example.png"), fig)

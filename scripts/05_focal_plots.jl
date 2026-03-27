@@ -49,7 +49,7 @@ fig_types = let
     axislegend(; position=:rc, merge=true)
     fig
 end
-save(plotsdir("focal_types.png"), fig_types)
+save(plotsdir("supp", "focal_types.png"), fig_types)
 
 # Visualize result
 fig_types2 = let
@@ -74,7 +74,7 @@ fig_types2 = let
     axislegend(; position=:rb, merge=true)
     fig
 end
-save(plotsdir("focal_types2.png"), fig_types2)
+save(plotsdir("supp", "focal_types2.png"), fig_types2)
 
 ## Repeat with 4 species with different degrees
 
@@ -115,7 +115,7 @@ fig_spp = let
     fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
     fig
 end
-save(plotsdir("focal_spp.png"), fig_spp)
+save(plotsdir("supp", "focal_spp.png"), fig_spp)
 
 ## Explore variations with different sampler
 
@@ -248,7 +248,7 @@ fig_mask = let
     # Show figure
     figA = fig
 end
-save(plotsdir("focal_samplers_mask.png"), fig_mask)
+save(plotsdir("supp", "focal_mask.png"), fig_mask)
 
 ## Optimized sampling
 

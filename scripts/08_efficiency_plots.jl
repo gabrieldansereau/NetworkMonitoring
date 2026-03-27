@@ -100,7 +100,7 @@ begin
         ylog2...,
     )
     legend!(f[2, 2], fg2)
-    save(plotsdir("efficiency_distribution_species.png"), f)
+    save(plotsdir("supp", "efficiency_distribution_species.png"), f)
     f
 end
 
@@ -138,7 +138,7 @@ begin
         legend=legend,
         axis=(;),
     )
-    save(plotsdir("efficiency_occupancy_species.png"), f)
+    save(plotsdir("supp", "efficiency_occupancy_species.png"), f)
     f
 end
 
