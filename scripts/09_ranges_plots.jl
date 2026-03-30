@@ -102,6 +102,62 @@ begin
     f
 end
 
+## Fill-in all possible offset values for simulations with missing results
+
+# Check the proportion of simulations with results
+@chain effs_estimations begin
+    groupby([:variable])
+    combine(nrow)
+    @transform(:prop = :nrow ./ (maximum(:nrow)))
+    @rsubset(:prop < 1.0)
+end
+
+# Get all combinations
+effs_estimations_all = allcombinations(
+    DataFrame;
+    sim=unique(effs_estimations.sim),
+    set=unique(effs_estimations.set),
+    variable=unique(effs_estimations.variable),
+)
+leftjoin!(effs_estimations_all, effs_estimations; on=[:sim, :set, :variable])
+
+# Add the offset as a column
+@chain effs_estimations_all begin
+    @rtransform!(
+        :offset = parse(
+            Float64, replace(:variable, "Over-" => "", "Under" => "", "True-" => "")
+        )
+    )
+    select!(:sim, :set, :variable, :offset, All())
+    sort!(:sim)
+end
+
+# Check the missing results
+@chain effs_estimations_all begin
+    @rsubset(ismissing(:eff))
+end
+
+# Replace missing values by maximum
+sims_missing = unique(@rsubset(effs_estimations_all, ismissing(:eff)).sim)
+for sim in sims_missing
+    # Select simulation
+    effs_sim = @view effs_estimations_all[effs_estimations_all.sim .== sim, :]
+    # Extract efficiency from highest non-missing offset
+    effs_nonmissing = @rsubset(effs_sim, !(ismissing(:eff)))
+    max_offset = maximum(effs_nonmissing.offset)
+    max_row = effs_sim[effs_sim.offset .== max_offset, :]
+    # Replace values
+    for r in eachrow(effs_sim)
+        if ismissing(r.eff)
+            r.eff = max_row.eff[1]
+            r.eff_low = max_row.eff_low[1]
+            r.eff_upp = max_row.eff_upp[1]
+            r.occ = max_row.occ[1]
+        end
+    end
+end
+select!(effs_estimations_all, Not(:offset))
+
 ## Within-simulation comparison
 
 # Separate results per simulation
@@ -120,7 +176,7 @@ set = [
 ]
 set = ["Under-0.40", "Under-0.20", "True-0.00", "Over-0.20", "Over-0.40"]
 within_combined_dif2 = comparewithin(
-    select(effs_estimations, Not(:eff_low, :eff_upp)),
+    select(effs_estimations_all, Not(:eff_low, :eff_upp)),
     set;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -234,7 +290,7 @@ end
 # Complete set of comparison
 set_all = reverse(unique(effs_estimations.variable))
 within_combined_all = comparewithin(
-    select(effs_estimations, Not(:eff_low, :eff_upp)),
+    select(effs_estimations_all, Not(:eff_low, :eff_upp)),
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -350,7 +406,7 @@ end
 ## Confidence intervals
 
 # Calculate intervals
-effs_intervals = @chain effs_estimations begin
+effs_intervals = @chain effs_estimations_all begin
     @rsubset(:variable in set)
     @rtransform(:min = :eff_low - :eff, :max = :eff_upp - :eff)
     @select(:sim, :set, :variable, :min, :max)
@@ -393,7 +449,7 @@ end
 begin
     d = effs_overlap
     u = unique_overlap
-    sortedcomps = unique(u.variable)
+    sortedcomps = set
     rev = true
 
     # Figure & grid

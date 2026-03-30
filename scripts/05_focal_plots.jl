@@ -540,9 +540,7 @@ save(plotsdir("focal_joined.png"), fig_joined)
 # idp = lpad(id, 3, "0")
 
 # Default to efficiency results for illustration
-if !(@isdefined OUTDIR)
-    const OUTDIR = "efficiency" # dev(local), focal_array or efficiency
-end
+const OUTDIR = "efficiency" # dev(local), focal_array or efficiency
 
 # Load & summarize results
 monitored_estimations_all = CSV.read(
