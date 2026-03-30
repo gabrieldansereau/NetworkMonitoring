@@ -52,60 +52,78 @@ end
 
 ## Within-simulation comparison
 
-# Separate results per simulation
-set = [
-    "Under-0.50",
-    "Under-0.40",
-    "Under-0.30",
-    "Under-0.20",
-    "Under-0.10",
-    "True-0.00",
-    "Over-0.10",
-    "Over-0.20",
-    "Over-0.30",
-    "Over-0.40",
-    "Over-0.50",
-]
-set = ["Under-0.40", "Under-0.20", "True-0.00", "Over-0.20", "Over-0.40"]
-within_combined_dif2 = comparewithin(
+# Complete set of comparisons
+set_all = reverse(unique(effs_estimations.variable))
+within_combined_all = comparewithin(
     select(effs_estimations, Not(:offset, :eff_low, :eff_upp)),
-    set;
+    set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
-    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
     f=(n, n2) -> n - n2,
 )
-flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
+flipthatcomp!(within_combined_all, unique(within_combined_all.variable))
 @rtransform!(
-    within_combined_dif2, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
+    within_combined_all, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
 )
 
+# Bring back offset & update variable label
+@rtransform!(
+    within_combined_all,
+    :offset = parse(Float64, replace(:variable, "Over-" => "", "Under" => ""))
+)
+select!(within_combined_all, Not(:value), :value)
+
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_df2 = @chain within_combined_dif2 begin
-    @groupby(:set, :variable)
+unique_comps = @chain within_combined_all begin
+    @groupby(:set, :variable, :offset)
     @combine(
+        :prop_sim = length(:value),
         :count_pos = count(>=(0), :value) / length(:value),
         :count_neg = count(<(0), :value) / length(:value)
     )
+    @transform(:prop_sim = :prop_sim ./ maximum(:prop_sim))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
     @rtransform(:label = "$(round(Int, :count *100)) %")
     @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
 end
 
-# Visualize
+# Extract quantile range for all offset
+within_bands = @chain within_combined_all begin
+    groupby([:set, :variable, :offset])
+    @combine(
+        :low = quantile(:value, 0.05), :med = median(:value), :upp = quantile(:value, 0.95),
+    )
+end
+
+# Add an Entry for offset of zero
+push!(
+    within_bands,
+    (; set="ranges", variable="True-0.0", offset=0.0, low=0.0, med=0.0, upp=0.0),
+)
+sort!(within_bands, :offset)
+
+## Plot comparisons and bands
+
+# Combined figure
 begin
-    d = within_combined_dif2
-    u = unique_df2
-    sortedcomps = unique(u.variable)
+    # Select results for comparison
+    set = collect(-0.4:0.2:0.4)
+    d = @rsubset(within_combined_all, :offset in set)
+    u = @rsubset(unique_comps, :offset in set)
+
+    # Select results for bands
+    res_bands = @rsubset(within_bands, :offset >= -0.4, :offset <= 0.4)
+    var = :offset
+
+    # Figure options
+    f = Figure(; size=(750, 650))
     rev = true
 
-    # Figure & grid
-    if nrow(u) <= 12
-        f = Figure(; size=(750, 300))
-    else
-        f = Figure(; size=(600, 800))
-    end
+    # Sorted sets for comparison
+    sortedcomps = unique(u.variable)
+    sortedoffsets = [o > 0.0 ? "+$o" : "$o" for o in unique(u.offset)]
 
+    # Comparison panel
     function make_comps_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1, rev=rev)
         # Random seed for jitter
         Random.seed!(42)
@@ -117,8 +135,8 @@ begin
         # Main panel
         d1 = @rsubset(d, :set == "ranges")
         m = mapping(
-            :variable =>
-                renamer([s => replace(s, "ΔTrue_" => "") for s in sortedcomps]) => "",
+            :variable => sorter(sortedcomps) => "",
+            # renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
             :value => "Efficiency compared to True Range";
             color=:value => (x -> x > 0.0),
         )
@@ -172,75 +190,31 @@ begin
 
         return (g1, g3)
     end
-    make_comps_ax!(f; l1="Range estimation comparisons")
-    save(plotsdir("ranges_comparison.png"), current_figure())
-    f
-end
 
-## Plot bands (on the run!)
+    # Bands panel
+    function make_bands_ax!(f; res=res_bands, var=var, rev=rev)
+        # Values
+        x = res[:, var]
+        low = res.low
+        med = res.med
+        upp = res.upp
 
-# Complete set of comparison
-set_all = reverse(unique(effs_estimations.variable))
-within_combined_all = comparewithin(
-    select(effs_estimations, Not(:offset, :eff_low, :eff_upp)),
-    set_all;
-    to="True-0.00",
-    labels=Dict("True-0.00" => "True"),
-    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
-    f=(n, n2) -> n - n2,
-)
-flipthatcomp!(within_combined_all, unique(within_combined_all.variable))
-@rtransform!(
-    within_combined_all, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
-)
-
-# Extract quantile range
-within_bands = @chain within_combined_all begin
-    groupby([:set, :variable])
-    @combine(
-        :low = quantile(:value, 0.05), :med = median(:value), :upp = quantile(:value, 0.95),
-    )
-    @select(:set, :variable, :offset = :variable, All())
-    @rtransform(:offset = parse(Float64, replace(:offset, "Over-" => "", "Under" => "")))
-end
-
-# Add an Entry for offset of zero
-push!(
-    within_bands,
-    (; set="ranges", variable="True-0.0", offset=0.0, low=0.0, med=0.0, upp=0.0),
-)
-sort!(within_bands, :offset)
-
-# Restrict offset limits
-@rsubset!(within_bands, :offset >= -0.4, :offset <= 0.4)
-
-# Bands
-tickdict = Dict(within_bands.offset .=> string.(within_bands.offset))
-tickdict[0.0] = "0.0"
-fig_types = begin
-    res = within_bands
-    var = :offset
-    rev = true
-
-    fig = Figure(; size=(750, 350))
-    function make_bands_ax!(f; res=res, var=var, rev=rev)
-        t1, t2 = extrema(res[:, var])
+        # Axis
+        t1, t2 = extrema(x)
+        tickdict = Dict(within_bands.offset .=> string.(within_bands.offset))
+        tickdict[0.0] = "0.0"
         ax = Axis(
             f;
-            xlabel="Offset",
+            xlabel="Range estimation difference (%)",
             ylabel="Efficiency difference with True Range",
             xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
-            xtickformat=x -> [tickdict[tick] for tick in x],
+            xtickformat=values ->
+                [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
             yreversed=rev,
-            # xticklabelrotation=pi / 8,
         )
         if !rev
             limits!(ax, (nothing, nothing), (-1500, 1500))
         end
-        x = res.offset
-        low = res.low
-        med = res.med
-        upp = res.upp
 
         # Two band color option
         col1 = Makie.wong_colors()[1]
@@ -262,27 +236,12 @@ fig_types = begin
 
         return ax
     end
-    ax = make_bands_ax!(fig[1, 1])
-    Legend(fig[1, 2], ax, "90% Percentile range")
-    save(plotsdir("ranges_bands.png"), current_figure())
-    fig
-end
 
-# Combine subpanels
-begin
-    rev = true
-    f = Figure(; size=(750, 650))
+    # Create figure
     g1, g3 = make_comps_ax!(
-        f;
-        d=within_combined_dif2,
-        u=unique_df2,
-        sortedcomps=unique(u.variable),
-        rev=rev,
-        l1="A) Efficiency comparison between range estimations",
+        f; rev=rev, l1="A) Efficiency comparison between range estimations"
     )
-    ax2 = make_bands_ax!(
-        f[(end + 1):(end + 10), 1:(end - 1)]; res=within_bands, var=:offset, rev=rev
-    )
+    ax2 = make_bands_ax!(f[(end + 1):(end + 10), 1:(end - 1)]; rev=rev)
     Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false)
     Label(
         f[7, 1, Top()],
@@ -309,7 +268,7 @@ true_max = Dict(r.sim => r.max for r in eachrow(effs_intervals_true))
 
 # Check overlap
 effs_overlap = @chain effs_intervals begin
-    rightjoin(within_combined_dif2; on=[:sim, :set, :variable])
+    rightjoin(within_combined_red; on=[:sim, :set, :variable])
     @select(Not(:occ))
     @rtransform(:true_min = true_min[:sim], :true_max = true_max[:sim])
     @rtransform(
