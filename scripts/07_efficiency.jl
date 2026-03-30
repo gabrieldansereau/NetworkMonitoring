@@ -107,7 +107,7 @@ effs_optimized = @chain sims_optimized begin
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
-@time effs_estimations = @chain sims_estimations begin
+effs_estimations = @chain sims_estimations begin
     @groupby(:sim, :set, :layer)
     @combine(
         :eff = efficiency(:nbon, :med; f=exp),
@@ -116,6 +116,25 @@ end
     )
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
+end
+
+# Rename estimations with same number of digits
+@transform!(
+    effs_estimations,
+    :variable = [
+        @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(:variable, "-")
+    ]
+)
+
+# Add the offset as a column
+@chain effs_estimations begin
+    @rtransform!(
+        :offset = parse(
+            Float64, replace(:variable, "Over-" => "", "Under" => "", "True-" => "")
+        )
+    )
+    select!(:sim, :set, :variable, :offset, All())
+    sort!(:sim)
 end
 
 # Export

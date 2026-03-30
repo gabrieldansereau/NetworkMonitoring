@@ -7,14 +7,6 @@ include("include.jl") # see note regarding why we cannot use the module
 # Load data
 effs_estimations = CSV.read(datadir("efficiency_estimations.csv"), DataFrame)
 
-# Rename with same number of digits
-@transform!(
-    effs_estimations,
-    :variable = [
-        @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(:variable, "-")
-    ]
-)
-
 # Sort values
 sorted = unique(filter(:sim => ==(1), effs_estimations).variable)
 
@@ -121,17 +113,6 @@ effs_estimations_all = allcombinations(
 )
 leftjoin!(effs_estimations_all, effs_estimations; on=[:sim, :set, :variable])
 
-# Add the offset as a column
-@chain effs_estimations_all begin
-    @rtransform!(
-        :offset = parse(
-            Float64, replace(:variable, "Over-" => "", "Under" => "", "True-" => "")
-        )
-    )
-    select!(:sim, :set, :variable, :offset, All())
-    sort!(:sim)
-end
-
 # Check the missing results
 @chain effs_estimations_all begin
     @rsubset(ismissing(:eff))
@@ -143,9 +124,8 @@ for sim in sims_missing
     # Select simulation
     effs_sim = @view effs_estimations_all[effs_estimations_all.sim .== sim, :]
     # Extract efficiency from highest non-missing offset
-    effs_nonmissing = @rsubset(effs_sim, !(ismissing(:eff)))
-    max_offset = maximum(effs_nonmissing.offset)
-    max_row = effs_sim[effs_sim.offset .== max_offset, :]
+    _, max_i = findmax(skipmissing(effs_sim.offset))
+    max_row = effs_sim[max_i, :]
     # Replace values
     for r in eachrow(effs_sim)
         if ismissing(r.eff)
@@ -156,7 +136,6 @@ for sim in sims_missing
         end
     end
 end
-select!(effs_estimations_all, Not(:offset))
 
 ## Within-simulation comparison
 
@@ -176,7 +155,7 @@ set = [
 ]
 set = ["Under-0.40", "Under-0.20", "True-0.00", "Over-0.20", "Over-0.40"]
 within_combined_dif2 = comparewithin(
-    select(effs_estimations_all, Not(:eff_low, :eff_upp)),
+    select(effs_estimations_all, Not(:offset, :eff_low, :eff_upp)),
     set;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -290,7 +269,7 @@ end
 # Complete set of comparison
 set_all = reverse(unique(effs_estimations.variable))
 within_combined_all = comparewithin(
-    select(effs_estimations_all, Not(:eff_low, :eff_upp)),
+    select(effs_estimations_all, Not(:offset, :eff_low, :eff_upp)),
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
