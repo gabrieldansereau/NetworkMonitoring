@@ -155,7 +155,7 @@ set = [
 ]
 set = ["Under-0.40", "Under-0.20", "True-0.00", "Over-0.20", "Over-0.40"]
 within_combined_dif2 = comparewithin(
-    select(effs_estimations_all, Not(:offset, :eff_low, :eff_upp)),
+    select(effs_estimations, Not(:offset, :eff_low, :eff_upp)),
     set;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -269,7 +269,7 @@ end
 # Complete set of comparison
 set_all = reverse(unique(effs_estimations.variable))
 within_combined_all = comparewithin(
-    select(effs_estimations_all, Not(:offset, :eff_low, :eff_upp)),
+    select(effs_estimations, Not(:offset, :eff_low, :eff_upp)),
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -385,7 +385,7 @@ end
 ## Confidence intervals
 
 # Calculate intervals
-effs_intervals = @chain effs_estimations_all begin
+effs_intervals = @chain effs_estimations begin
     @rsubset(:variable in set)
     @rtransform(:min = :eff_low - :eff, :max = :eff_upp - :eff)
     @select(:sim, :set, :variable, :min, :max)
