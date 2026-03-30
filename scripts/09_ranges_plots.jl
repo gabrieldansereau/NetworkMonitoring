@@ -295,6 +295,17 @@ unique_overlap = @chain effs_overlap begin
     @rtransform(:label = (:label == "1 %" && :count < 1.0) ? "< 1 %" : :label)
 end
 
+# Extract quantile range for all offset
+overlap_bands = rename(unique_overlap, :count => :med)
+select!(overlap_bands, Not(:label))
+
+# Add an Entry for offset of zero
+common = (; set="ranges", variable="True-0.0", offset=0.0)
+push!(overlap_bands, (; common..., countmeasure="overlap", med=1.0))
+push!(overlap_bands, (; common..., countmeasure="positive", med=0.0))
+push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
+sort!(overlap_bands, :offset)
+
 # Visualize
 begin
     # Select results for comparison
@@ -302,8 +313,12 @@ begin
     d = @rsubset(effs_overlap, :offset in set)
     u = @rsubset(unique_overlap, :offset in set)
 
+    # Select results for bands
+    res = @rsubset(overlap_bands, :offset in set)
+    var = :offset
+
     # Figure options
-    f = Figure(; size=(750, 450))
+    f = Figure(; size=(750, 650))
     rev = true
 
     # Sorted sets for comparison
@@ -383,11 +398,63 @@ begin
 
         return (g1, g3)
     end
-    make_overlap_ax!(f; l1="Range estimation comparisons")
+
+    # Bands panel
+    function make_overlap_bands!(f; res=res, var=var, rev=rev)
+        # Axis
+        t1, t2 = extrema(set)
+        ax = Axis(
+            f[1, 1];
+            xlabel="Range estimation difference (%)",
+            ylabel="Proportion of simulations",
+            xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
+            xtickformat=values ->
+                [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
+        )
+        # Band colors
+        pal = Dict(
+            "negative" => Makie.wong_colors()[3],
+            "overlap" => Makie.wong_colors()[4],
+            "positive" => :grey,
+        )
+        # Bands
+        for mes in ["overlap", "negative", "positive"]
+            r = @rsubset(res, :countmeasure == mes)
+            x = r[:, var]
+            med = r.med
+            band!(ax, x, zeros(length(x)), med; alpha=0.6, label=mes, color=pal[mes])
+            lines!(ax, x, med; label=mes, color=pal[mes])
+        end
+        # Common options
+        vlines!(ax, 0.0; linestyle=:solid, color=:grey)
+        hlines!(ax, 0.0; linestyle=:dash, color=:black)
+
+        return ax
+    end
+
+    # Create figure
+    g1, g3 = make_overlap_ax!(f; l1="A) Efficiency comparison between range estimations")
+    ax2 = make_overlap_bands!(f[(end + 1):(end + 3), 1:(end - 1)])
+    Legend(
+        f[7:end, end],
+        ax2,
+        "Comparison sign";
+        framevisible=false,
+        merge=true,
+        tellwidth=false,
+    )
+    Label(
+        f[7, 1, Top()],
+        "B) Change in comparison sign given range estimation difference";
+        halign=:left,
+        font=:bold,
+        padding=(-80, 0, 10, 0),
+    )
     save(plotsdir("ranges_confidence_interval.png"), current_figure())
     f
 end
 
+##
 ## Check the distribution of range efficiencies
 #=
 
