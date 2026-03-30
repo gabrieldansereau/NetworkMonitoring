@@ -258,7 +258,6 @@ end
 
 # Calculate intervals
 effs_intervals = @chain effs_estimations begin
-    @rsubset(:variable in set)
     @rtransform(:min = :eff_low - :eff, :max = :eff_upp - :eff)
     @select(:sim, :set, :variable, :min, :max)
 end
@@ -268,7 +267,7 @@ true_max = Dict(r.sim => r.max for r in eachrow(effs_intervals_true))
 
 # Check overlap
 effs_overlap = @chain effs_intervals begin
-    rightjoin(within_combined_red; on=[:sim, :set, :variable])
+    rightjoin(within_combined_all; on=[:sim, :set, :variable])
     @select(Not(:occ))
     @rtransform(:true_min = true_min[:sim], :true_max = true_max[:sim])
     @rtransform(
@@ -284,7 +283,7 @@ end
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
 unique_overlap = @chain effs_overlap begin
-    @groupby(:set, :variable)
+    @groupby(:set, :variable, :offset)
     @combine(
         :positive = count(==("positive"), :overlap_sign) / length(:overlap_sign),
         :negative = count(==("negative"), :overlap_sign) / length(:overlap_sign),
@@ -298,18 +297,20 @@ end
 
 # Visualize
 begin
-    d = effs_overlap
-    u = unique_overlap
-    sortedcomps = set
+    # Select results for comparison
+    set = collect(-0.5:0.1:0.5)
+    d = @rsubset(effs_overlap, :offset in set)
+    u = @rsubset(unique_overlap, :offset in set)
+
+    # Figure options
+    f = Figure(; size=(750, 450))
     rev = true
 
-    # Figure & grid
-    if nrow(u) <= 12
-        f = Figure(; size=(750, 300))
-    else
-        f = Figure(; size=(600, 800))
-    end
+    # Sorted sets for comparison
+    sortedcomps = unique(u.variable)
+    sortedoffsets = [o > 0.0 ? "+$o" : "$o" for o in unique(u.offset)]
 
+    # Overlap panel
     function make_overlap_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1, rev=rev)
         # Random seed for jitter
         Random.seed!(42)
@@ -321,8 +322,7 @@ begin
         # Main panel
         d1 = @rsubset(d, :set == "ranges")
         m = mapping(
-            :variable =>
-                renamer([s => replace(s, "ΔTrue_" => "") for s in sortedcomps]) => "",
+            :variable => sorter(sortedcomps) => "",
             :value => "Efficiency compared to True Range";
             color=:overlap_sign,
         )
