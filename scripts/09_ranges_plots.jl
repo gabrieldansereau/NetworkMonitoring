@@ -285,6 +285,7 @@ end
 unique_overlap = @chain effs_overlap begin
     @groupby(:set, :variable, :offset)
     @combine(
+        :n = length(:value),
         :positive = count(==("positive"), :overlap_sign) / length(:overlap_sign),
         :negative = count(==("negative"), :overlap_sign) / length(:overlap_sign),
         :overlap = count(==("overlap"), :overlap_sign) / length(:overlap_sign),
@@ -300,11 +301,19 @@ overlap_bands = rename(unique_overlap, :count => :med)
 select!(overlap_bands, Not(:label))
 
 # Add an Entry for offset of zero
-common = (; set="ranges", variable="True-0.0", offset=0.0)
+common = (; set="ranges", variable="True-0.0", n=200, offset=0.0)
 push!(overlap_bands, (; common..., countmeasure="overlap", med=1.0))
 push!(overlap_bands, (; common..., countmeasure="positive", med=0.0))
 push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
 sort!(overlap_bands, :offset)
+
+# Add confidence interval for the proportion
+@rtransform!(overlap_bands, :x = round(Int, :med * :n))
+@rtransform!(
+    overlap_bands,
+    :low = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[1],
+    :upp = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[2],
+)
 
 # Visualize
 begin
@@ -422,7 +431,9 @@ begin
             r = @rsubset(res, :countmeasure == mes)
             x = r[:, var]
             med = r.med
-            band!(ax, x, zeros(length(x)), med; alpha=0.6, label=mes, color=pal[mes])
+            low = r.low
+            upp = r.upp
+            band!(ax, x, low, upp; alpha=0.6, label=mes, color=pal[mes])
             lines!(ax, x, med; label=mes, color=pal[mes])
         end
         # Common options
