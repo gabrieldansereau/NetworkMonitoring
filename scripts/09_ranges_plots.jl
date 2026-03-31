@@ -454,6 +454,50 @@ begin
     f
 end
 
+## Mix overlap & efficiency sign
+
+begin
+    # Select results for comparison
+    set = collect(-0.5:0.1:0.5)
+    d = @rsubset(effs_overlap, :offset in set)
+    u = @rsubset(unique_overlap, :offset in set)
+
+    # Sorted sets for comparison
+    sortedcomps = unique(u.variable)
+    sortedoffsets = [o > 0.0 ? "+$o" : "$o" for o in unique(u.offset)]
+
+    # Select results for bands
+    res_bands = @rsubset(within_bands, :offset >= -0.4, :offset <= 0.4)
+    var = :offset
+
+    # Figure options
+    f = Figure(; size=(800, 750))
+    rev = true
+
+    # Create figure
+    g1, g3 = make_overlap_ax!(
+        f;
+        d=d,
+        u=u,
+        sortedcomps=sortedcomps,
+        rev=rev,
+        l1="A) Efficiency comparison between range estimations",
+    )
+    ax2 = make_bands_ax!(
+        f[(end + 1):(end + 5), 1:(end - 1)]; res=res_bands, var=var, rev=rev
+    )
+    Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false, width=200)
+    Label(
+        f[7, 1, Top()],
+        "B) Percentile range of efficiency differences";
+        halign=:left,
+        font=:bold,
+        padding=(-80, 0, 10, 0),
+    )
+    save(plotsdir("ranges_mixed.png"), current_figure())
+    f
+end
+
 ##
 ## Check the distribution of range efficiencies
 #=
