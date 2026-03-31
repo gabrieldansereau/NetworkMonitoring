@@ -250,7 +250,7 @@ begin
         font=:bold,
         padding=(-80, 0, 10, 0),
     )
-    save(plotsdir("ranges_combined.png"), f)
+    save(plotsdir("ranges_efficiency.png"), f)
     f
 end
 
@@ -450,7 +450,7 @@ begin
         font=:bold,
         padding=(-80, 0, 10, 0),
     )
-    save(plotsdir("ranges_confidence_interval.png"), current_figure())
+    save(plotsdir("ranges_overlap.png"), current_figure())
     f
 end
 
