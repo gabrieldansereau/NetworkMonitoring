@@ -107,7 +107,7 @@ sort!(within_bands, :offset)
 # Combined figure
 begin
     # Select results for comparison
-    set = collect(-0.4:0.2:0.4)
+    set = collect(-0.5:0.1:0.5)
     d = @rsubset(within_combined_all, :offset in set)
     u = @rsubset(unique_comps, :offset in set)
 
@@ -116,27 +116,25 @@ begin
     var = :offset
 
     # Figure options
-    f = Figure(; size=(750, 650))
+    f = Figure(; size=(800, 750))
     rev = true
 
-    # Sorted sets for comparison
-    sortedcomps = unique(u.variable)
-    sortedoffsets = [o > 0.0 ? "+$o" : "$o" for o in unique(u.offset)]
-
     # Comparison panel
-    function make_comps_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1, rev=rev)
+    function make_comps_ax!(g1, g3; d=d, u=u, l1, rev=rev)
         # Random seed for jitter
         Random.seed!(42)
 
-        # Define grid layouts
-        g1 = GridLayout(f[1:6, 1:3])
-        g3 = GridLayout(f[1:6, end + 1])
-
+        # Sorted sets for comparison
+        sortedcomps = unique(u.variable)
+        sortedoffsets = [
+            o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for
+            o in unique(u.offset)
+        ]
         # Main panel
         d1 = @rsubset(d, :set == "ranges")
         m = mapping(
-            :variable => sorter(sortedcomps) => "",
-            # renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
+            :variable =>
+                renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
             :value => "Efficiency compared to True Range";
             color=:value => (x -> x > 0.0),
         )
@@ -153,7 +151,7 @@ begin
             mapping([length(unique(u.variable)) / 2 + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey)
         fg1 = draw!(g1, data(d1) * m * rains + vline + hline; axis=(; xreversed=rev))
-        pad = (-80, 0, 10, 0)
+        pad = (-65, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
 
         # Summary panels
@@ -184,9 +182,23 @@ begin
         ax1 = g1.content[1].content
         linkyaxes!(ax1, ax3)
 
-        # Add label
+        # Add labels
         pad = (0, 0, 10, 0)
         Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
+        Label(
+            g1[1, 1, TopLeft()],
+            "Over ⬆️";
+            padding=(0, 2, -40, 0),
+            halign=:right,
+            fontsize=12,
+        )
+        Label(
+            g1[1, 1, BottomLeft()],
+            "Under ⬇️";
+            padding=(0, 2, 0, -50),
+            halign=:right,
+            fontsize=12,
+        )
 
         return (g1, g3)
     end
@@ -234,22 +246,50 @@ begin
         vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey)
         hlines!(ax, 0.0; linestyle=:dash, color=:black)
 
+        # Add labels
+        Label(
+            f[1, 1, BottomLeft()],
+            "⬅️ Under";
+            padding=(0, 0, -72, 0),
+            halign=:left,
+            fontsize=12,
+            tellheight=false,
+            tellwidth=false,
+        )
+        Label(
+            f[1, 1, BottomRight()],
+            "Over ➡️";
+            padding=(0, 0, -72, 0),
+            halign=:right,
+            fontsize=12,
+            tellheight=false,
+            tellwidth=false,
+        )
+
         return ax
     end
 
     # Create figure
+    g1 = GridLayout(f[1:6, 1:3])
+    g3 = GridLayout(f[1:6, end + 1])
     g1, g3 = make_comps_ax!(
-        f; rev=rev, l1="A) Efficiency comparison between range estimations"
+        g1, g3; rev=rev, l1="A) Efficiency comparison between range estimations"
     )
-    ax2 = make_bands_ax!(f[(end + 1):(end + 10), 1:(end - 1)]; rev=rev)
+    ax2 = make_bands_ax!(f[(end + 1):(end + 5), 1:(end - 1)]; rev=rev)
     Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false)
     Label(
         f[7, 1, Top()],
         "B) Percentile range of efficiency differences";
         halign=:left,
         font=:bold,
-        padding=(-80, 0, 10, 0),
+        padding=(-65, 0, 10, 0),
     )
+    # Align Axis labels
+    ax1 = content(g1[1, 1])
+    yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 2
+    ax1.yticklabelspace = yspace
+    ax2.yticklabelspace = yspace
+    # Save
     save(plotsdir("ranges_efficiency.png"), f)
     f
 end
@@ -327,26 +367,26 @@ begin
     var = :offset
 
     # Figure options
-    f = Figure(; size=(750, 650))
+    f = Figure(; size=(800, 750))
     rev = true
 
-    # Sorted sets for comparison
-    sortedcomps = unique(u.variable)
-    sortedoffsets = [o > 0.0 ? "+$o" : "$o" for o in unique(u.offset)]
-
     # Overlap panel
-    function make_overlap_ax!(f; d=d, u=u, sortedcomps=sortedcomps, l1, rev=rev)
+    function make_overlap_ax!(g1, g3; d=d, u=u, l1, rev=rev)
         # Random seed for jitter
         Random.seed!(42)
 
-        # Define grid layouts
-        g1 = GridLayout(f[1:6, 1:2])
-        g3 = GridLayout(f[1:6, end + 1])
+        # Sorted sets for comparison
+        sortedcomps = unique(u.variable)
+        sortedoffsets = [
+            o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for
+            o in unique(u.offset)
+        ]
 
         # Main panel
         d1 = @rsubset(d, :set == "ranges")
         m = mapping(
-            :variable => sorter(sortedcomps) => "",
+            :variable =>
+                renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
             :value => "Efficiency compared to True Range";
             color=:overlap_sign,
         )
@@ -369,7 +409,7 @@ begin
         ]
         scl = scales(; Color=(; palette=pal))
         fg1 = draw!(g1, data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
-        pad = (-80, 0, 10, 0)
+        pad = (-65, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
 
         # Summary panels
@@ -401,15 +441,29 @@ begin
         ax1 = g1.content[1].content
         linkyaxes!(ax1, ax3)
 
-        # Add label
+        # Add labels
         pad = (0, 0, 10, 0)
         Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
+        Label(
+            g1[1, 1, TopLeft()],
+            "Over ⬆️";
+            padding=(0, 2, -40, 0),
+            halign=:right,
+            fontsize=12,
+        )
+        Label(
+            g1[1, 1, BottomLeft()],
+            "Under ⬇️";
+            padding=(0, 2, 0, -50),
+            halign=:right,
+            fontsize=12,
+        )
 
         return (g1, g3)
     end
 
     # Bands panel
-    function make_overlap_bands!(f; res=res, var=var, rev=rev)
+    function make_overlap_bands!(f; res=res, var=var, rev=!rev, title="", addlines=false)
         # Axis
         t1, t2 = extrema(set)
         ax = Axis(
@@ -419,6 +473,8 @@ begin
             xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
             xtickformat=values ->
                 [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
+            xreversed=rev,
+            title=title,
         )
         # Band colors
         pal = Dict(
@@ -439,30 +495,43 @@ begin
             lines!(ax, x, med; label=lab, color=col)
         end
         # Common options
-        vlines!(ax, 0.0; linestyle=:solid, color=:grey)
-        hlines!(ax, 0.0; linestyle=:dash, color=:black)
+        if addlines
+            vlines!(ax, 0.0; linestyle=:solid, color=:grey)
+            hlines!(ax, 0.0; linestyle=:dash, color=:black)
+        end
 
         return ax
     end
 
     # Create figure
-    g1, g3 = make_overlap_ax!(f; l1="A) Efficiency comparison between range estimations")
-    ax2 = make_overlap_bands!(f[(end + 1):(end + 3), 1:(end - 1)])
+    g1 = GridLayout(f[1:6, 1:2])
+    g3 = GridLayout(f[:, end + 1])
+    g4l = 7:9
+    make_overlap_ax!(g1, g3; l1="A) Efficiency comparison between range estimations")
+    # ax2 = make_overlap_bands!(f[g4l, 1:2]; addlines=true)
+    ax2 = make_overlap_bands!(
+        f[g4l, 1]; res=@rsubset(res, :offset <= 0.0), rev=true, title="Underestimation"
+    )
+    ax3 = make_overlap_bands!(
+        f[g4l, 2]; res=@rsubset(res, :offset >= 0.0), title="Overestimation"
+    )
     Legend(
-        f[7:end, end],
-        ax2,
-        "Comparison sign";
-        framevisible=false,
-        merge=true,
-        tellwidth=false,
+        f[g4l, end], ax2, "Comparison sign"; framevisible=false, merge=true, tellwidth=false
     )
     Label(
-        f[7, 1, Top()],
+        f[g4l, 1, Top()],
         "B) Change in proportion of comparisons";
         halign=:left,
         font=:bold,
-        padding=(-80, 0, 10, 0),
+        padding=(-65, 0, 30, 0),
     )
+    # Align Axis labels
+    ax1 = content(g1[1, 1])
+    yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 2
+    ax1.yticklabelspace = yspace
+    ax2.yticklabelspace = yspace
+    ax3.yticklabelspace = yspace
+    # Save
     save(plotsdir("ranges_overlap.png"), current_figure())
     f
 end
@@ -475,10 +544,6 @@ begin
     d = @rsubset(effs_overlap, :offset in set)
     u = @rsubset(unique_overlap, :offset in set)
 
-    # Sorted sets for comparison
-    sortedcomps = unique(u.variable)
-    sortedoffsets = [o > 0.0 ? "+$o" : "$o" for o in unique(u.offset)]
-
     # Select results for bands
     res_bands = @rsubset(within_bands, :offset >= -0.4, :offset <= 0.4)
     var = :offset
@@ -488,13 +553,10 @@ begin
     rev = true
 
     # Create figure
+    g1 = GridLayout(f[1:6, 1:2])
+    g3 = GridLayout(f[:, end + 1])
     g1, g3 = make_overlap_ax!(
-        f;
-        d=d,
-        u=u,
-        sortedcomps=sortedcomps,
-        rev=rev,
-        l1="A) Efficiency comparison between range estimations",
+        g1, g3; d=d, u=u, rev=rev, l1="A) Efficiency comparison between range estimations"
     )
     ax2 = make_bands_ax!(
         f[(end + 1):(end + 5), 1:(end - 1)]; res=res_bands, var=var, rev=rev
@@ -505,8 +567,14 @@ begin
         "B) Percentile range of efficiency differences";
         halign=:left,
         font=:bold,
-        padding=(-80, 0, 10, 0),
+        padding=(-65, 0, 10, 0),
     )
+    # Align Axis labels
+    ax1 = content(g1[1, 1])
+    yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 10
+    ax1.yticklabelspace = yspace
+    ax2.yticklabelspace = yspace
+    # Save
     save(plotsdir("ranges_mixed.png"), current_figure())
     f
 end
