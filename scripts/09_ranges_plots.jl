@@ -433,8 +433,10 @@ begin
             med = r.med
             low = r.low
             upp = r.upp
-            band!(ax, x, low, upp; alpha=0.6, label=mes, color=pal[mes])
-            lines!(ax, x, med; label=mes, color=pal[mes])
+            lab = uppercasefirst(mes)
+            col = pal[mes]
+            band!(ax, x, low, upp; alpha=0.6, label=lab, color=col)
+            lines!(ax, x, med; label=lab, color=col)
         end
         # Common options
         vlines!(ax, 0.0; linestyle=:solid, color=:grey)
@@ -456,7 +458,7 @@ begin
     )
     Label(
         f[7, 1, Top()],
-        "B) Change in comparison sign given range estimation difference";
+        "B) Change in proportion of comparisons";
         halign=:left,
         font=:bold,
         padding=(-80, 0, 10, 0),
