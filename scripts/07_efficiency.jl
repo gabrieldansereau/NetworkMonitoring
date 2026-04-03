@@ -118,6 +118,38 @@ effs_estimations = @chain sims_estimations begin
     rename(:layer => :variable)
 end
 
+# Adjust efficiency estimation for point density
+@chain begin
+    DataFrame(; sim=Int.(keys(occup)), occ=Float64.(values(occup)))
+    sort(:sim)
+    @rtransform(:ref_density = :occ / 500)
+end
+
+# Reference values
+nbon_max = maximum(sims_estimations.nbon)
+ref_density = Dict(k => v / (nbon_max - 150) for (k, v) in occup)
+
+# Adjust sampling effort
+sims_effort = @chain sims_estimations begin
+    @rtransform(
+        :offset = parse(
+            Float64, replace(:layer, "Over-" => "", "Under" => "", "True-" => "")
+        )
+    )
+    @rsubset(:offset <= 0.5)
+    @select(:sim, :layer, :offset, :nbon)
+    @rtransform(:occ = occup[:sim])
+    # filter(:layer => ==("True-0.0"), _)
+    @rtransform(:area = (1 + :offset) * :occ)
+    @rtransform(:area = :area > 1.0 ? 1.0 : :area)
+    @rtransform(:sampling_density = :area / :nbon, :ref_density = ref_density[:sim])
+    @rsubset(:sampling_density >= :ref_density)
+    groupby([:sim, :layer, :offset, :occ, :ref_density])
+    @combine(:nmax = maximum(:nbon))
+    sort(:nmax; rev=true)
+    # last()
+end
+
 # Rename estimations with same number of digits
 @transform!(
     effs_estimations,
