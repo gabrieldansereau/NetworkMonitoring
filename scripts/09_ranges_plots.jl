@@ -42,12 +42,19 @@ for sim in sims_missing
     # Replace values
     for r in eachrow(effs_sim)
         if ismissing(r.eff)
+            r.offset = parse(Float64, replace(r.variable, "Over-" => "", "Under" => ""))
             r.eff = max_row.eff[1]
             r.eff_low = max_row.eff_low[1]
             r.eff_upp = max_row.eff_upp[1]
             r.occ = max_row.occ[1]
         end
     end
+end
+
+# Use dataset with all possible values
+use_all = false
+if use_all
+    effs_estimations = effs_estimations_all
 end
 
 ## Within-simulation comparison
@@ -125,6 +132,7 @@ begin
         Random.seed!(42)
 
         # Sorted sets for comparison
+        sort!(u, :offset)
         sortedcomps = unique(u.variable)
         sortedoffsets = [
             o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for
@@ -376,6 +384,7 @@ begin
         Random.seed!(42)
 
         # Sorted sets for comparison
+        sort!(u, :offset)
         sortedcomps = unique(u.variable)
         sortedoffsets = [
             o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for
