@@ -109,6 +109,34 @@ push!(
 )
 sort!(within_bands, :offset)
 
+## Add sampling effort over area
+
+# Add area and sampling effort
+@chain within_combined_all begin
+    @rtransform!(:area = (1 + :offset) * :occ)
+    @rtransform!(:area = :area > 1.0 ? 1.0 : :area)
+    @rtransform!(:effort = :area / 500)
+end
+
+# Visualize area
+begin
+    u = @rsubset(within_combined_all, :offset >= -0.5, :offset <= 0.5)
+    @rtransform!(u, :side = first(split(:variable, "-")))
+    f =
+        data(u) *
+        mapping(
+            :value => "efficiency difference",
+            :area;
+            group=:sim => nonnumeric,
+            color=:offset,
+            row=:side,
+        ) *
+        visual(ScatterLines; colorscale=(x -> x + 0.5), markersize=3, linewidth=0.5)
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash, color=:grey)
+    draw(f + vline, scales(; Color=(; colormap=:broc)))
+end
+save(plotsdir("ranges_area_scatterlines.png"), current_figure())
+
 ## Plot comparisons and bands
 
 # Combined figure
