@@ -112,7 +112,7 @@ begin
     u = @rsubset(unique_comps, :offset in set)
 
     # Select results for bands
-    res_bands = @rsubset(within_bands, :offset >= -0.4, :offset <= 0.4)
+    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
     var = :offset
 
     # Figure options
@@ -545,7 +545,7 @@ begin
     u = @rsubset(unique_overlap, :offset in set)
 
     # Select results for bands
-    res_bands = @rsubset(within_bands, :offset >= -0.4, :offset <= 0.4)
+    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
     var = :offset
 
     # Figure options
