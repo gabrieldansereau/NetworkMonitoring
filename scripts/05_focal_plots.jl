@@ -600,7 +600,7 @@ fig_estimation = let
 
     # Display elements
     show_lines = true
-    show_eff = true
+    show_eff = false
     show_sat = true
     show_int = false
     adjust_effort = true
@@ -648,17 +648,18 @@ fig_estimation = let
     end
 
     # Create figure
-    fig = Figure()
+    fig = Figure(; size=(600, 500))
     # Create layouts
     ga = GridLayout(fig[:, 1:3])
     gb = GridLayout(fig[:, end + 1])
     # Create axes
     ax = Axis(
-        ga[1, 1];
+        ga[1, 1:3];
         xlabel="Sites in BON",
         ylabel="Monitored interactions",
         xticks=0:100:500,
     )
+    ax0 = Axis(ga[2, 2:3]; yreversed=true, xlabel="Efficiency")
     yopts = (; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10)
     ax1 = Axis(gb[1, 1]; yopts...)
     ax2 = Axis(gb[2, 1]; yopts...)
@@ -674,14 +675,16 @@ fig_estimation = let
     hidedecorations!(ax3; label=false)
 
     # Sampling results
-    for v in vals
+    for (i, v) in enumerate(vals)
         b = filter(var => ==(v), res)
         # Get the saturation parameter for the curve
         eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
         eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
         eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
-        # Get the efficiency for comparison
+        # Get the efficiencies for comparison
         eff = efficiency(b.nbon, b.med; f=exp)
+        eff_low = efficiency(b.nbon, b.low; f=exp)
+        eff_upp = efficiency(b.nbon, b.upp; f=exp)
         # Display results
         lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
@@ -717,6 +720,11 @@ fig_estimation = let
         if show_lines
             lines!(ax, b.nbon, b.med; label=lab)
         end
+        rangebars!(ax0, [i], [eff_low], [eff_upp]; direction=:x, color=colours[v])
+        if v == "True-0.0"
+            vlines!(ax0, [eff]; color=:grey, linestyle=:dash, alpha=0.5)
+        end
+        scatter!(ax0, [eff], [i]; color=colours[v])
     end
     hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
     Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=3)
@@ -730,6 +738,10 @@ fig_estimation = let
         scatter!(a, coordinates(_bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
         a.ylabel = v
     end
+
+    # Fix efficiency panel
+    limits!(ax0, (nothing, nothing), (0.5, 3.5))
+    hideydecorations!(ax0)
 
     # Subpanel labels
     Label(ga[1, :, Top()], "Range estimation, id=$idp"; padding=(0, 0, 5, 0), font=:bold)
