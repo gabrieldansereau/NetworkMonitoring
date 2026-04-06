@@ -184,9 +184,9 @@ end
 effs_effort = @chain sims_effort begin
     @groupby(:sim, :set, :layer, :offset)
     @combine(
-        :eff = efficiency(:neff, :med; f=exp),
-        :eff_low = efficiency(:neff, :confint_low; f=exp),
-        :eff_upp = efficiency(:neff, :confint_upp; f=exp)
+        :eff = efficiency(:nbon, :med; f=exp),
+        :eff_low = efficiency(:nbon, :confint_low; f=exp),
+        :eff_upp = efficiency(:nbon, :confint_upp; f=exp)
     )
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
