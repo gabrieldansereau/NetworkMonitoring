@@ -12,6 +12,7 @@ using Reexport
     using Distributions
     using GeoMakie
     using NeutralLandscapes
+    using Printf
     using ProgressMeter
     using Random
     using SparseArrays

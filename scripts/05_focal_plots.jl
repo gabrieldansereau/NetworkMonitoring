@@ -548,7 +548,7 @@ monitored_estimations_all = CSV.read(
 )
 monitored_missings = filter(:monitored => ismissing, monitored_estimations_all)
 filter!(:monitored => !ismissing, monitored_estimations_all)
-monitored_estimations = summarize_focal(monitored_estimations_all; id=id)
+monitored_estimations = summarize_focal(monitored_estimations_all; id=id, confint=true)
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
@@ -579,6 +579,12 @@ fig_estimation = let
     var = :layer
     res = filter(var => in(set), monitored_estimations)
     vals = unique(res[:, var])
+
+    # Display elements
+    show_lines = true
+    show_eff = true
+    show_sat = true
+    show_int = true
 
     # Replace set for illustration when overestimation is not available.
     replaced = false
@@ -639,11 +645,50 @@ fig_estimation = let
     # Sampling results
     for v in vals
         b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=v)
-        lines!(ax, b.nbon, b.med; label=v)
+        # Get the saturation parameter for the curve
+        eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
+        eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
+        eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
+        # Get the efficiency for comparison
+        eff = efficiency(b.nbon, b.med; f=exp)
+        # Display results
+        lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
+        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
+        if show_sat
+            lines!(
+                ax,
+                b.nbon,
+                saturation(eff_a)(b.nbon);
+                color=colours[v],
+                linestyle=:dash,
+                linewidth=1.5,
+                alpha=0.7,
+            )
+        end
+        if show_int
+            lines!(
+                ax,
+                b.nbon,
+                saturation(eff_a_low)(b.nbon);
+                color=colours[v],
+                linestyle=:dot,
+                linewidth=1.5,
+            )
+            lines!(
+                ax,
+                b.nbon,
+                saturation(eff_a_upp)(b.nbon);
+                color=colours[v],
+                linestyle=:dot,
+                linewidth=1.5,
+            )
+        end
+        if show_lines
+            lines!(ax, b.nbon, b.med; label=lab)
+        end
     end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
+    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=3)
     # Heatmaps & BON example
     heatmap!(ax1, range_over; colormap=:greys, alpha=0.5)
     heatmap!(ax1, range_true; colormap=:viridis)
