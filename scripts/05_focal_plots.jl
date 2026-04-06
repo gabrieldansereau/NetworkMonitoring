@@ -549,12 +549,18 @@ monitored_estimations_all = CSV.read(
 monitored_missings = filter(:monitored => ismissing, monitored_estimations_all)
 filter!(:monitored => !ismissing, monitored_estimations_all)
 monitored_estimations = summarize_focal(monitored_estimations_all; id=id, confint=true)
+@rtransform!(
+    monitored_estimations,
+    :offset = parse(Float64, replace(:layer, "Over-" => "", "Under" => "", "True-" => ""))
+)
+select!(monitored_estimations, :sim, :set, :sp, :type, :sampler, :layer, :offset, All())
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
 
 # Load layers used for optimization
 errors = string.(unique(monitored_estimations.layer))
+offsets = unique(monitored_estimations.offset)
 estimated_ranges = Dict()
 for (i, e) in enumerate(errors)
     estimated_ranges[e] = SDT.SDMLayer(
@@ -567,10 +573,22 @@ estimated_ranges
 begin
     Random.seed!(33)
     bons = Dict()
-    for e in errors
-        bons[e] = BON.sample(BON.BalancedAcceptance(100), estimated_ranges[e])
+    bons_adj = Dict()
+    for (i, e) in enumerate(errors)
+        n = 100
+        n_adj = round(Int, ((1 + offsets[i]) * n))
+        bons[e] = BON.sample(BON.BalancedAcceptance(n), estimated_ranges[e])
+        bons_adj[e] = BON.sample(BON.BalancedAcceptance(n_adj), estimated_ranges[e])
     end
     bons
+end
+
+# Add effort adjustment
+nbon_max = maximum(monitored_estimations.nbon)
+nbon_ref = nbon_max - 200
+@chain monitored_estimations begin
+    @rtransform!(:nmax = round(Int, nbon_ref * (1 + :offset)))
+    @rtransform!(:neff = :nbon * nbon_max / :nmax)
 end
 
 # Plot
@@ -584,7 +602,20 @@ fig_estimation = let
     show_lines = true
     show_eff = true
     show_sat = true
-    show_int = true
+    show_int = false
+    adjust_effort = true
+    adjust_n = false
+
+    # Adjust sampling effort
+    if adjust_effort
+        @rsubset!(res, :nbon <= :nmax)
+        _bons = bons_adj
+        if adjust_n
+            @rtransform!(res, :nbon = :neff)
+        end
+    else
+        _bons = bons
+    end
 
     # Replace set for illustration when overestimation is not available.
     replaced = false
@@ -657,8 +688,8 @@ fig_estimation = let
         if show_sat
             lines!(
                 ax,
-                b.nbon,
-                saturation(eff_a)(b.nbon);
+                1:nbon_max,
+                saturation(eff_a)(1:nbon_max);
                 color=colours[v],
                 linestyle=:dash,
                 linewidth=1.5,
@@ -696,7 +727,7 @@ fig_estimation = let
     heatmap!(ax3, range_true; colormap=:viridis, alpha=0.5)
     heatmap!(ax3, range_under; colormap=:viridis)
     for (a, v) in zip([ax1, ax2, ax3], vals)
-        scatter!(a, coordinates(bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
+        scatter!(a, coordinates(_bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
         a.ylabel = v
     end
 
