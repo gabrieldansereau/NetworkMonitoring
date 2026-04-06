@@ -13,6 +13,7 @@ using CSV
 using DataFramesMeta
 using Distributions
 using DrWatson
+using HypothesisTests
 using ProgressMeter
 using Random
 using Revise

@@ -81,7 +81,7 @@ function focal_monitoring(
     layer::Union{Nothing,SDT.SDMLayer}=nothing;
     name::String="unnamed",
     nrep::Int=1,
-    nbons::AbstractRange{Int64}=1:100,
+    nbons::AbstractVector{Int64}=1:100,
     type::Vector{Symbol}=[:possible],
     sampler::Vector{UnionAll}=[BON.BalancedAcceptance],
     combined=false,

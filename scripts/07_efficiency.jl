@@ -22,6 +22,10 @@ for set in sets
         isfile(file) || continue
         monitored_all = CSV.read(datadir(file), DataFrame)
 
+        # Separate results with missing values
+        monitored_missings = filter(:monitored => ismissing, monitored_all)
+        filter!(:monitored => !ismissing, monitored_all)
+
         # Summmarize results not combined previously
         _confint = set == "estimations" ? true : false
         monitored = summarize_focal(
@@ -70,7 +74,7 @@ begin
     end
     f
 end
-save(plotsdir("efficiency_example.png"), f)
+save(plotsdir("supp", "efficiency_example.png"), f)
 
 ## Occupancy
 
@@ -103,7 +107,7 @@ effs_optimized = @chain sims_optimized begin
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
-@time effs_estimations = @chain sims_estimations begin
+effs_estimations = @chain sims_estimations begin
     @groupby(:sim, :set, :layer)
     @combine(
         :eff = efficiency(:nbon, :med; f=exp),
@@ -112,6 +116,25 @@ end
     )
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
+end
+
+# Rename estimations with same number of digits
+@transform!(
+    effs_estimations,
+    :variable = [
+        @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(:variable, "-")
+    ]
+)
+
+# Add the offset as a column
+@chain effs_estimations begin
+    @rtransform!(
+        :offset = parse(
+            Float64, replace(:variable, "Over-" => "", "Under" => "", "True-" => "")
+        )
+    )
+    select!(:sim, :set, :variable, :offset, All())
+    sort!(:sim)
 end
 
 # Export
@@ -172,4 +195,4 @@ fig = let bs = sim1_samplers, b = monitored_samplers
     axislegend(; position=:rb, unique=true)
     current_figure()
 end
-save(plotsdir("efficiency_within_example.png"), fig)
+save(plotsdir("supp", "efficiency_within_example.png"), fig)
