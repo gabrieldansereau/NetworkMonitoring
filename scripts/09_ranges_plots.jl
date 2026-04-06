@@ -4,7 +4,9 @@
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
-effs_estimations = CSV.read(datadir("efficiency_estimations.csv"), DataFrame)
+effs_estimations = CSV.read(
+    datadir("efficiency_estimations-effort_adjusted.csv"), DataFrame
+)
 
 ## Fill-in all possible offset values for simulations with missing results
 
@@ -143,17 +145,11 @@ begin
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
     d = @rsubset(within_combined_all, :offset in set)
-    u = @rsubset(unique_comps, :offset in set)
+    rev = true
 
     # Random seed for jitter
     Random.seed!(42)
 
-    # Sorted sets for comparison
-    sort!(u, :offset)
-    sortedcomps = unique(u.variable)
-    sortedoffsets = [
-        o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for o in unique(u.offset)
-    ]
     # Main panel
     d1 = @rsubset(d, :set == "ranges")
     m = mapping(
@@ -172,11 +168,10 @@ begin
     )
     vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
     hline =
-        mapping([length(unique(u.variable)) / 2 + 0.5]) *
+        mapping([length(unique(d1.variable)) / 2 + 0.5]) *
         visual(HLines; linestyle=:solid, color=:lightgrey)
     scl = scales(; Color=(; colormap=:cividis))
     fg1 = draw(data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
-    # colorbar!(g1[1, 2], fg1)
     # Figure
     save(plotsdir("ranges_area_scatter_area_per_site.png"), fg1)
     fg1
