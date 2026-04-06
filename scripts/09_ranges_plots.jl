@@ -1,7 +1,6 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using Printf
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data

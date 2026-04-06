@@ -14,6 +14,7 @@ using DataFramesMeta
 using Distributions
 using DrWatson
 using HypothesisTests
+using Printf
 using ProgressMeter
 using Random
 using Revise
