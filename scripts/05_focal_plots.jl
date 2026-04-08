@@ -4,8 +4,6 @@ using DrWatson
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
 CairoMakie.activate!(; type="svg")
 
-## Load focal species results
-
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
 idp = lpad(id, 3, "0")
@@ -600,6 +598,7 @@ fig_estimation = let
 
     # Display elements
     show_lines = true
+    show_scatter = true
     show_eff = false
     show_sat = true
     show_int = false
@@ -720,6 +719,9 @@ fig_estimation = let
         if show_lines
             lines!(ax, b.nbon, b.med; label=lab)
         end
+        if show_scatter
+            scatter!(ax, b.nbon, b.med; label=lab, markersize=5)
+        end
         rangebars!(ax0, [i], [eff_low], [eff_upp]; direction=:x, color=colours[v])
         if v == "True-0.0"
             vlines!(ax0, [eff]; color=:grey, linestyle=:dash, alpha=0.5)
@@ -742,7 +744,7 @@ fig_estimation = let
     # Fix efficiency panel
     limits!(ax0, (nothing, nothing), (0.5, 3.5))
     hideydecorations!(ax0)
-ax0.yreversed = true
+    ax0.yreversed = true
 
     # Subpanel labels
     Label(ga[1, :, Top()], "Range estimation, id=$idp"; padding=(0, 0, 5, 0), font=:bold)
