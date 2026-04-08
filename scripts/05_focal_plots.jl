@@ -659,7 +659,7 @@ fig_estimation = let
         ylabel="Monitored interactions",
         xticks=0:100:500,
     )
-    ax0 = Axis(ga[2, 2:3]; yreversed=true, xlabel="Efficiency")
+    ax0 = Axis(ga[2, 2:3]; xlabel="Efficiency")
     yopts = (; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10)
     ax1 = Axis(gb[1, 1]; yopts...)
     ax2 = Axis(gb[2, 1]; yopts...)
@@ -742,6 +742,7 @@ fig_estimation = let
     # Fix efficiency panel
     limits!(ax0, (nothing, nothing), (0.5, 3.5))
     hideydecorations!(ax0)
+ax0.yreversed = true
 
     # Subpanel labels
     Label(ga[1, :, Top()], "Range estimation, id=$idp"; padding=(0, 0, 5, 0), font=:bold)
