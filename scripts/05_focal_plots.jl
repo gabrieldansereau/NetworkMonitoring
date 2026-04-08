@@ -590,166 +590,177 @@ nbon_ref = nbon_max - 200
 end
 
 # Plot
-fig_estimation = let
-    set = ["Over-0.5", "True-0.0", "Under-0.5"]
-    var = :layer
-    res = filter(var => in(set), monitored_estimations)
-    vals = unique(res[:, var])
+fig_estimation = begin
+    function plot_focal(; adjust_effort=false)
+        set = ["Over-0.50", "True-0.00", "Under-0.50"]
+        var = :layer
+        res = disallowmissing(filter(var => in(set), monitored_estimations))
+        vals = unique(res[:, var])
 
-    # Display elements
-    show_lines = true
-    show_scatter = true
-    show_eff = false
-    show_sat = true
-    show_int = false
-    adjust_effort = true
-    adjust_n = false
+        # Display elements
+        show_lines = true
+        show_scatter = true
+        show_eff = false
+        show_sat = true
+        show_int = false
+        adjust_effort = adjust_effort
+        adjust_n = false
 
-    # Adjust sampling effort
-    if adjust_effort
-        @rsubset!(res, :nbon <= :nmax)
-        _bons = bons_adj
-        if adjust_n
-            @rtransform!(res, :nbon = :neff)
-        end
-    else
-        _bons = bons
-    end
-
-    # Replace set for illustration when overestimation is not available.
-    replaced = false
-    if !(all([s in errors for s in set]))
-        _errs = filter(startswith("Over-"), errors)
-        _max = parse.(Float64, replace.(_errs, "Over-" => "")) |> maximum |> string
-        _orig_set = set
-        set = ["Over-$_max", "True-0.0", "Under-$_max"]
-        if all([s in errors for s in set])
-            @warn "Requested set not available in exported layers. Replacing by closest set: $set"
-            replaced = true
-            res = filter(var => in(set), monitored_estimations)
-            vals = unique(res[:, var])
+        # Adjust sampling effort
+        if adjust_effort
+            @rsubset!(res, :nbon <= :nmax)
+            _bons = bons_adj
+            if adjust_n
+                @rtransform!(res, :nbon = :neff)
+            end
         else
-            @error "Requested set $set not available in exported layers"
+            _bons = bons_adj
         end
-    end
 
-    # Set layers
-    range_over = estimated_ranges[set[1]]
-    range_true = estimated_ranges[set[2]]
-    range_under = estimated_ranges[set[3]]
-
-    # Set colours
-    if !(@isdefined colours)
-        colours = Dict()
-    end
-    for (i, s) in enumerate(set)
-        colours[s] = Makie.wong_colors()[i]
-    end
-
-    # Create figure
-    fig = Figure(; size=(600, 500))
-    # Create layouts
-    ga = GridLayout(fig[:, 1:3])
-    gb = GridLayout(fig[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1:3];
-        xlabel="Sites in BON",
-        ylabel="Monitored interactions",
-        xticks=0:100:500,
-    )
-    ax0 = Axis(ga[2, 2:3]; xlabel="Efficiency")
-    yopts = (; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10)
-    ax1 = Axis(gb[1, 1]; yopts...)
-    ax2 = Axis(gb[2, 1]; yopts...)
-    ax3 = Axis(gb[3, 1]; yopts...)
-    # Highlight replaced set values
-    if replaced
-        ax1.ylabelcolor = :red
-        ax3.ylabelcolor = :red
-    end
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-
-    # Sampling results
-    for (i, v) in enumerate(vals)
-        b = filter(var => ==(v), res)
-        # Get the saturation parameter for the curve
-        eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
-        eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
-        eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
-        # Get the efficiencies for comparison
-        eff = efficiency(b.nbon, b.med; f=exp)
-        eff_low = efficiency(b.nbon, b.low; f=exp)
-        eff_upp = efficiency(b.nbon, b.upp; f=exp)
-        # Display results
-        lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
-        if show_sat
-            lines!(
-                ax,
-                1:nbon_max,
-                saturation(eff_a)(1:nbon_max);
-                color=colours[v],
-                linestyle=:dash,
-                linewidth=1.5,
-                alpha=0.7,
-            )
+        # Replace set for illustration when overestimation is not available.
+        replaced = false
+        if !(all([s in errors for s in set]))
+            _errs = filter(startswith("Over-"), errors)
+            _max =
+                parse.(Float64, replace.(_errs, "Over-" => "")) |>
+                maximum |>
+                s -> @sprintf("%.2f", s)
+            _orig_set = set
+            set = ["Over-$_max", "True-0.00", "Under-$_max"]
+            if all([s in errors for s in set])
+                @warn "Requested set not available in exported layers. Replacing by closest set: $set"
+                replaced = true
+                res = disallowmissing(filter(var => in(set), monitored_estimations))
+                vals = unique(res[:, var])
+            else
+                @error "Requested set $set not available in exported layers"
+            end
         end
-        if show_int
-            lines!(
-                ax,
-                b.nbon,
-                saturation(eff_a_low)(b.nbon);
-                color=colours[v],
-                linestyle=:dot,
-                linewidth=1.5,
-            )
-            lines!(
-                ax,
-                b.nbon,
-                saturation(eff_a_upp)(b.nbon);
-                color=colours[v],
-                linestyle=:dot,
-                linewidth=1.5,
-            )
-        end
-        if show_lines
-            lines!(ax, b.nbon, b.med; label=lab)
-        end
-        if show_scatter
-            scatter!(ax, b.nbon, b.med; label=lab, markersize=5)
-        end
-        rangebars!(ax0, [i], [eff_low], [eff_upp]; direction=:x, color=colours[v])
-        if v == "True-0.0"
-            vlines!(ax0, [eff]; color=:grey, linestyle=:dash, alpha=0.5)
-        end
-        scatter!(ax0, [eff], [i]; color=colours[v])
-    end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
-    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=3)
-    # Heatmaps & BON example
-    heatmap!(ax1, range_over; colormap=:greys, alpha=0.5)
-    heatmap!(ax1, range_true; colormap=:viridis)
-    heatmap!(ax2, range_true; colormap=:viridis)
-    heatmap!(ax3, range_true; colormap=:viridis, alpha=0.5)
-    heatmap!(ax3, range_under; colormap=:viridis)
-    for (a, v) in zip([ax1, ax2, ax3], vals)
-        scatter!(a, coordinates(_bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
-        a.ylabel = v
-    end
 
-    # Fix efficiency panel
-    limits!(ax0, (nothing, nothing), (0.5, 3.5))
-    hideydecorations!(ax0)
-    ax0.yreversed = true
+        # Set layers
+        range_over = estimated_ranges[set[1]]
+        range_true = estimated_ranges[set[2]]
+        range_under = estimated_ranges[set[3]]
 
-    # Subpanel labels
-    Label(ga[1, :, Top()], "Range estimation, id=$idp"; padding=(0, 0, 5, 0), font=:bold)
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    save(plotsdir("focal_ranges.png"), fig)
-    fig
+        # Set colours
+        if !(@isdefined colours)
+            colours = Dict()
+        end
+        for (i, s) in enumerate(set)
+            colours[s] = Makie.wong_colors()[i]
+        end
+
+        # Create figure
+        fig = Figure(; size=(600, 500))
+        # Create layouts
+        ga = GridLayout(fig[:, 1:3])
+        gb = GridLayout(fig[:, end + 1])
+        # Create axes
+        ax = Axis(
+            ga[1, 1:3];
+            xlabel="Sites in BON",
+            ylabel="Monitored interactions",
+            xticks=0:100:500,
+        )
+        ax0 = Axis(ga[2, 2:3]; xlabel="Efficiency")
+        yopts = (; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10)
+        ax1 = Axis(gb[1, 1]; yopts...)
+        ax2 = Axis(gb[2, 1]; yopts...)
+        ax3 = Axis(gb[3, 1]; yopts...)
+        # Highlight replaced set values
+        if replaced
+            ax1.ylabelcolor = :red
+            ax3.ylabelcolor = :red
+        end
+        # Remove decorations for heatmaps
+        hidedecorations!(ax1; label=false)
+        hidedecorations!(ax2; label=false)
+        hidedecorations!(ax3; label=false)
+
+        # Sampling results
+        for (i, v) in enumerate(vals)
+            b = filter(var => ==(v), res)
+            # Get the saturation parameter for the curve
+            eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
+            eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
+            eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
+            # Get the efficiencies for comparison
+            eff = efficiency(b.nbon, b.med; f=exp)
+            eff_low = efficiency(b.nbon, b.low; f=exp)
+            eff_upp = efficiency(b.nbon, b.upp; f=exp)
+            # Display results
+            lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
+            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
+            if show_sat
+                lines!(
+                    ax,
+                    1:nbon_max,
+                    saturation(eff_a)(1:nbon_max);
+                    color=colours[v],
+                    linestyle=:dash,
+                    linewidth=1.5,
+                    alpha=0.7,
+                )
+            end
+            if show_int
+                lines!(
+                    ax,
+                    b.nbon,
+                    saturation(eff_a_low)(b.nbon);
+                    color=colours[v],
+                    linestyle=:dot,
+                    linewidth=1.5,
+                )
+                lines!(
+                    ax,
+                    b.nbon,
+                    saturation(eff_a_upp)(b.nbon);
+                    color=colours[v],
+                    linestyle=:dot,
+                    linewidth=1.5,
+                )
+            end
+            if show_lines
+                lines!(ax, b.nbon, b.med; label=lab)
+            end
+            if show_scatter
+                scatter!(ax, b.nbon, b.med; label=lab, markersize=5)
+            end
+            rangebars!(ax0, [i], [eff_low], [eff_upp]; direction=:x, color=colours[v])
+            if v == "True-0.00"
+                vlines!(ax0, [eff]; color=:grey, linestyle=:dash, alpha=0.5)
+            end
+            scatter!(ax0, [eff], [i]; color=colours[v])
+        end
+        hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
+        Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=3)
+        # Heatmaps & BON example
+        heatmap!(ax1, range_over; colormap=:greys, alpha=0.5)
+        heatmap!(ax1, range_true; colormap=:viridis)
+        heatmap!(ax2, range_true; colormap=:viridis)
+        heatmap!(ax3, range_true; colormap=:viridis, alpha=0.5)
+        heatmap!(ax3, range_under; colormap=:viridis)
+        for (a, v) in zip([ax1, ax2, ax3], vals)
+            scatter!(a, coordinates(_bons[v]); markersize=5, strokewidth=0.5, color=colours[v])
+            a.ylabel = v
+        end
+
+        # Fix efficiency panel
+        limits!(ax0, (nothing, nothing), (0.5, 3.5))
+        hideydecorations!(ax0)
+        ax0.yreversed = true
+
+        # Subpanel labels
+        Label(
+            ga[1, :, Top()],
+            "Range estimation, id=$idp";
+            padding=(0, 0, 5, 0),
+            font=:bold,
+        )
+        Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+        # Show figure
+        save(plotsdir("focal_ranges.png"), fig)
+        return fig
+    end
+    plot_focal(; adjust_effort=false)
 end
