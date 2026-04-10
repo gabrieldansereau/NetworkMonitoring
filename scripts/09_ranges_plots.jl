@@ -1,7 +1,6 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using Printf
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
@@ -109,6 +108,76 @@ push!(
 )
 sort!(within_bands, :offset)
 
+## Add sampling effort over area
+
+# Add area and sampling effort
+@chain within_combined_all begin
+    @rtransform!(:area = (1 + :offset) * :occ)
+    @rtransform!(:area = :area > 1.0 ? 1.0 : :area)
+    @rtransform!(:area_per_site = :area / 500 * 100)
+    @rtransform!(:site_per_area = (500 / 10_000) / :area)
+end
+
+# Visualize area
+begin
+    u = @rsubset(within_combined_all, :offset >= -0.5, :offset <= 0.5)
+    @rtransform!(u, :side = first(split(:variable, "-")))
+    f =
+        data(u) *
+        mapping(
+            :value => "efficiency difference",
+            :area;
+            group=:sim => nonnumeric,
+            color=:offset,
+            row=:side,
+        ) *
+        visual(ScatterLines; colorscale=(x -> x + 0.5), markersize=3, linewidth=0.5)
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash, color=:grey)
+    fg = draw(f + vline, scales(; Color=(; colormap=:broc)))
+    save(plotsdir("ranges_area_scatterlines.png"), fg)
+    fg
+end
+
+# Area per site
+begin
+    # Select results for comparison
+    set = collect(-0.5:0.1:0.5)
+    d = @rsubset(within_combined_all, :offset in set)
+    rev = true
+
+    # Random seed for jitter
+    Random.seed!(42)
+
+    # Main panel
+    d1 = @rsubset(d, :set == "ranges")
+    sortedcomps = unique(d1.variable)
+    sortedoffsets = [
+        o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for o in unique(d1.offset)
+    ]
+    m = mapping(
+        :variable =>
+            renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
+        :value => "Efficiency compared to True Range";
+        color=:area_per_site,
+    )
+    rains = visual(
+        RainClouds;
+        markersize=6,
+        jitter_width=0.30,
+        plot_boxplots=false,
+        clouds=nothing,
+        orientation=:horizontal,
+    )
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+    hline =
+        mapping([length(unique(d1.variable)) / 2 + 0.5]) *
+        visual(HLines; linestyle=:solid, color=:lightgrey)
+    scl = scales(; Color=(; colormap=:cividis))
+    fg1 = draw(data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
+    # Figure
+    save(plotsdir("ranges_area_scatter_area_per_site.png"), fg1)
+    fg1
+end
 ## Plot comparisons and bands
 
 # Combined figure
@@ -305,24 +374,17 @@ end
 ## Confidence intervals
 
 # Calculate intervals
-effs_intervals = @chain effs_estimations begin
-    @rtransform(:min = :eff_low - :eff, :max = :eff_upp - :eff)
-    @select(:sim, :set, :variable, :min, :max)
-end
-effs_intervals_true = @rsubset(effs_intervals, :variable == "True-0.00")
-true_min = Dict(r.sim => r.min for r in eachrow(effs_intervals_true))
-true_max = Dict(r.sim => r.max for r in eachrow(effs_intervals_true))
+effs_intervals_true = @rsubset(effs_estimations, :variable == "True-0.00")
+true_low = Dict(r.sim => r.eff_low for r in eachrow(effs_intervals_true))
+true_upp = Dict(r.sim => r.eff_upp for r in eachrow(effs_intervals_true))
 
 # Check overlap
-effs_overlap = @chain effs_intervals begin
-    rightjoin(within_combined_all; on=[:sim, :set, :variable])
-    @select(Not(:occ))
-    @rtransform(:true_min = true_min[:sim], :true_max = true_max[:sim])
-    @rtransform(
-        :overlap_neg = (:value + abs(:max) + abs(:true_min)) >= 0,
-        :overlap_pos = (:value - abs(:min) - abs(:true_max)) <= 0,
-    )
-    @rtransform(:overlap = :value < 0 ? :overlap_neg : :overlap_pos)
+effs_overlap = @chain effs_estimations begin
+    @rsubset(:offset != 0.0)
+    leftjoin(within_combined_all; on=[:sim, :set, :variable, :offset, :occ])
+    @select(Not(:occ, :eff, :area, :area_per_site, :site_per_area))
+    @rtransform(:true_low = true_low[:sim], :true_upp = true_upp[:sim])
+    @rtransform(:overlap = :eff_low <= :true_upp && :true_low <= :eff_upp)
     @rtransform(
         :overlap_sign =
             :overlap == false ? (:value < 0 ? "negative" : "positive") : "overlap"

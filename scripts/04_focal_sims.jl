@@ -219,9 +219,9 @@ threshold = thresholds[indexin([sp], probranges.species)...]
 
 # Define the estimation errors to explore (percentage of range)
 if OUTDIR == "efficiency"
-    errors = collect([-0.5:0.05:1.0..., 2.0])
+    errors = collect(-0.5:0.05:0.5)
 else
-    errors = [-0.5:0.5:0.5..., 2.0, 4.0, 8.0]
+    errors = collect([-0.5:0.5:0.5..., 2.0, 4.0]) # keep 2.0 to test removal
 end
 
 # Create the layers with the right percentages
@@ -266,27 +266,42 @@ for i in length(errors):-1:2 # needs to run backwards
 end
 layers
 
+# Add effort adjustment
+nbon_max = 500
+nbon_ref = 300
+nstep = 31
+nmaxs = [round(Int, nbon_ref * (1 + e)) for e in reverse(errors)]
+nbons = [[1, round.(Int, range(0, n; length=nstep)[Not(1)])...] for n in nmaxs]
+
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
 set = filter(in(collect(keys(layers))), reverse(errors)) # to match order from earlier sims
 optim = [layers[s] for s in set]
 optimlabels = [ifelse(s < 0, "Under$s", "Over-$s") for s in set]
-replace!(optimlabels, "Over-0.0" => "True-0.0")
-STEP = (OUTDIR == "dev" ? 50 : 10)
-monitored_estimations = focal_monitoring(
-    nets_dict,
-    sp,
-    optim;
-    name="ranges",
-    type=[:realized],
-    sampler=[BalancedAcceptance],
-    nbons=[1, STEP:STEP:500...],
-    nrep=NREP,
-    combined=false,
-)
-@rtransform!(monitored_estimations, :layer = optimlabels[:layer])
-@select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, All())
+optimlabels = [
+    @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(optimlabels, "-")
+]
+replace!(optimlabels, "Over-0.00" => "True-0.00")
+# STEP = (OUTDIR == "dev" ? 50 : 10)
+monitored_estimations = DataFrame()
+for i in eachindex(optim)
+    @info "Monitoring layer $i/$(length(optim))"
+    monitored_estimations_i = focal_monitoring(
+        nets_dict,
+        sp,
+        optim[i];
+        name="ranges",
+        type=[:realized],
+        sampler=[BalancedAcceptance],
+        nbons=nbons[i],
+        nrep=NREP,
+        combined=false,
+    )
+    @rtransform!(monitored_estimations_i, :layer = optimlabels[i], :offset = set[i])
+    append!(monitored_estimations, monitored_estimations_i)
+end
+@select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, :offset, All())
 
 # Add an entry with missing values for monitored estimations
 for r in reverse(removed)
@@ -297,6 +312,7 @@ for r in reverse(removed)
         type=:realized,
         sampler=BalancedAcceptance,
         layer="Over-$r",
+        offset=r,
         nbon=missing,
         rep=missing,
         deg=unique(monitored_estimations.deg)[1],
