@@ -4,9 +4,7 @@
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
-effs_estimations = CSV.read(
-    datadir("efficiency_estimations-effort_adjusted.csv"), DataFrame
-)
+effs_estimations = CSV.read(datadir("efficiency_estimations.csv"), DataFrame)
 
 ## Fill-in all possible offset values for simulations with missing results
 
@@ -152,6 +150,10 @@ begin
 
     # Main panel
     d1 = @rsubset(d, :set == "ranges")
+    sortedcomps = unique(d1.variable)
+    sortedoffsets = [
+        o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for o in unique(d1.offset)
+    ]
     m = mapping(
         :variable =>
             renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
