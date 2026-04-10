@@ -1,8 +1,9 @@
-using DrWatson
-@quickactivate :NetworkMonitoring
+# using DrWatson
+# @quickactivate :NetworkMonitoring
 
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
-CairoMakie.activate!(; type="svg")
+include("include.jl") # see note regarding why we cannot use the module
+import BiodiversityObservationNetworks as BON
+using BiodiversityObservationNetworks: GI.coordinates
 
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
@@ -546,7 +547,9 @@ monitored_estimations_all = CSV.read(
 )
 monitored_missings = filter(:monitored => ismissing, monitored_estimations_all)
 filter!(:monitored => !ismissing, monitored_estimations_all)
-monitored_estimations = summarize_focal(monitored_estimations_all; id=id, confint=true)
+monitored_estimations = summarize_focal(
+    monitored_estimations_all; id=id, confint=true, α=0.10
+)
 @rtransform!(
     monitored_estimations,
     :offset = parse(Float64, replace(:layer, "Over-" => "", "Under" => "", "True-" => ""))
@@ -686,8 +689,8 @@ fig_estimation = begin
             eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
             # Get the efficiencies for comparison
             eff = efficiency(b.nbon, b.med; f=exp)
-            eff_low = efficiency(b.nbon, b.low; f=exp)
-            eff_upp = efficiency(b.nbon, b.upp; f=exp)
+            eff_low = efficiency(b.nbon, b.confint_low; f=exp)
+            eff_upp = efficiency(b.nbon, b.confint_upp; f=exp)
             # Display results
             lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
             band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
@@ -705,16 +708,16 @@ fig_estimation = begin
             if show_int
                 lines!(
                     ax,
-                    b.nbon,
-                    saturation(eff_a_low)(b.nbon);
+                    1:nbon_max,
+                    saturation(eff_a_low)(1:nbon_max);
                     color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
                 )
                 lines!(
                     ax,
-                    b.nbon,
-                    saturation(eff_a_upp)(b.nbon);
+                    1:nbon_max,
+                    saturation(eff_a_upp)(1:nbon_max);
                     color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
@@ -728,7 +731,15 @@ fig_estimation = begin
             end
             rangebars!(ax0, [i], [eff_low], [eff_upp]; direction=:x, color=colours[v])
             if v == "True-0.00"
-                vlines!(ax0, [eff]; color=:grey, linestyle=:dash, alpha=0.5)
+                vlines!(ax0, [eff]; color=colours[v], linestyle=:dash, alpha=0.5)
+                band!(
+                    ax0,
+                    [eff_low, eff_upp],
+                    [0.0, 0.0],
+                    [4.0, 4.0];
+                    color=colours[v],
+                    alpha=0.4,
+                )
             end
             scatter!(ax0, [eff], [i]; color=colours[v])
         end
