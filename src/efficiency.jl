@@ -37,10 +37,25 @@ function efficiency_difference(a1, a2; k=10_000)
     return efficiency_integral(a1, k) - efficiency_integral(a2, k)
 end
 
+# Value n at which the curve reaches proportion p
+efficiency_n_at_p(a, p) = p * a / (1 - p)
+
 # Complete efficiency worklow
-function efficiency(x, y; k=10_000, rmse=false, kw...)
+function efficiency(
+    x, y; option=:integral, k=10_000, p::Float64=0.95, n::Int=maximum(x), rmse=false, kw...
+)
+    opts = [:integral, :integral_at_n, :n_at_p, :p_at_n]
+    @assert option in opts || error("possible values for keyword option are $opts")
     a, _rmse = efficiency_gridsearch(x, y; rmse=true, kw...) # rmse=true on purpose
-    ei = efficiency_integral(a, k)
+    if option == :integral
+        ei = efficiency_integral(a, k)
+    elseif option == :integral_at_n
+        ei = efficiency_integral(a, n)
+    elseif option == :n_at_p
+        ei = efficiency_n_at_p(a, p)
+    elseif option == :p_at_n
+        ei = saturation(a)(n)
+    end
     if rmse
         return (; ei=ei, rmse=_rmse)
     else

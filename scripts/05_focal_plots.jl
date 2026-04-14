@@ -558,6 +558,7 @@ select!(monitored_estimations, :sim, :set, :sp, :type, :sampler, :layer, :offset
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
+select!(monitored_estimations, :sim, :offset, Not([:set, :sp, :type, :sampler]))
 
 # Load layers used for optimization
 errors = string.(unique(monitored_estimations.layer))
@@ -585,8 +586,8 @@ begin
 end
 
 # Add effort adjustment
-nbon_max = maximum(monitored_estimations.nbon)
-nbon_ref = nbon_max - 200
+nbon_ref = maximum(@rsubset(monitored_estimations, :offset == 0.0).nbon)
+nbon_max = nbon_ref
 @chain monitored_estimations begin
     @rtransform!(:nmax = round(Int, nbon_ref * (1 + :offset)))
     @rtransform!(:neff = :nbon * nbon_max / :nmax)
@@ -594,7 +595,7 @@ end
 
 # Plot
 fig_estimation = begin
-    function plot_focal(; adjust_effort=false)
+    function plot_focal(; adjust_effort=false, adjust_n=false, option=:integral, n=300, p=0.95)
         set = ["Over-0.50", "True-0.00", "Under-0.50"]
         var = :layer
         res = disallowmissing(filter(var => in(set), monitored_estimations))
@@ -607,17 +608,15 @@ fig_estimation = begin
         show_sat = true
         show_int = false
         adjust_effort = adjust_effort
-        adjust_n = false
+        adjust_n = adjust_n
 
         # Adjust sampling effort
+        _bons = bons_adj
         if adjust_effort
             @rsubset!(res, :nbon <= :nmax)
-            _bons = bons_adj
-            if adjust_n
-                @rtransform!(res, :nbon = :neff)
-            end
-        else
-            _bons = bons_adj
+        end
+        if adjust_n
+            @rtransform!(res, :nbon = :neff)
         end
 
         # Replace set for illustration when overestimation is not available.
@@ -659,11 +658,13 @@ fig_estimation = begin
         ga = GridLayout(fig[:, 1:3])
         gb = GridLayout(fig[:, end + 1])
         # Create axes
+        xlim = 500
         ax = Axis(
             ga[1, 1:3];
             xlabel="Sites in BON",
             ylabel="Monitored interactions",
             xticks=0:100:500,
+            limits=((nothing, 1.02 * xlim), (nothing, nothing)),
         )
         ax0 = Axis(ga[2, 2:3]; xlabel="Efficiency")
         yopts = (; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10)
@@ -688,17 +689,18 @@ fig_estimation = begin
             eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
             eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
             # Get the efficiencies for comparison
-            eff = efficiency(b.nbon, b.med; f=exp)
-            eff_low = efficiency(b.nbon, b.confint_low; f=exp)
-            eff_upp = efficiency(b.nbon, b.confint_upp; f=exp)
+            nv = n isa Dict ? n[v] : n
+            eff = efficiency(b.nbon, b.med; f=exp, option=option, n=nv)
+            eff_low = efficiency(b.nbon, b.confint_low; f=exp, option=option, n=nv)
+            eff_upp = efficiency(b.nbon, b.confint_upp; f=exp, option=option, n=nv)
             # Display results
             lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
             band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
             if show_sat
                 lines!(
                     ax,
-                    1:nbon_max,
-                    saturation(eff_a)(1:nbon_max);
+                    1:xlim,
+                    saturation(eff_a)(1:xlim);
                     color=colours[v],
                     linestyle=:dash,
                     linewidth=1.5,
@@ -708,16 +710,16 @@ fig_estimation = begin
             if show_int
                 lines!(
                     ax,
-                    1:nbon_max,
-                    saturation(eff_a_low)(1:nbon_max);
+                    1:xlim,
+                    saturation(eff_a_low)(1:xlim);
                     color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
                 )
                 lines!(
                     ax,
-                    1:nbon_max,
-                    saturation(eff_a_upp)(1:nbon_max);
+                    1:xlim,
+                    saturation(eff_a_upp)(1:xlim);
                     color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
@@ -773,5 +775,27 @@ fig_estimation = begin
         save(plotsdir("focal_ranges.png"), fig)
         return fig
     end
-    plot_focal(; adjust_effort=false)
+    plot_focal(; adjust_effort=false, adjust_n=false)
 end
+
+# Adjusting n at 300
+plot_focal(; adjust_effort=false, adjust_n=false)
+plot_focal(; adjust_effort=false, adjust_n=true)
+
+# Evaluating n at p = 0.95
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.95)
+plot_focal(; adjust_effort=false, adjust_n=true, option=:n_at_p, p=0.95)
+
+# Evaluating n at p
+plot_focal(; adjust_effort=false, adjust_n=false, option=:p_at_n, n=300)
+plot_focal(;
+    adjust_effort=false,
+    adjust_n=false,
+    option=:p_at_n,
+    n=Dict("Over-0.50" => 450, "True-0.00" => 300, "Under-0.50" => 150),
+)
+
+# Integral at n
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=500)
+plot_focal(; adjust_effort=false, adjust_n=true, option=:integral_at_n, n=500)
