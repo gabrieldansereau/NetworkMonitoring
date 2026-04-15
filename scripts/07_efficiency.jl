@@ -136,9 +136,9 @@ effs_estimations = DataFrame()
     occ = occup[sim]
     set = first(gd.set)
     # Compute efficiency
-    eff = efficiency(gd.nbon, gd.med; f=exp, pmax=1.0)
-    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=1.0)
-    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=1.0)
+    eff = efficiency(gd.nbon, gd.med; f=exp, pmax=pmax, option=:integral)
+    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=pmax, option=:integral)
+    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=pmax, option=:integral)
     # Export
     row = (;
         sim=sim,
