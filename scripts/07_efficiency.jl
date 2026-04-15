@@ -123,10 +123,11 @@ effs_estimations = DataFrame()
     deg = first(gd.deg)
     pmax = first(gd.pmax)
     occ = occup[sim]
+    set = first(gd.set)
     # Compute efficiency
-    eff = efficiency(gd.nbon, gd.med; f=exp)
-    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp)
-    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp)
+    eff = efficiency(gd.nbon, gd.med; f=exp, pmax=pmax)
+    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=pmax)
+    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=pmax)
     # Export
     row = (;
         sim=sim,
@@ -138,6 +139,7 @@ effs_estimations = DataFrame()
         deg=deg,
         pmax=pmax,
         occ=occ,
+        set=set,
     )
     push!(effs_estimations, row)
 end
