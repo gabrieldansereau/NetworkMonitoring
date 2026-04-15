@@ -109,35 +109,39 @@ effs_optimized = @chain sims_optimized begin
 end
 
 # Prior transformations for range estimations
-@chain sims_estimations begin
-    # Rename estimations with same number of digits
-    @transform!(
-        :layer = [
-            @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(:layer, "-")
-        ]
-    )
-    # Add the offset as a column
-    @rtransform!(
-        :offset = parse(
-            Float64, replace(:layer, "Over-" => "", "Under" => "", "True-" => "")
-        )
-    )
-    # Arrange nicely
-    select!(:sim, :set, :layer, :offset, All())
-    sort!(:sim)
-end
+@rtransform!(sims_estimations, :degmax = :degmax / :deg)
+rename!(sims_estimations, :degmax => :pmax)
 
-# Now calculate the efficiency
-effs_estimations = @chain sims_estimations begin
-    @groupby(:sim, :set, :layer, :offset)
-    @combine(
-        :eff = efficiency(:nbon, :med; f=exp),
-        :eff_low = efficiency(:nbon, :confint_low; f=exp),
-        :eff_upp = efficiency(:nbon, :confint_upp; f=exp)
+# Calculate the efficiency for the range estimations
+gdf = @groupby(sims_estimations, :sim, :layer, :offset)
+effs_estimations = DataFrame()
+@showprogress "Efficiency for range estimations" for gd in gdf
+    # Extract group info
+    sim = first(gd.sim)
+    layer = first(gd.layer)
+    offset = first(gd.offset)
+    deg = first(gd.deg)
+    pmax = first(gd.pmax)
+    occ = occup[sim]
+    # Compute efficiency
+    eff = efficiency(gd.nbon, gd.med; f=exp)
+    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp)
+    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp)
+    # Export
+    row = (;
+        sim=sim,
+        variable=layer,
+        offset=offset,
+        eff=eff,
+        eff_low=eff_low,
+        eff_upp=eff_upp,
+        deg=deg,
+        pmax=pmax,
+        occ=occ,
     )
-    @rtransform(:occ = occup[:sim])
-    rename(:layer => :variable)
+    push!(effs_estimations, row)
 end
+effs_estimations
 
 # Export
 CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
@@ -149,7 +153,7 @@ CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
 
 # Reference values
 nbon_max = maximum(sims_estimations.nbon)
-nbon_ref = nbon_max - 200
+nbon_ref = maximum(@rsubset(sims_estimations, :offset == 0.0).nbon)
 ref_file = first(filter(startswith("layer_sp_range"), readdir(datadir("efficiency"))))
 ntot = length(SDT.SDMLayer(datadir("efficiency", ref_file); bandnumber=1))
 ref_density = Dict(k => nbon_ref / (ntot * v) for (k, v) in occup)
