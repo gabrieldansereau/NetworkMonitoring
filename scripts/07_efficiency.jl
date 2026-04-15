@@ -89,6 +89,8 @@ end
 occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
 sort!(occupdf, :sim)
 
+## Efficiency for species, samplers and optimized simulations
+
 # Calculate efficiency & assign occupancy
 effs_species = @chain sims_species begin
     @groupby(:sim, :set, :sp, :deg, :rank, :occ)
@@ -108,12 +110,21 @@ effs_optimized = @chain sims_optimized begin
     rename(:layer => :variable)
 end
 
-# Prior transformations for range estimations
-@rtransform!(sims_estimations, :degmax = :degmax / :deg)
-rename!(sims_estimations, :degmax => :pmax)
+# Export
+CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
+CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
+CSV.write(datadir("efficiency_species.csv"), effs_species);
+
+## Efficiency for range estimations
+
+# Prior transformations and grouping for range estimations
+gdf = @chain sims_estimations begin
+    @rtransform(:degmax = :degmax / :deg)
+    rename(:degmax => :pmax)
+    @groupby(:sim, :layer, :offset)
+end
 
 # Calculate the efficiency for the range estimations
-gdf = @groupby(sims_estimations, :sim, :layer, :offset)
 effs_estimations = DataFrame()
 @showprogress "Efficiency for range estimations" for gd in gdf
     # Extract group info
@@ -125,9 +136,9 @@ effs_estimations = DataFrame()
     occ = occup[sim]
     set = first(gd.set)
     # Compute efficiency
-    eff = efficiency(gd.nbon, gd.med; f=exp, pmax=pmax)
-    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=pmax)
-    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=pmax)
+    eff = efficiency(gd.nbon, gd.med; f=exp, pmax=1.0)
+    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=1.0)
+    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=1.0)
     # Export
     row = (;
         sim=sim,
@@ -146,9 +157,6 @@ end
 effs_estimations
 
 # Export
-CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
-CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
-CSV.write(datadir("efficiency_species.csv"), effs_species);
 CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
 
 ## Adjust efficiency estimation for point density
