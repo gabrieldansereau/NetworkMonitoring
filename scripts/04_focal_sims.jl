@@ -273,6 +273,21 @@ nstep = 31
 nmaxs = [round(Int, nbon_ref * (1 + e)) for e in reverse(errors)]
 nbons = [[1, round.(Int, range(0, n; length=nstep)[Not(1)])...] for n in nmaxs]
 
+# Get the maximum proportion of interactions to monitor in the layer
+pmax = Dict()
+for k in keys(layers)
+    idx = findall(isone, layers[k])
+    nets = SIS.networks(realized)[idx]
+    monitored_int = unique(reduce(vcat, interactions.(render.(Binary, nets))))
+    monitored_deg = sum(in.(sp, monitored_int))
+    realized_deg = degree(realized.metaweb, sp)
+    # pmax[k] = monitored_deg / realized_deg
+    pmax[k] = monitored_deg
+end
+pmax
+pmax_df = sort(DataFrame((id=id, offset=k, pmax=v) for (k, v) in pmax), :offset)
+CSV.write(datadir("_xtras", "pmax", "pmax-$idp.csv"), pmax_df)
+
 # Optimize with UncertaintySampling
 @info "Range estimations"
 Random.seed!(id * 832)
@@ -299,6 +314,7 @@ for i in eachindex(optim)
         combined=false,
     )
     @rtransform!(monitored_estimations_i, :layer = optimlabels[i], :offset = set[i])
+    @rtransform!(monitored_estimations_i, :pmax = pmax[:offset])
     append!(monitored_estimations, monitored_estimations_i)
 end
 @select!(monitored_estimations, :set, :sp, :type, :sampler, :layer, :offset, All())
@@ -315,7 +331,8 @@ for r in reverse(removed)
         offset=r,
         nbon=missing,
         rep=missing,
-        deg=unique(monitored_estimations.deg)[1],
+        deg=deg,
+        pmax=pmax[r],
         monitored=missing,
     )
     pushfirst!(monitored_estimations, row; promote=true)

@@ -9,14 +9,16 @@ ndi(x, y) = (x - y) / (x + y)
 ## Efficiency
 
 # Saturation equation
-saturation(a) = (x) -> x ./ (a .+ x)
+saturation(a, pmax=1.0) = (x) -> pmax .* x ./ (a .+ x)
 
 # Grid search for best fit
-function efficiency_gridsearch(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false, f=identity)
+function efficiency_gridsearch(
+    x, y, pmax=1.0; A=LinRange(-5.0, 15.0, 10_000), rmse=false, f=identity
+)
     A = f.(A)
     err = zeros(length(A))
     for i in eachindex(A)
-        f = saturation(A[i])
+        f = saturation(A[i], pmax)
         err[i] = sqrt(mean((y .- f(x)) .^ 2.0))
     end
     if rmse
@@ -30,31 +32,45 @@ function efficiency_gridsearch(x, y; A=LinRange(-5.0, 15.0, 10_000), rmse=false,
 end
 
 # Integral of efficiency curve
-efficiency_integral(a, k=10_000) = ((a * log(a) - a * log(a + k) + k))
+efficiency_integral(a, k=10_000, pmax=1.0) = (pmax * (a * log(a) - a * log(a + k) + k))
 
 # Difference between two curves
-function efficiency_difference(a1, a2; k=10_000)
-    return efficiency_integral(a1, k) - efficiency_integral(a2, k)
+function efficiency_difference(a1, a2; k=10_000, pmax=1.0)
+    return efficiency_integral(a1, k, pmax) - efficiency_integral(a2, k, pmax)
 end
 
 # Value n at which the curve reaches proportion p
-efficiency_n_at_p(a, p) = p * a / (1 - p)
+efficiency_n_at_p(a, p, pmax=1.0) = p * a / (pmax - p)
 
 # Complete efficiency worklow
 function efficiency(
-    x, y; option=:integral, k=10_000, p::Float64=0.95, n::Int=maximum(x), rmse=false, kw...
+    x,
+    y;
+    pmax=1.0,
+    option=:integral,
+    k=10_000,
+    p::Float64=0.95,
+    n::Int=maximum(x),
+    rmse=false,
+    kw...,
 )
-    opts = [:integral, :integral_at_n, :n_at_p, :p_at_n]
+    opts = [:integral, :integral_at_n, :n_at_p, :p_at_n, :a]
     @assert option in opts || error("possible values for keyword option are $opts")
-    a, _rmse = efficiency_gridsearch(x, y; rmse=true, kw...) # rmse=true on purpose
+    a, _rmse = efficiency_gridsearch(x, y, pmax; rmse=true, kw...) # rmse=true on purpose
     if option == :integral
-        ei = efficiency_integral(a, k)
+        ei = efficiency_integral(a, k, pmax)
     elseif option == :integral_at_n
-        ei = efficiency_integral(a, n)
+        ei = efficiency_integral(a, n, pmax)
     elseif option == :n_at_p
-        ei = efficiency_n_at_p(a, p)
+        if p > pmax
+            @warn "Requested p > pmax (pmax=$pmax). Defaulting to p=0.99*pmax"
+            p = 0.99pmax
+        end
+        ei = efficiency_n_at_p(a, p, pmax)
     elseif option == :p_at_n
-        ei = saturation(a)(n)
+        ei = saturation(a, pmax)(n)
+    elseif option == :a
+        ei = a
     end
     if rmse
         return (; ei=ei, rmse=_rmse)

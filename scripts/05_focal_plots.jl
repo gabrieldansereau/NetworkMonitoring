@@ -554,11 +554,15 @@ monitored_estimations = summarize_focal(
     monitored_estimations,
     :offset = parse(Float64, replace(:layer, "Over-" => "", "Under" => "", "True-" => ""))
 )
+pmax = Dict(
+    r.offset => r.pmax for r in eachrow(CSV.read(datadir("pmax-$idp.csv"), DataFrame))
+)
+@rtransform!(monitored_estimations, :pmax = pmax[:offset] / :deg)
 select!(monitored_estimations, :sim, :set, :sp, :type, :sampler, :layer, :offset, All())
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
-select!(monitored_estimations, :sim, :offset, Not([:set, :sp, :type, :sampler]))
+select!(monitored_estimations, :sim, :layer, :offset, Not([:set, :sp, :type, :sampler]))
 
 # Load layers used for optimization
 errors = string.(unique(monitored_estimations.layer))
@@ -595,7 +599,9 @@ end
 
 # Plot
 fig_estimation = begin
-    function plot_focal(; adjust_effort=false, adjust_n=false, option=:integral, n=300, p=0.95)
+    function plot_focal(;
+        adjust_effort=false, adjust_n=false, option=:integral, n=300, p=0.95, pmax=false
+    )
         set = ["Over-0.50", "True-0.00", "Under-0.50"]
         var = :layer
         res = disallowmissing(filter(var => in(set), monitored_estimations))
@@ -685,14 +691,23 @@ fig_estimation = begin
         for (i, v) in enumerate(vals)
             b = filter(var => ==(v), res)
             # Get the saturation parameter for the curve
-            eff_a = efficiency_gridsearch(b.nbon, b.med; f=exp)
-            eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low; f=exp)
-            eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp; f=exp)
+            pm = pmax ? unique(b.pmax)[1] : 1.0
+            eff_a = efficiency_gridsearch(b.nbon, b.med, pm; f=exp)
+            eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low, pm; f=exp)
+            eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp, pm; f=exp)
             # Get the efficiencies for comparison
             nv = n isa Dict ? n[v] : n
-            eff = efficiency(b.nbon, b.med; f=exp, option=option, n=nv)
-            eff_low = efficiency(b.nbon, b.confint_low; f=exp, option=option, n=nv)
-            eff_upp = efficiency(b.nbon, b.confint_upp; f=exp, option=option, n=nv)
+            eff = efficiency(b.nbon, b.med; f=exp, pmax=pm, option=option, n=nv, p=p)
+            eff_low = efficiency(
+                b.nbon, b.confint_low; f=exp, pmax=pm, option=option, n=nv, p=p
+            )
+            eff_upp = efficiency(
+                b.nbon, b.confint_upp; f=exp, pmax=pm, option=option, n=nv, p=p
+            )
+            if v == "True-0.00"
+                global _nbon = b.nbon
+                global _med = b.med
+            end
             # Display results
             lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
             band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
@@ -700,7 +715,7 @@ fig_estimation = begin
                 lines!(
                     ax,
                     1:xlim,
-                    saturation(eff_a)(1:xlim);
+                    saturation(eff_a, pm)(1:xlim);
                     color=colours[v],
                     linestyle=:dash,
                     linewidth=1.5,
@@ -711,7 +726,7 @@ fig_estimation = begin
                 lines!(
                     ax,
                     1:xlim,
-                    saturation(eff_a_low)(1:xlim);
+                    saturation(eff_a_low, pm)(1:xlim);
                     color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
@@ -719,7 +734,7 @@ fig_estimation = begin
                 lines!(
                     ax,
                     1:xlim,
-                    saturation(eff_a_upp)(1:xlim);
+                    saturation(eff_a_upp, pm)(1:xlim);
                     color=colours[v],
                     linestyle=:dot,
                     linewidth=1.5,
@@ -762,6 +777,25 @@ fig_estimation = begin
         limits!(ax0, (nothing, nothing), (0.5, 3.5))
         hideydecorations!(ax0)
         ax0.yreversed = true
+        # Adapt panel for options
+        adj_n = adjust_n ? "(n ajusted)" : ""
+        adj_e = adjust_effort ? "(effort-adjusted)" : ""
+        pm_t = pmax ? "(pmax = true)" : ""
+        if option == :integral
+            ax0.xlabel = "Efficiency integral $(pm_t)$(adj_n)$(adj_e)"
+        elseif option == :n_at_p
+            ax0.xlabel = "Number of sites at p = $p $(pm_t)$(adj_n)$(adj_e)"
+        elseif option == :p_at_n
+            if n isa Dict
+                ax0.xlabel = "Proportion at maximum n"
+            else
+                ax0.xlabel = "Proportion at n = $n $(pm_t)$(adj_n)$(adj_e)"
+            end
+        elseif option == :integral_at_n
+            ax0.xlabel = "Efficiency integral at n = $n $(pm_t)$(adj_n)$(adj_e)"
+        elseif option == :a
+            ax0.xlabel = "Parameter a"
+        end
 
         # Subpanel labels
         Label(
@@ -778,15 +812,22 @@ fig_estimation = begin
     plot_focal(; adjust_effort=false, adjust_n=false)
 end
 
+## Adjust n
+
 # Adjusting n at 300
 plot_focal(; adjust_effort=false, adjust_n=false)
 plot_focal(; adjust_effort=false, adjust_n=true)
+
+# Integral at n
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=500)
+plot_focal(; adjust_effort=false, adjust_n=true, option=:integral_at_n, n=500)
 
 # Evaluating n at p = 0.95
 plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.95)
 plot_focal(; adjust_effort=false, adjust_n=true, option=:n_at_p, p=0.95)
 
-# Evaluating n at p
+# Evaluating p at n
 plot_focal(; adjust_effort=false, adjust_n=false, option=:p_at_n, n=300)
 plot_focal(;
     adjust_effort=false,
@@ -795,7 +836,27 @@ plot_focal(;
     n=Dict("Over-0.50" => 450, "True-0.00" => 300, "Under-0.50" => 150),
 )
 
-# Integral at n
-plot_focal(; adjust_effort=false, adjust_n=false, option=:integral)
-plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=500)
-plot_focal(; adjust_effort=false, adjust_n=true, option=:integral_at_n, n=500)
+## pmax
+
+# integral
+plot_focal(; adjust_effort=false, adjust_n=false, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, pmax=true)
+
+# integral at n
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=5000, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=5000, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=500, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:integral_at_n, n=300, pmax=true)
+
+# p at n
+plot_focal(; adjust_effort=false, adjust_n=false, option=:p_at_n, n=300, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:p_at_n, n=300, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:p_at_n, n=500, pmax=true)
+
+# n at p
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.80, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.80, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.50, pmax=true)
+
+# a - don't use a with pmax=true, only an option for convenience
+plot_focal(; adjust_effort=false, adjust_n=false, option=:a, pmax=false)
