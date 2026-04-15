@@ -46,9 +46,12 @@ for sim in sims_missing
             r.eff_low = max_row.eff_low[1]
             r.eff_upp = max_row.eff_upp[1]
             r.occ = max_row.occ[1]
+            r.deg = max_row.deg
+            r.pmax = max_row.pmax
         end
     end
 end
+disallowmissing!(effs_estimations_all)
 
 # Use dataset with all possible values
 use_all = false
@@ -61,7 +64,7 @@ end
 # Complete set of comparisons
 set_all = reverse(unique(effs_estimations.variable))
 within_combined_all = comparewithin(
-    select(effs_estimations, Not(:offset, :eff_low, :eff_upp)),
+    select(effs_estimations, :sim, :set, :variable, :eff, :occ),
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
@@ -380,14 +383,22 @@ true_upp = Dict(r.sim => r.eff_upp for r in eachrow(effs_intervals_true))
 
 # Check overlap
 effs_overlap = @chain effs_estimations begin
+    # Remove the True Range simulations
     @rsubset(:offset != 0.0)
+    # Join back the comparison values with the actual efficiency values
     leftjoin(within_combined_all; on=[:sim, :set, :variable, :offset, :occ])
-    @select(Not(:occ, :eff, :area, :area_per_site, :site_per_area))
+    @select(:sim, :variable, :offset, :value, :eff_low, :eff_upp, All())
+    # Check the overlap with the interval for the True Range
     @rtransform(:true_low = true_low[:sim], :true_upp = true_upp[:sim])
     @rtransform(:overlap = :eff_low <= :true_upp && :true_low <= :eff_upp)
+    # Assess the overlap sign
     @rtransform(
         :overlap_sign =
             :overlap == false ? (:value < 0 ? "negative" : "positive") : "overlap"
+    )
+    # Filter out columns used for intervals and order nicely
+    @select(
+        :sim, :variable, :offset, :value, :overlap, :overlap_sign, :deg, :pmax, :occ, :set
     )
 end
 
@@ -418,12 +429,14 @@ push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
 sort!(overlap_bands, :offset)
 
 # Add confidence interval for the proportion
-@rtransform!(overlap_bands, :x = round(Int, :med * :n))
-@rtransform!(
-    overlap_bands,
-    :low = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[1],
-    :upp = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[2],
-)
+@chain overlap_bands begin
+    @rtransform!(:x = round(Int, :med * :n))
+    @rtransform!(
+        :low = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[1],
+        :upp = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[2],
+    )
+    @select!(Not(:x))
+end
 
 # Visualize
 begin
