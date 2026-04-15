@@ -216,13 +216,10 @@ function _median_confint(x; α=0.05)
 end
 
 function summarize_focal(df; id=0, confint=false, α=0.05)
-    if "layer" in names(df)
-        cols = [:set, :sp, :type, :sampler, :layer, :nbon]
-    else
-        cols = [:set, :sp, :type, :sampler, :nbon]
-    end
+    notcols = [:rep, :monitored]
+    cols = setdiff(Symbol.(names(df)), notcols)
     monitored = @chain df begin
-        groupby(cols)
+        groupby(Not(notcols))
         @combine(
             :low = quantile(:monitored, 0.05),
             :med = median(:monitored),
@@ -234,7 +231,7 @@ function summarize_focal(df; id=0, confint=false, α=0.05)
     end
     if confint
         monitored_confint = @chain df begin
-            groupby(cols)
+            groupby(Not(notcols))
             @combine(
                 :deg = maximum(:deg),
                 :confint_low = Ref(:monitored),
@@ -249,7 +246,13 @@ function summarize_focal(df; id=0, confint=false, α=0.05)
             )
             @select(Not(:deg))
         end
-        leftjoin!(monitored, monitored_confint; on=cols)
+        leftjoin!(
+            monitored,
+            monitored_confint;
+            on=intersect(cols, Symbol.(names(monitored_confint))),
+        )
+        ordered = [:sim, :layer, :offset, :nbon, :deg, :degmax, :low, :med, :upp]
+        select!(monitored, ordered, r"^confint", All())
     end
     monitored.sampler =
         replace.(

@@ -550,19 +550,11 @@ filter!(:monitored => !ismissing, monitored_estimations_all)
 monitored_estimations = summarize_focal(
     monitored_estimations_all; id=id, confint=true, α=0.10
 )
-@rtransform!(
-    monitored_estimations,
-    :offset = parse(Float64, replace(:layer, "Over-" => "", "Under" => "", "True-" => ""))
-)
-pmax = Dict(
-    r.offset => r.pmax for r in eachrow(CSV.read(datadir("pmax-$idp.csv"), DataFrame))
-)
-@rtransform!(monitored_estimations, :pmax = pmax[:offset] / :deg)
-select!(monitored_estimations, :sim, :set, :sp, :type, :sampler, :layer, :offset, All())
+@rtransform!(monitored_estimations, :degmax = :degmax / :deg)
+rename!(monitored_estimations, :degmax => :pmax)
 if id == 1
     CSV.write(datadir("monitored_estimations.csv"), monitored_estimations)
 end
-select!(monitored_estimations, :sim, :layer, :offset, Not([:set, :sp, :type, :sampler]))
 
 # Load layers used for optimization
 errors = string.(unique(monitored_estimations.layer))
