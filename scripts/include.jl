@@ -26,4 +26,12 @@ CairoMakie.activate!(; type="svg")
 
 includet(srcdir("colours.jl"))
 includet(srcdir("efficiency.jl"))
-includet(srcdir("focal.jl"))
+includet(srcdir("focal-summary.jl"))
+
+# Trick LanguageServer into cooperating in script files
+@static if false
+    @warn "Should not actually run!"
+    include("../src/colours.jl")
+    include("../src/efficiency.jl")
+    include("../src/focal-summary.jl")
+end
