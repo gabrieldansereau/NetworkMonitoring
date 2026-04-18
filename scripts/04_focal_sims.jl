@@ -225,7 +225,7 @@ else
 end
 
 # Create the layers with the right percentages
-layers = Dict()
+layers = Dict{Float64,SDT.SimpleSDMLayers.SDMLayer{Float64}}()
 for e in errors
     # Convert the error / percentage to a number of cells
     ncell = length(sp_mask)
@@ -244,12 +244,25 @@ for e in errors
 end
 layers
 
+# Get the maximum proportion of interactions to monitor in the layer
+degmax = Dict{Float64,Int64}()
+@showprogress "Computing degmax" for e in errors
+    idx = findall(isone, layers[e])
+    nets = SIS.networks(realized)[idx]
+    monitored_int = unique(reduce(vcat, interactions.(render.(Binary, nets))))
+    monitored_deg = sum(in.(sp, monitored_int))
+    realized_deg = degree(realized.metaweb, sp)
+    degmax[e] = monitored_deg
+end
+degmax
+degmax_df = sort(DataFrame((id=id, offset=k, degmax=v) for (k, v) in degmax), :offset)
+
 # Remove cases where layers have the same number of cells (i.e. the exact same
 # cells) This should mostly apply for species with high occupancy when the range
 # overestimation is too high. Unless we remove them, we'll end running multiple
 # times the exact same similation. It's better to deal with it later on when
 # summarizing the results.
-removed = []
+removed = Vector{Float64}()
 for i in length(errors):-1:2 # needs to run backwards
     # Errors to compare
     e = errors[i]
@@ -264,54 +277,52 @@ for i in length(errors):-1:2 # needs to run backwards
         push!(removed, e)
     end
 end
+removed
 layers
 
 # Add effort adjustment
 nbon_max = 500
 nbon_ref = 300
 nstep = 31
-nmaxs = [round(Int, nbon_ref * (1 + e)) for e in reverse(errors)]
-nbons = [[1, round.(Int, range(0, n; length=nstep)[Not(1)])...] for n in nmaxs]
-
-# Get the maximum proportion of interactions to monitor in the layer
-degmax = Dict()
-for k in keys(layers)
-    idx = findall(isone, layers[k])
-    nets = SIS.networks(realized)[idx]
-    monitored_int = unique(reduce(vcat, interactions.(render.(Binary, nets))))
-    monitored_deg = sum(in.(sp, monitored_int))
-    realized_deg = degree(realized.metaweb, sp)
-    degmax[k] = monitored_deg
+nbons = Dict{Float64,Vector{Int64}}()
+for e in errors
+    nmax = round(Int, nbon_ref * (1 + e))
+    bonrange = round.(Int, range(0, nmax; length=nstep))
+    nbon = replace(bonrange, 0 => 1)
+    nbons[e] = nbon
 end
-degmax
-degmax_df = sort(DataFrame((id=id, offset=k, degmax=v) for (k, v) in degmax), :offset)
+nbons
 
-# Optimize with UncertaintySampling
+# Define the set to monitor
 @info "Range estimations"
 Random.seed!(id * 832)
-set = filter(in(collect(keys(layers))), reverse(errors)) # to match order from earlier sims
-optim = [layers[s] for s in set]
-optimlabels = [ifelse(s < 0, "Under$s", "Over-$s") for s in set]
-optimlabels = [
-    @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(optimlabels, "-")
-]
-replace!(optimlabels, "Over-0.00" => "True-0.00")
+set = sort(collect(keys(layers)); rev=true) # rev=true to match order from earlier sims
 # STEP = (OUTDIR == "dev" ? 50 : 10)
+# Define the labels
+setlabels = Dict{Float64,String}()
+for s in set
+    spad = @sprintf("%.2f", s)
+    label = ifelse(s < 0, "Under$spad", "Over-$spad")
+    label = ifelse(s == 0, "True-0.00", label)
+    setlabels[s] = label
+end
+setlabels
+# Run the focal monitoring
 monitored_estimations = DataFrame()
-for i in eachindex(optim)
-    @info "Monitoring layer $i/$(length(optim))"
+for (i, s) in enumerate(set)
+    @info "Monitoring layer $i/$(length(set))"
     monitored_estimations_i = focal_monitoring(
         nets_dict,
         sp,
-        optim[i];
+        layers[s];
         name="ranges",
         type=[:realized],
         sampler=[BalancedAcceptance],
-        nbons=nbons[i],
+        nbons=nbons[s],
         nrep=NREP,
         combined=false,
     )
-    @rtransform!(monitored_estimations_i, :layer = optimlabels[i], :offset = set[i])
+    @rtransform!(monitored_estimations_i, :layer = setlabels[s], :offset = s)
     @rtransform!(monitored_estimations_i, :degmax = degmax[:offset])
     append!(monitored_estimations, monitored_estimations_i)
 end
@@ -332,17 +343,18 @@ end
 for r in reverse(removed)
     @info "Adding row for duplicated layer $r"
     row = (
-        set="ranges",
-        sp=sp,
-        type=:realized,
-        sampler=BalancedAcceptance,
+        sim=id,
         layer="Over-$r",
         offset=r,
         nbon=missing,
         rep=missing,
+        monitored=missing,
+        set="ranges",
         deg=deg,
         degmax=degmax[r],
-        monitored=missing,
+        sp=sp,
+        type=:realized,
+        sampler=BalancedAcceptance,
     )
     pushfirst!(monitored_estimations, row; promote=true)
 end
@@ -350,4 +362,6 @@ monitored_estimations
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimations)
-SDT.SimpleSDMLayers.save(datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), optim)
+SDT.SimpleSDMLayers.save(
+    datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), [layers[s] for s in set]
+)

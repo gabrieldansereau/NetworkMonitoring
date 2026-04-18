@@ -49,7 +49,18 @@ sims_optimized = sims_dict["optimized"]
 sims_species = sims_dict["spp"]
 sims_estimations = sims_dict["estimations"]
 
-## Efficiency
+# Calculate occupancy
+files = filter(startswith("layer_sp_range"), readdir(datadir("efficiency")))
+sort!(files; by=x -> parse(Int, replace(x, "layer_sp_range-" => "", ".tiff" => "")))
+occup = Dict()
+for (i, f) in enumerate(files)
+    l = SDT.SDMLayer(datadir("efficiency", f); bandnumber=1)
+    occup[i] = occupancy(l)
+end
+occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
+sort!(occupdf, :sim)
+
+## Efficiency example
 
 # Select UncertaintySampling only as example
 sims_set = @rsubset(sims_samplers, :sampler == "Uncertainty Sampling")
@@ -75,19 +86,6 @@ begin
     f
 end
 save(plotsdir("supp", "efficiency_example.png"), f)
-
-## Occupancy
-
-# Calculate occupancy
-files = filter(startswith("layer_sp_range"), readdir(datadir("efficiency")))
-sort!(files; by=x -> parse(Int, replace(x, "layer_sp_range-" => "", ".tiff" => "")))
-occup = Dict()
-for (i, f) in enumerate(files)
-    l = SDT.SDMLayer(datadir("efficiency", f); bandnumber=1)
-    occup[i] = occupancy(l)
-end
-occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
-sort!(occupdf, :sim)
 
 ## Efficiency for species, samplers and optimized simulations
 
