@@ -108,16 +108,6 @@ function focal_monitoring(
         # Select network object
         net = nets_dict[type]
 
-        # Get degree of focal species
-        if type == :detected
-            # fix for detected where the metaweb subfield is not reajusted to detected int
-            _mw = metawebify(net)
-            _no = parse(Int, replace(string(sp), "node_" => ""))
-            deg = sum(_mw[_no, :]) + sum(_mw[:, _no]) + sum(_mw[_no, _no])
-        else
-            deg = degree(net.metaweb, sp)
-        end
-
         # Create neutral layer for optimization if none was provided
         if isnothing(layer)
             layer = SDT.SDMLayer(
@@ -128,41 +118,10 @@ function focal_monitoring(
             )
         end
 
-        # Prevent issues with layers without any presence
-        if iszero(length(layer))
-            monitored_deg = 0
-        else
-            # Make sure the sampler will work
-            len = length(layer)
-            if len < nbon && sampler == BON.SimpleRandom
-                error("SimpleRandom cannot sample fewer sites than present in layer")
-            end
-            if len != length(layer.grid) && sampler == BON.WeightedBalancedAcceptance
-                error(
-                    "WeightedBalancedAcceptance does not work when some pixels have no data"
-                )
-            end
+        # Run with options
+        info = focal_monitoring(net, sp, layer, nrep, nbon, type, sampler)
 
-            # Generate monitoring sites on layer given sampler
-            bon = BON.sample(sampler(nbon), layer)
-
-            # Compute degree for focal species across monitored sites
-            monitored_int = monitor(
-                x -> interactions(render(Binary, x)), net, bon; makeunique=true
-            )
-            monitored_deg = sum(in.(sp, monitored_int))
-        end
-
-        # Export results
-        info = (
-            sp=sp,
-            type=type,
-            sampler=sampler,
-            nbon=nbon,
-            rep=nrep,
-            deg=deg,
-            monitored=monitored_deg,
-        )
+        # Export
         push!(monitored, info)
     end
 
@@ -184,6 +143,60 @@ function focal_monitoring(
     @select!(monitored, :set = name, All())
 
     return monitored
+end
+function focal_monitoring(
+    net::Metaweb,
+    sp::Symbol,
+    layer::SDT.SDMLayer,
+    nrep::Int,
+    nbon::Int,
+    type::Symbol,
+    sampler::typeof(BON.BalancedAcceptance),
+)
+    # Get degree of focal species
+    if type == :detected
+        # fix for detected where the metaweb subfield is not reajusted to detected int
+        _mw = metawebify(net)
+        _no = parse(Int, replace(string(sp), "node_" => ""))
+        deg = sum(_mw[_no, :]) + sum(_mw[:, _no]) + sum(_mw[_no, _no])
+    else
+        deg = degree(net.metaweb, sp)
+    end
+
+    # Prevent issues with layers without any presence
+    if iszero(length(layer))
+        monitored_deg = 0
+    else
+        # Make sure the sampler will work
+        len = length(layer)
+        if len < nbon && sampler == BON.SimpleRandom
+            error("SimpleRandom cannot sample fewer sites than present in layer")
+        end
+        if len != length(layer.grid) && sampler == BON.WeightedBalancedAcceptance
+            error("WeightedBalancedAcceptance does not work when some pixels have no data")
+        end
+
+        # Generate monitoring sites on layer given sampler
+        bon = BON.sample(sampler(nbon), layer)
+
+        # Compute degree for focal species across monitored sites
+        monitored_int = monitor(
+            x -> interactions(render(Binary, x)), net, bon; makeunique=true
+        )
+        monitored_deg = sum(in.(sp, monitored_int))
+    end
+
+    # Export results
+    info = (
+        sp=sp,
+        type=type,
+        sampler=sampler,
+        nbon=nbon,
+        rep=nrep,
+        deg=deg,
+        monitored=monitored_deg,
+    )
+    return info
 end
 function focal_monitoring(nets_dict, spp::Vector{Symbol}; kw...)
     monitored_vec = Vector{DataFrame}(undef, length(spp))
