@@ -350,7 +350,7 @@ for r in reverse(removed)
         rep=missing,
         monitored=missing,
         set="ranges",
-        deg=deg,
+        deg=degmax[0.0],
         degmax=degmax[r],
         sp=sp,
         type=:realized,
