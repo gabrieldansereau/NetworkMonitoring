@@ -233,6 +233,20 @@ begin
         fg1 = draw!(g1, data(d1) * m * rains + vline + hline; axis=(; xreversed=rev))
         pad = (-65, 0, 10, 0)
         Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
+        Label(
+            g1[1, 1, TopLeft()],
+            "Over ⬆️";
+            padding=(0, 2, -40, 0),
+            halign=:right,
+            fontsize=12,
+        )
+        Label(
+            g1[1, 1, BottomLeft()],
+            "Under ⬇️";
+            padding=(0, 2, 0, -50),
+            halign=:right,
+            fontsize=12,
+        )
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
@@ -265,20 +279,6 @@ begin
         # Add labels
         pad = (0, 0, 10, 0)
         Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-        Label(
-            g1[1, 1, TopLeft()],
-            "Over ⬆️";
-            padding=(0, 2, -40, 0),
-            halign=:right,
-            fontsize=12,
-        )
-        Label(
-            g1[1, 1, BottomLeft()],
-            "Under ⬇️";
-            padding=(0, 2, 0, -50),
-            halign=:right,
-            fontsize=12,
-        )
 
         return (g1, g3)
     end
@@ -298,7 +298,7 @@ begin
         ax = Axis(
             f;
             xlabel="Range estimation difference (%)",
-            ylabel="Efficiency difference with True Range",
+            ylabel="Efficiency compared to True Range",
             xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
             xtickformat=values ->
                 [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
@@ -371,6 +371,90 @@ begin
     ax2.yticklabelspace = yspace
     # Save
     save(plotsdir("ranges_efficiency.png"), f)
+    f
+end
+
+begin
+    # Figure options
+    f = Figure(; size=(900, 450))
+    rev = false
+
+    # Select results for bands
+    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
+    var = :offset
+
+    # Bands
+    p1 = f[1:5, 1:3]
+    ax = make_bands_ax!(p1; rev=false)
+    Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
+    # ax = Axis(p1)
+
+    # Select results for comparison
+    set = collect(-0.5:0.1:0.5)
+    d = @rsubset(within_combined_all, :offset in set)
+    u = @rsubset(unique_comps, :offset in set)
+
+    # Comparison axis
+    Random.seed!(42)
+    col1 = Makie.wong_colors()[1]
+    col2 = Makie.wong_colors()[2]
+    colfunc(x) = [v < 0 ? col1 : col2 for v in x]
+    scatter!(
+        ax,
+        [o + 0.02 * (rand() - 0.5) for o in d.offset],
+        d.value;
+        color=colfunc(d.value),
+        markersize=5,
+        alpha=0.7,
+    )
+
+    # Set axis limits
+    ymin = minimum(res_bands.low)
+    ymax = maximum(res_bands.upp)
+    yoff = 0.1maximum(abs.([ymin, ymax]))
+    ylims!(ax, minimum(res_bands.low) - yoff, maximum(res_bands.upp) + yoff)
+
+    # Summary panel
+    d3 = @rsubset(u, :set == "ranges")
+    p2 = f[end + 1, 1:(end - 1)]
+    ax0 = Axis(p2; yticks=([0.5, 1.5], ["Negative", "Positive"]))
+    m34 = mapping(
+        :offset,
+        [1];
+        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
+        color=:countmeasure => sorter(["count_neg", "count_pos"]),
+        bar_labels=:label => verbatim,
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:y,
+        label_position=:center,
+        label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
+    )
+    draw!(ax0, data(d3) * m34 * v3)
+    hidexdecorations!(ax0;)
+    hideydecorations!(ax0; ticklabels=false, ticks=false)
+    hidespines!(ax0)
+
+    # Align axes
+    linkxaxes!(ax, ax0)
+
+    # Add labels
+    pad = (-65, 0, 10, 0)
+    Label(
+        p1[1, 1, Top()],
+        "Efficiency comparison between range estimations";
+        halign=:left,
+        font=:bold,
+        padding=pad,
+    )
+    Label(p2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
+
+    # Figure
+    save(plotsdir("ranges_efficiency_one.png"), f)
     f
 end
 
