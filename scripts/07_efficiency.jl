@@ -17,7 +17,6 @@ for set in sets
     # Create data frame for set results
     sims_dict[set] = DataFrame()
     for id in ids
-        @info "$set - $id"
         # Load all results
         file = datadir("efficiency", "monitored_$set-$id.csv")
         isfile(file) || continue
@@ -115,36 +114,6 @@ CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
 CSV.write(datadir("efficiency_species.csv"), effs_species);
 
 ## Efficiency for range estimations
-
-# Investigate nbon
-weirdos = @chain sims_estimations begin
-    @rsubset :offset == 0.0
-    @rsubset :nbon > 300
-    unique(_.sim)
-end
-@chain sims_estimations begin
-    @rsubset :sim == 4
-    @rsubset :offset == 0.00
-end
-# Sont-ce les simulations avec pas d'valeurs?
-weirdos_n = @chain sims_estimations begin
-    @groupby :sim
-    @combine :n = length(unique(:offset))
-    @aside nmax = maximum(_.n)
-    @rsubset :n < nmax
-end
-weirdos_n.sim == weirdos
-# Elles le sont-ces!
-# Kessé qui s'passe?!
-# Préparer liste pour job
-rstrip(mapreduce(w -> "$w,", string, [1, weirdos...]),',')
-
-# Investigate deg & degmax
-@chain sims_estimations begin
-    @rsubset :offset == 0.0
-    @rsubset :nbon == 1
-    @rsubset :deg != :degmax
-end
 
 # Prior transformations and grouping for range estimations
 gdf = @chain sims_estimations begin
