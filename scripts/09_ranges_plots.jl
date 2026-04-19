@@ -196,7 +196,7 @@ begin
 
     # Figure options
     f = Figure(; size=(800, 750))
-    rev = true
+    rev = false
 
     # Comparison panel
     function make_comps_ax!(g1, g3; d=d, u=u, l1, rev=rev)
@@ -236,11 +236,11 @@ begin
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Positive", "Negative"]))
+        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
-            stack=:countmeasure => sorter(["count_pos", "count_neg"]),
+            stack=:countmeasure => sorter(["count_neg", "count_pos"]),
             color=:countmeasure => sorter(["count_neg", "count_pos"]),
             bar_labels=:label => verbatim,
         )
@@ -305,7 +305,7 @@ begin
             yreversed=rev,
         )
         if !rev
-            limits!(ax, (nothing, nothing), (-1500, 1500))
+            # limits!(ax, (nothing, nothing), (-1500, 1500))
         end
 
         # Two band color option
@@ -451,7 +451,7 @@ begin
 
     # Figure options
     f = Figure(; size=(800, 750))
-    rev = true
+    rev = false
 
     # Overlap panel
     function make_overlap_ax!(g1, g3; d=d, u=u, l1, rev=rev)
@@ -498,14 +498,14 @@ begin
 
         # Summary panels
         d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], ["Positive", "Overlap", "Negative"]))
-        sortedmeasures = reverse(first.(pal))
+        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
+        sortedmeasures = first.(pal)
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
             stack=:countmeasure => sorter(sortedmeasures),
-            bar_labels=:label => verbatim,
             color=:countmeasure,
+            bar_labels=:label => verbatim,
         )
         v3 = visual(
             BarPlot;
@@ -547,7 +547,7 @@ begin
     end
 
     # Bands panel
-    function make_overlap_bands!(f; res=res, var=var, rev=!rev, title="", addlines=false)
+    function make_overlap_bands!(f; res=res, var=var, rev=rev, title="", addlines=false)
         # Axis
         t1, t2 = extrema(set)
         ax = Axis(
@@ -597,7 +597,7 @@ begin
         f[g4l, 1]; res=@rsubset(res, :offset <= 0.0), rev=true, title="Underestimation"
     )
     ax3 = make_overlap_bands!(
-        f[g4l, 2]; res=@rsubset(res, :offset >= 0.0), title="Overestimation"
+        f[g4l, 2]; res=@rsubset(res, :offset >= 0.0), rev=false, title="Overestimation"
     )
     Legend(
         f[g4l, end], ax2, "Comparison sign"; framevisible=false, merge=true, tellwidth=false
@@ -634,7 +634,7 @@ begin
 
     # Figure options
     f = Figure(; size=(800, 750))
-    rev = true
+    rev = false
 
     # Create figure
     g1 = GridLayout(f[1:6, 1:2])
