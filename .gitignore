@@ -13,3 +13,6 @@ data/dev
 narval.sh
 jobs/out
 *hostfile
+
+# Actually version-control
+!*xtra*.jl
