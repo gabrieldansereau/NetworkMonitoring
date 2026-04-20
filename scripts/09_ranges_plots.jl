@@ -63,41 +63,47 @@ end
 
 # Complete set of comparisons
 set_all = reverse(unique(effs_estimations.variable))
-within_combined_all = comparewithin(
-    select(effs_estimations, :sim, :set, :variable, :eff, :occ),
+within_comps = comparewithin(
+    effs_estimations,
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
     f=(n, n2) -> n - n2,
 )
-flipthatcomp!(within_combined_all, unique(within_combined_all.variable))
+flipthatcomp!(within_comps, unique(within_comps.variable))
 @rtransform!(
-    within_combined_all, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
+    within_comps, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
 )
 
 # Bring back offset & update variable label
 @rtransform!(
-    within_combined_all,
-    :offset = parse(Float64, replace(:variable, "Over-" => "", "Under" => ""))
+    within_comps, :offset = parse(Float64, replace(:variable, "Over-" => "", "Under" => ""))
 )
-select!(within_combined_all, Not(:value), :value)
+select!(within_comps, :sim, :variable, :offset, :value, :overlap, Not(:set), All(), :set)
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_comps = @chain within_combined_all begin
-    @groupby(:set, :variable, :offset)
+unique_comps = @chain within_comps begin
+    @groupby :set :variable :offset
     @combine(
-        :prop_sim = length(:value),
-        :count_pos = count(>=(0), :value) / length(:value),
-        :count_neg = count(<(0), :value) / length(:value)
+        :n = length(:value),
+        :sign_pos = count(>=(0), :value) / length(:value),
+        :sign_neg = count(<(0), :value) / length(:value),
+        :positive = count(==("positive"), :overlap) / length(:overlap),
+        :negative = count(==("negative"), :overlap) / length(:overlap),
+        :overlap = count(==("overlap"), :overlap) / length(:overlap),
     )
-    @transform(:prop_sim = :prop_sim ./ maximum(:prop_sim))
-    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
-    @rtransform(:label = "$(round(Int, :count *100)) %")
-    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
+    @transform :prop_sim = :n ./ maximum(:n)
+    stack(
+        [:sign_pos, :sign_neg, :positive, :negative, :overlap];
+        variable_name=:countmeasure,
+        value_name=:count,
+    )
+    @rtransform :label = "$(round(Int, :count *100)) %"
+    @rtransform :label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label
 end
 
 # Extract quantile range for all offset
-within_bands = @chain within_combined_all begin
+within_bands = @chain within_comps begin
     groupby([:set, :variable, :offset])
     @combine(
         :low = quantile(:value, 0.05), :med = median(:value), :upp = quantile(:value, 0.95),
@@ -117,8 +123,8 @@ sort!(within_bands, :offset)
 begin
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_combined_all, :offset in set)
-    u = @rsubset(unique_comps, :offset in set)
+    d = @rsubset(within_comps, :offset in set)
+    u = @rsubset(unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"])
 
     # Select results for bands
     res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
@@ -184,8 +190,8 @@ begin
         m34 = mapping(
             :variable => sorter(sortedcomps),
             [1];
-            stack=:countmeasure => sorter(["count_neg", "count_pos"]),
-            color=:countmeasure => sorter(["count_neg", "count_pos"]),
+            stack=:countmeasure => sorter(["sign_neg", "sign_pos"]),
+            color=:countmeasure => sorter(["sign_neg", "sign_pos"]),
             bar_labels=:label => verbatim,
         )
         v3 = visual(
@@ -321,8 +327,8 @@ begin
 
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_combined_all, :offset in set)
-    u = @rsubset(unique_comps, :offset in set)
+    d = @rsubset(within_comps, :offset in set)
+    u = @rsubset(unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"])
 
     # Comparison axis
     Random.seed!(42)
@@ -351,8 +357,8 @@ begin
     m34 = mapping(
         :offset,
         [1];
-        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
-        color=:countmeasure => sorter(["count_neg", "count_pos"]),
+        stack=:countmeasure => sorter(["sign_neg", "sign_pos"]),
+        color=:countmeasure => sorter(["sign_neg", "sign_pos"]),
         bar_labels=:label => verbatim,
     )
     v3 = visual(
@@ -390,53 +396,14 @@ end
 
 ## Confidence intervals
 
-# Calculate intervals
-effs_intervals_true = @rsubset(effs_estimations, :variable == "True-0.00")
-true_low = Dict(r.sim => r.eff_low for r in eachrow(effs_intervals_true))
-true_upp = Dict(r.sim => r.eff_upp for r in eachrow(effs_intervals_true))
-
-# Check overlap
-effs_overlap = @chain effs_estimations begin
-    # Remove the True Range simulations
-    @rsubset(:offset != 0.0)
-    # Join back the comparison values with the actual efficiency values
-    leftjoin(within_combined_all; on=[:sim, :set, :variable, :offset, :occ])
-    @select(:sim, :variable, :offset, :value, :eff_low, :eff_upp, All())
-    # Check the overlap with the interval for the True Range
-    @rtransform(:true_low = true_low[:sim], :true_upp = true_upp[:sim])
-    @rtransform(:overlap = :eff_low <= :true_upp && :true_low <= :eff_upp)
-    # Assess the overlap sign
-    @rtransform(
-        :overlap_sign =
-            :overlap == false ? (:value < 0 ? "negative" : "positive") : "overlap"
-    )
-    # Filter out columns used for intervals and order nicely
-    @select(
-        :sim, :variable, :offset, :value, :overlap, :overlap_sign, :deg, :pmax, :occ, :set
-    )
-end
-
-# Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_overlap = @chain effs_overlap begin
-    @groupby(:set, :variable, :offset)
-    @combine(
-        :n = length(:value),
-        :positive = count(==("positive"), :overlap_sign) / length(:overlap_sign),
-        :negative = count(==("negative"), :overlap_sign) / length(:overlap_sign),
-        :overlap = count(==("overlap"), :overlap_sign) / length(:overlap_sign),
-    )
-    stack([:positive, :negative, :overlap]; variable_name=:countmeasure, value_name=:count)
-    @rtransform(:label = "$(round(Int, :count *100)) %")
-    @rtransform(:label = (:label == "0 %" && :count > 0.0) ? "< 1 %" : :label)
-    @rtransform(:label = (:label == "1 %" && :count < 1.0) ? "< 1 %" : :label)
-end
-
 # Extract quantile range for all offset
-overlap_bands = rename(unique_overlap, :count => :med)
+overlap_bands = rename(unique_comps, :count => :med)
 select!(overlap_bands, Not(:label))
 
 # Add an Entry for offset of zero
-common = (; set="ranges", variable="True-0.0", n=200, offset=0.0)
+common = (;
+    set="ranges", variable="True-0.0", offset=0.0, n=maximum(overlap_bands.n), prop_sim=1.0
+)
 push!(overlap_bands, (; common..., countmeasure="overlap", med=1.0))
 push!(overlap_bands, (; common..., countmeasure="positive", med=0.0))
 push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
@@ -456,8 +423,10 @@ end
 begin
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(effs_overlap, :offset in set)
-    u = @rsubset(unique_overlap, :offset in set)
+    d = @rsubset(within_comps, :offset in set)
+    u = @rsubset(
+        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
+    )
 
     # Select results for bands
     res = @rsubset(overlap_bands, :offset in set)
@@ -486,7 +455,7 @@ begin
             :variable =>
                 renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
             :value => "Efficiency compared to True Range";
-            color=:overlap_sign,
+            color=:overlap,
         )
         rains = visual(
             RainClouds;
@@ -639,8 +608,10 @@ end
 begin
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(effs_overlap, :offset in set)
-    u = @rsubset(unique_overlap, :offset in set)
+    d = @rsubset(within_comps, :offset in set)
+    u = @rsubset(
+        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
+    )
 
     # Select results for bands
     res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)

@@ -86,10 +86,17 @@ function comparewithin(
     # Make sure all labels are defined
     all_labels = Dict(s in keys(labels) ? s => labels[s] : s => s for s in set)
     # Select variables in set & prepare for comparison
-    within_combined = @chain effs_combined begin
-        @rsubset(:variable in set)
-        @rtransform(:variable = all_labels[:variable])
-        unstack(:variable, :eff)
+    gpvars = [:sim, :set, :occ]
+    effs_selected = @chain effs_combined begin
+        # Select main columns
+        select(gpvars, :variable, :eff, :eff_low, :eff_upp)
+        # Select variables
+        @rsubset :variable in set
+        # Rename
+        @rtransform :variable = all_labels[:variable]
+        # Nest efficiencies in single column
+        @rtransform :eff = (eff=:eff, low=:eff_low, upp=:eff_upp)
+        select(gpvars, :variable, :eff)
     end
     # Define combinations to compare
     if isnothing(to)
@@ -111,19 +118,41 @@ function comparewithin(
         comps = reduce(vcat, comps)
     end
     # Compare efficiencies
+    comps_df = DataFrame()
     for (c1, c2) in comps
+        # Select variables for comparison
         l1 = all_labels[c1]
         l2 = all_labels[c2]
-        complabel = "Δ$(l1)_$(l2)"
-        @rtransform!(within_combined, $complabel = f($(l1), $(l2)))
+        comp_view = @rsubset(effs_selected, :variable in [l1, l2]; view=true)
+        # Unstack to compare column-wise
+        comp = unstack(comp_view, :variable, :eff)
+        rename!(comp, Dict(l1 => :v1, l2 => :v2))
+        # Create empty columns to hold results
+        comp.variable .= "Δ$(l1)_$(l2)"
+        comp.value = Vector{Union{Missing,Float64}}(missing, nrow(comp))
+        comp.overlap = Vector{Union{Missing,Bool}}(missing, nrow(comp))
+        comp.overlap_sign = Vector{Union{Missing,String}}(missing, nrow(comp))
+        # Loop to compare individual results
+        for r in eachrow(comp)
+            eff1 = r.v1
+            eff2 = r.v2
+            if !ismissing(eff1) && !ismissing(eff2)
+                # Actual comparison
+                r.value = f(eff1.eff, eff2.eff)
+                # Overlap of confidence intervals
+                r.overlap = eff1.low <= eff2.upp && eff2.low <= eff1.upp
+                r.overlap_sign =
+                    r.overlap ? "overlap" : (r.value < 0 ? "negative" : "positive")
+            end
+        end
+        # Simplify & export
+        select!(comp, :sim, :set, :occ, :variable, :value, :overlap_sign => :overlap)
+        append!(comps_df, comp)
     end
-    # Select only the variables from the comparison
-    within_combined = @chain within_combined begin
-        select(:sim, :set, :occ, r"Δ")
-        stack(r"Δ")
-        dropmissing()
-    end
-    return within_combined
+    # Remove missing comparisons
+    dropmissing!(comps_df)
+    disallowmissing!(comps_df)
+    return comps_df
 end
 
 # Flip some comparison values
@@ -136,8 +165,12 @@ function flipthatcomp!(df, toflip)
         inds = findall(==(comp), df.variable)
         # Update
         new = @view df[inds, :]
-        @rtransform!(new, :variable = newcomp)
-        @rtransform!(new, :value = -(:value))
+        @rtransform!(
+            new,
+            :variable = newcomp,
+            :value = -(:value),
+            :overlap = replace(:overlap, "positive" => "negative", "negative" => "positive")
+        )
     end
     return df
 end
