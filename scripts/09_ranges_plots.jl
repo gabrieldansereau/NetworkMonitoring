@@ -622,7 +622,7 @@ begin
             [o + 0.02 * (rand() - 0.5) for o in d.offset],
             d.value;
             color=[pal[v] for v in d.overlap],
-            label=[uppercasefirst(v) => (; color=pal[v]) for v in d.overlap],
+            label=[uppercasefirst(v) => (; color=pal[v], markersize=8) for v in d.overlap],
             markersize=5,
             alpha=0.9,
         )
@@ -797,15 +797,26 @@ begin
     ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
-    # Legend
-    Legend(g1l[:, :], ax1; framevisible=false, merge=true, halign=:left)
     # Summary panel
     ax2 = make_summary_ax!(g2[:, :]; u=u)
     vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey)
     # Overlap bands
     ax3 = make_overlap_bands!(g3[:, :]; res=overlap_bands, rev=false, title="")
     vlines!(ax3, [0.0]; linestyle=:solid, color=:lightgrey)
-    Legend(g3l[:, :], ax3; framevisible=false, merge=true, tellwidth=false, halign=:left)
+
+    # Legends
+    leg_opt = (; framevisible=false, merge=true, halign=:left)
+    Legend(g1l[:, :], ax1, "Comparison values"; leg_opt...)
+    Legend(g3l[:, :], ax3, "Comparison sign"; leg_opt..., tellwidth=false)
+    # pl, lb = Makie.get_labeled_plots(ax1; merge=true, unique=false)
+    # Legend(
+    #     g1l[:, :],
+    #     [pl[1:2], pl[3:5]],
+    #     [lb[1:2], lb[3:5]],
+    #     ["Comparison range", "Comparison sign"];
+    #     framevisible=false,
+    #     halign=:center,
+    # )
 
     # Align axes
     linkxaxes!(ax1, ax2, ax3)
