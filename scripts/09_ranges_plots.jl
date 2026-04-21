@@ -270,7 +270,7 @@ begin
         lines!(ax, x, med; label="Median", color=col1)
 
         # Common options
-        vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey)
+        vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey, linewidth=2.0)
         hlines!(ax, 0.0; linestyle=:dash, color=:black)
 
         # Add labels
@@ -800,15 +800,17 @@ begin
     g3l = GridLayout(f[(end - 3):end, 4])
 
     # Bands
-    ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
+    ax1 = make_bands_ax!(
+        g1[:, :]; res=res_bands, var=var, rev=false, colour=false, arrowlabels=false
+    )
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
     # Summary panel
     ax2 = make_summary_ax!(g2[:, :]; u=u)
-    vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey)
+    vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey, linewidth=2.0)
     # Overlap bands
     ax3 = make_overlap_bands!(g3[:, :]; res=overlap_bands, rev=false, title="")
-    vlines!(ax3, [0.0]; linestyle=:solid, color=:lightgrey)
+    vlines!(ax3, [0.0]; linestyle=:solid, color=:lightgrey, linewidth=2.0)
 
     # Legends
     leg_opt = (; framevisible=false, merge=true, halign=:left)
@@ -819,14 +821,24 @@ begin
     linkxaxes!(ax1, ax2, ax3)
 
     # Add labels
-    pad = (-65, 0, 10, 0)
-    lab_opt = (; halign=:left, font=:bold, padding=pad)
+    lab_opt = (; halign=:left, font=:bold)
     Label(
         g1[1, 1, Top()],
         "a) Comparison of efficiencies between range estimations";
         lab_opt...,
+        padding=(-65, 0, 30, 0),
     )
-    Label(g3[1, 1, Top()], "b) Proportion of simulations per comparison sign"; lab_opt...)
+    Label(
+        g3[1, 1, Top()],
+        "b) Proportion of simulations per comparison sign";
+        lab_opt...,
+        padding=(-65, 0, 15, 0),
+    )
+    for g in [g1]
+        opt = (; halign=:center, fontsize=12, tellheight=false, tellwidth=false)
+        Label(g[1, 1, Top()], "⬅️ Underestimation"; padding=(-200, 0, -15, 0), opt...)
+        Label(g[1, 1, Top()], "Overestimation ➡️"; padding=(200, 0, -15, 0), opt...)
+    end
 
     # Figure
     save(plotsdir("ranges_overlap_minimal.png"), f)
