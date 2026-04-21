@@ -220,7 +220,9 @@ begin
     end
 
     # Bands panel
-    function make_bands_ax!(f; res=res_bands, var=var, rev=rev, colour=true)
+    function make_bands_ax!(
+        f; res=res_bands, var=var, rev=rev, colour=true, arrowlabels=true
+    )
         # Values
         x = res[:, var]
         low = res.low
@@ -272,24 +274,26 @@ begin
         hlines!(ax, 0.0; linestyle=:dash, color=:black)
 
         # Add labels
-        Label(
-            f[1, 1, BottomLeft()],
-            "⬅️ Under";
-            padding=(0, 0, -72, 0),
-            halign=:left,
-            fontsize=12,
-            tellheight=false,
-            tellwidth=false,
-        )
-        Label(
-            f[1, 1, BottomRight()],
-            "Over ➡️";
-            padding=(0, 0, -72, 0),
-            halign=:right,
-            fontsize=12,
-            tellheight=false,
-            tellwidth=false,
-        )
+        if arrowlabels
+            Label(
+                f[1, 1, BottomLeft()],
+                "⬅️ Under";
+                padding=(0, 0, -72, 0),
+                halign=:left,
+                fontsize=12,
+                tellheight=false,
+                tellwidth=false,
+            )
+            Label(
+                f[1, 1, BottomRight()],
+                "Over ➡️";
+                padding=(0, 0, -72, 0),
+                halign=:right,
+                fontsize=12,
+                tellheight=false,
+                tellwidth=false,
+            )
+        end
 
         return ax
     end
@@ -446,7 +450,7 @@ begin
     rev = false
 
     # Overlap panel
-    function make_overlap_ax!(g1, g3; d=d, u=u, l1, rev=rev)
+    function make_overlap_ax!(g1, g3; d=d, u=u, l1, rev=rev, arrowlabels=true)
         # Random seed for jitter
         Random.seed!(42)
 
@@ -520,20 +524,22 @@ begin
         # Add labels
         pad = (0, 0, 10, 0)
         Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-        Label(
-            g1[1, 1, TopLeft()],
-            "Over ⬆️";
-            padding=(0, 2, -40, 0),
-            halign=:right,
-            fontsize=12,
-        )
-        Label(
-            g1[1, 1, BottomLeft()],
-            "Under ⬇️";
-            padding=(0, 2, 0, -50),
-            halign=:right,
-            fontsize=12,
-        )
+        if arrowlabels
+            Label(
+                g1[1, 1, TopLeft()],
+                "Over ⬆️";
+                padding=(0, 2, -40, 0),
+                halign=:right,
+                fontsize=12,
+            )
+            Label(
+                g1[1, 1, BottomLeft()],
+                "Under ⬇️";
+                padding=(0, 2, 0, -50),
+                halign=:right,
+                fontsize=12,
+            )
+        end
 
         return (g1, g3)
     end
@@ -808,39 +814,100 @@ begin
     leg_opt = (; framevisible=false, merge=true, halign=:left)
     Legend(g1l[:, :], ax1, "Comparison values"; leg_opt...)
     Legend(g3l[:, :], ax3, "Comparison sign"; leg_opt..., tellwidth=false)
-    # pl, lb = Makie.get_labeled_plots(ax1; merge=true, unique=false)
-    # Legend(
-    #     g1l[:, :],
-    #     [pl[1:2], pl[3:5]],
-    #     [lb[1:2], lb[3:5]],
-    #     ["Comparison range", "Comparison sign"];
-    #     framevisible=false,
-    #     halign=:center,
-    # )
 
     # Align axes
     linkxaxes!(ax1, ax2, ax3)
 
     # Add labels
     pad = (-65, 0, 10, 0)
+    lab_opt = (; halign=:left, font=:bold, padding=pad)
     Label(
         g1[1, 1, Top()],
         "a) Comparison of efficiencies between range estimations";
-        halign=:left,
-        font=:bold,
-        padding=pad,
+        lab_opt...,
     )
-    # Label(g2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
-    Label(
-        g3[1, 1, Top()],
-        "b) Proportion of simulations per comparison sign";
-        font=:bold,
-        halign=:left,
-        padding=pad,
-    )
+    Label(g3[1, 1, Top()], "b) Proportion of simulations per comparison sign"; lab_opt...)
 
     # Figure
     save(plotsdir("ranges_overlap_minimal.png"), f)
+    f
+end
+
+begin
+    # Figure options
+    f = Figure(; size=(900, 700))
+
+    # GridLayout
+    g1 = GridLayout(f[1:5, 1:4])
+    g1a = GridLayout(g1[:, 1:2])
+    g1b = GridLayout(g1[:, 3:4])
+    g1l = GridLayout(g1[:, 5])
+    g3 = GridLayout(f[(end + 1):(end + 4), :])
+    g3a = GridLayout(g3[:, 1:2])
+    g3b = GridLayout(g3[:, 3:4])
+    g3l = GridLayout(g3[:, 5])
+
+    # Bands
+    res1a = @rsubset(res_bands, :offset <= 0.0)
+    res1b = @rsubset(res_bands, :offset >= 0.0)
+    ax1a = make_bands_ax!(
+        g1a[:, :]; res=res1a, var=var, rev=false, colour=false, arrowlabels=false
+    )
+    ax1b = make_bands_ax!(
+        g1b[:, :]; res=res1b, var=var, rev=false, colour=false, arrowlabels=false
+    )
+    hideydecorations!(ax1b; grid=false)
+    # Comparison axis
+    d1a = @rsubset(d, :offset <= 0.0)
+    d1b = @rsubset(d, :offset >= 0.0)
+    sc1a = make_comps_ax!(ax1a; d=d1a, res=res1a)
+    sc1b = make_comps_ax!(ax1b; d=d1b, res=res1b)
+    # Overlap bands
+    res3a = @rsubset(overlap_bands, :offset <= 0.0)
+    res3b = @rsubset(overlap_bands, :offset >= 0.0)
+    ax3a = make_overlap_bands!(g3a[:, :]; res=res3a, rev=false, title="Underestimation")
+    ax3b = make_overlap_bands!(g3b[:, :]; res=res3b, rev=false, title="Overestimation")
+    vlines!(ax3a, [0.0]; linestyle=:solid, color=:lightgrey)
+    vlines!(ax3b, [0.0]; linestyle=:solid, color=:lightgrey)
+    hideydecorations!(ax3b; grid=false)
+
+    # Legends
+    leg_opt = (; framevisible=false, merge=true, halign=:left)
+    Legend(g1l[:, :], ax1a, "Comparison values"; leg_opt..., tellwidth=false)
+    Legend(g3l[:, :], ax3a, "Comparison sign"; leg_opt..., tellwidth=false)
+
+    # Adjust axis limits
+    ymin = minimum(res_bands.low)
+    ymax = maximum(res_bands.upp)
+    yabsmax = maximum(abs.([ymin, ymax]))
+    yoff = 0.1yabsmax
+    ylims!(ax1a, ymin - yoff, ymax + yoff)
+    ylims!(ax1b, ymin - yoff, ymax + yoff)
+
+    # Titles
+    ax1a.title = "Underestimation"
+    ax1b.title = "Overestimation"
+
+    # Align axes
+    # ax1a.xreversed=true
+    # ax3a.xreversed=true
+    linkxaxes!(ax1a, ax3a)
+    linkxaxes!(ax1b, ax3b)
+    linkyaxes!(ax1a, ax1b)
+    linkyaxes!(ax3a, ax3b)
+
+    # Add labels
+    pad = (-65, 0, 30, 0)
+    lab_opt = (; halign=:left, font=:bold, padding=pad)
+    Label(
+        g1[1, 1, Top()],
+        "a) Comparison of efficiencies between range estimations";
+        lab_opt...,
+    )
+    Label(g3[1, 1, Top()], "b) Proportion of simulations per comparison sign"; lab_opt...)
+
+    # Figure
+    save(plotsdir("ranges_overlap_minimal_split.png"), f)
     f
 end
 
