@@ -220,7 +220,7 @@ begin
     end
 
     # Bands panel
-    function make_bands_ax!(f; res=res_bands, var=var, rev=rev)
+    function make_bands_ax!(f; res=res_bands, var=var, rev=rev, colour=true)
         # Values
         x = res[:, var]
         low = res.low
@@ -245,14 +245,23 @@ begin
         end
 
         # Two band color option
-        col1 = Makie.wong_colors()[1]
-        col2 = Makie.wong_colors()[2]
+        if colour
+            col1 = Makie.wong_colors()[1]
+            col2 = Makie.wong_colors()[2]
+            lab1 = "Lower efficiency"
+            lab2 = "Higher efficiency"
+        else
+            col1 = :grey
+            col2 = :grey
+            lab1 = "90% Percentile range"
+            lab2 = lab1
+        end
         lowpos = [l < 0 ? 0.0 : l for l in low]
         lowneg = [l < 0 ? l : 0.0 for l in low]
         upppos = [l < 0 ? 0.0 : l for l in upp]
         uppneg = [l < 0 ? l : 0.0 for l in upp]
-        band!(ax, x, lowneg, uppneg; alpha=0.6, label="Lower efficiency", color=col1)
-        band!(ax, x, lowpos, upppos; alpha=0.6, label="Higher efficiency", color=col2)
+        band!(ax, x, lowneg, uppneg; alpha=0.6, label=lab1, color=col1)
+        band!(ax, x, lowpos, upppos; alpha=0.6, label=lab2, color=col2)
         cf(x) = [v < 0 ? col1 : col2 for v in x]
         lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
         lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
@@ -472,7 +481,7 @@ begin
         pal = [
             "negative" => Makie.wong_colors()[3],
             "overlap" => Makie.wong_colors()[4],
-            "positive" => :grey,
+            "positive" => Makie.wong_colors()[2],
         ]
         scl = scales(; Color=(; palette=pal))
         fg1 = draw!(g1, data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
@@ -547,7 +556,7 @@ begin
         pal = Dict(
             "negative" => Makie.wong_colors()[3],
             "overlap" => Makie.wong_colors()[4],
-            "positive" => :grey,
+            "positive" => Makie.wong_colors()[2],
         )
         # Bands
         for mes in ["overlap", "negative", "positive"]
@@ -600,6 +609,103 @@ begin
     ax3.yticklabelspace = yspace
     # Save
     save(plotsdir("ranges_overlap.png"), current_figure())
+    f
+end
+
+begin
+    # Figure options
+    f = Figure(; size=(900, 450))
+    rev = false
+
+    # Select results for bands
+    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
+    var = :offset
+
+    # Bands
+    pr = 5
+    pc = 3
+    p1 = f[1:pr, 1:pc]
+    ax = make_bands_ax!(p1; rev=false, colour=false)
+    # ax = Axis(p1)
+
+    # Select results for comparison
+    set = collect(-0.5:0.1:0.5)
+    d = @rsubset(within_comps, :offset in set)
+    u = @rsubset(
+        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
+    )
+
+    # Comparison axis
+    Random.seed!(42)
+    pal = Dict(
+        "negative" => Makie.wong_colors()[3],
+        "overlap" => Makie.wong_colors()[4],
+        "positive" => Makie.wong_colors()[2],
+    )
+    scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
+    scatter!(
+        ax,
+        [o + 0.02 * (rand() - 0.5) for o in d.offset],
+        d.value;
+        color=[pal[v] for v in d.overlap],
+        label=[v => (; color=pal[v]) for v in d.overlap],
+        markersize=5,
+        alpha=0.9,
+    )
+
+    # Set axis limits
+    ymin = minimum(res_bands.low)
+    ymax = maximum(res_bands.upp)
+    yabsmax = maximum(abs.([ymin, ymax]))
+    yoff = 0.1yabsmax
+    ylims!(ax, ymin - yoff, ymax + yoff)
+
+    # Summary panel
+    d3 = @rsubset(u, :set == "ranges")
+    p2 = f[(end + 1):(end + 2), :]
+    ax0 = Axis(p2; yticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
+    m34 = mapping(
+        :offset,
+        [1];
+        stack=:countmeasure => sorter(["negative", "overlap", "positive"]),
+        color=:countmeasure,
+        bar_labels=:label => verbatim,
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:y,
+        label_position=:center,
+        label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
+    )
+    draw!(ax0, data(d3) * m34 * v3, scl)
+    hidexdecorations!(ax0;)
+    hideydecorations!(ax0; ticklabels=false, ticks=false)
+    hidespines!(ax0)
+
+    # Align axes
+    linkxaxes!(ax, ax0)
+
+    # Legend
+    p1leg = f[1:pr, pc + 1]
+    Legend(p1leg, ax; framevisible=false, merge=true)
+    # axislegend(p1leg,)
+
+    # Add labels
+    pad = (-65, 0, 10, 0)
+    Label(
+        p1[1, 1, Top()],
+        "Efficiency comparison between range estimations";
+        halign=:left,
+        font=:bold,
+        padding=pad,
+    )
+    Label(p2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
+
+    # Figure
+    save(plotsdir("ranges_overlap_one.png"), f)
     f
 end
 
