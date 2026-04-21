@@ -260,16 +260,16 @@ begin
         lowneg = [l < 0 ? l : 0.0 for l in low]
         upppos = [l < 0 ? 0.0 : l for l in upp]
         uppneg = [l < 0 ? l : 0.0 for l in upp]
-        band!(ax, x, lowneg, uppneg; alpha=0.6, label=lab1, color=col1)
-        band!(ax, x, lowpos, upppos; alpha=0.6, label=lab2, color=col2)
+        b1 = band!(ax, x, lowneg, uppneg; alpha=0.6, label=lab1, color=col1)
+        b2 = band!(ax, x, lowpos, upppos; alpha=0.6, label=lab2, color=col2)
         cf(x) = [v < 0 ? col1 : col2 for v in x]
-        lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
-        lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
-        lines!(ax, x, med; label="Median", color=col1)
+        l1 = lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
+        l2 = lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
+        l3 = lines!(ax, x, med; label="Median", color=col1)
 
         # Common options
-        vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey)
-        hlines!(ax, 0.0; linestyle=:dash, color=:black)
+        v1 = vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey)
+        v2 = hlines!(ax, 0.0; linestyle=:dash, color=:black)
 
         # Add labels
         Label(
@@ -291,7 +291,7 @@ begin
             tellwidth=false,
         )
 
-        return ax
+        return ax, (; b1, b2, l1, l2, l3, v1, v2)
     end
 
     # Create figure
@@ -300,7 +300,7 @@ begin
     g1, g3 = make_comps_ax!(
         g1, g3; rev=rev, l1="A) Efficiency comparison between range estimations"
     )
-    ax2 = make_bands_ax!(f[(end + 1):(end + 5), 1:(end - 1)]; rev=rev)
+    ax2, _ = make_bands_ax!(f[(end + 1):(end + 5), 1:(end - 1)]; rev=rev)
     Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false)
     Label(
         f[7, 1, Top()],
@@ -330,7 +330,7 @@ begin
 
     # Bands
     p1 = f[1:5, 1:3]
-    ax = make_bands_ax!(p1; rev=false)
+    ax, _ = make_bands_ax!(p1; rev=false)
     Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
     # ax = Axis(p1)
 
@@ -702,7 +702,7 @@ begin
     g3 = GridLayout(f[6:7, 1:3])
 
     # Bands
-    ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
+    ax1, _ = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
     # Legend
@@ -740,7 +740,7 @@ begin
     g3l = GridLayout(f[(end - 3):end, 4])
 
     # Bands
-    ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
+    ax1, _ = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
     # Legend
@@ -794,11 +794,18 @@ begin
     g3l = GridLayout(f[(end - 3):end, 4])
 
     # Bands
-    ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
+    ax1, plt1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
     # Legend
-    Legend(g1l[:, :], ax1; framevisible=false, merge=true, halign=:left)
+    Legend(
+        g1l[:, :],
+        [[plt1.b1, plt1.l3], [sc1]],
+        [["Percentile range", "Median"], [sc1.label => (; color=sc1.color)]],
+        ["Comparison values", "Comparison sign"];
+        framevisible=false,
+        halign=:left,
+    )
     # Summary panel
     ax2 = make_summary_ax!(g2[:, :]; u=u)
     vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey)
@@ -857,7 +864,7 @@ begin
     g1, g3 = make_overlap_ax!(
         g1, g3; d=d, u=u, rev=rev, l1="A) Efficiency comparison between range estimations"
     )
-    ax2 = make_bands_ax!(
+    ax2, _ = make_bands_ax!(
         f[(end + 1):(end + 5), 1:(end - 1)]; res=res_bands, var=var, rev=rev
     )
     Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false, width=200)
