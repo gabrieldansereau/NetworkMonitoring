@@ -734,25 +734,26 @@ begin
     # GridLayout
     g1 = GridLayout(f[1:5, 1:3])
     g1l = GridLayout(f[1:5, 4])
-    g2 = GridLayout(f[6:7, 1:3])
-    g3 = GridLayout(f[8:11, 1:3])
-    g3l = GridLayout(f[8:11, 4])
+    g2 = GridLayout(f[-1:0, 1:3])
+    g3 = GridLayout(f[(end + 1):(end + 4), 1:3])
+    g3l = GridLayout(f[(end - 3):end, 4])
 
     # Bands
     ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
     # Legend
-    Legend(g1l[:, :], ax1; framevisible=false, merge=true)
+    Legend(g1l[:, :], ax1; framevisible=false, merge=true, halign=:left)
     # Summary panel
     ax2 = make_summary_ax!(g2[:, :]; u=u)
     vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey)
+    # ax2.xticksvisible=true
+    # ax2.xticks=[-0.5:0.1:-0.1..., 0.1:0.1:0.5...]
+    ax1.xticksmirrored = true
     # Overlap bands
     ax3 = make_overlap_bands!(g3[:, :]; res=overlap_bands, rev=false, title="")
     vlines!(ax3, [0.0]; linestyle=:solid, color=:lightgrey)
-    Legend(
-        g3l[:, :], ax3, "Comparison sign"; framevisible=false, merge=true, tellwidth=false
-    )
+    Legend(g3l[:, :], ax3; framevisible=false, merge=true, tellwidth=false, halign=:left)
 
     # Align axes
     linkxaxes!(ax1, ax2, ax3)
@@ -760,7 +761,7 @@ begin
     # Add labels
     pad = (-65, 0, 10, 0)
     Label(
-        g1[1, 1, Top()],
+        g2[1, 1, Top()],
         "a) Comparison of efficiencies between range estimations";
         halign=:left,
         font=:bold,
