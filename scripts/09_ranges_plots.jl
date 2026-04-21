@@ -835,7 +835,7 @@ end
 
 begin
     # Figure options
-    f = Figure(; size=(900, 700))
+    f = Figure(; size=(900, 600))
 
     # GridLayout
     g1 = GridLayout(f[1:5, 1:4])
@@ -862,11 +862,13 @@ begin
     d1b = @rsubset(d, :offset >= 0.0)
     sc1a = make_comps_ax!(ax1a; d=d1a, res=res1a)
     sc1b = make_comps_ax!(ax1b; d=d1b, res=res1b)
+    hidexdecorations!(ax1a; grid=false)
+    hidexdecorations!(ax1b; grid=false)
     # Overlap bands
     res3a = @rsubset(overlap_bands, :offset <= 0.0)
     res3b = @rsubset(overlap_bands, :offset >= 0.0)
-    ax3a = make_overlap_bands!(g3a[:, :]; res=res3a, rev=false, title="Underestimation")
-    ax3b = make_overlap_bands!(g3b[:, :]; res=res3b, rev=false, title="Overestimation")
+    ax3a = make_overlap_bands!(g3a[:, :]; res=res3a, rev=false)
+    ax3b = make_overlap_bands!(g3b[:, :]; res=res3b, rev=false)
     vlines!(ax3a, [0.0]; linestyle=:solid, color=:lightgrey)
     vlines!(ax3b, [0.0]; linestyle=:solid, color=:lightgrey)
     hideydecorations!(ax3b; grid=false)
@@ -899,12 +901,12 @@ begin
     # Add labels
     pad = (-65, 0, 30, 0)
     lab_opt = (; halign=:left, font=:bold, padding=pad)
-    Label(
-        g1[1, 1, Top()],
-        "a) Comparison of efficiencies between range estimations";
-        lab_opt...,
-    )
-    Label(g3[1, 1, Top()], "b) Proportion of simulations per comparison sign"; lab_opt...)
+    # Label(
+    #     g1[1, 1, Top()],
+    #     "a) Comparison of efficiencies between range estimations";
+    #     lab_opt...,
+    # )
+    # Label(g3[1, 1, Top()], "b) Proportion of simulations per comparison sign"; lab_opt...)
 
     # Figure
     save(plotsdir("ranges_overlap_minimal_split.png"), f)
