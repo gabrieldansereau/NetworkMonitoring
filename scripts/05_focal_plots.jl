@@ -600,11 +600,12 @@ fig_estimation = begin
         vals = unique(res[:, var])
 
         # Display elements
-        show_lines = true
-        show_scatter = true
+        show_lines = false
+        show_scatter = false
+        show_band = false
         show_eff = false
         show_sat = true
-        show_int = false
+        show_int = true
         adjust_effort = adjust_effort
         adjust_n = adjust_n
 
@@ -702,7 +703,9 @@ fig_estimation = begin
             end
             # Display results
             lab = ifelse(show_eff, "$v, eff=$(@sprintf("%.0f", eff))", v)
-            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
+            if show_band
+                band!(ax, b.nbon, b.low, b.upp; alpha=0.4, color=colours[v], label=lab)
+            end
             if show_sat
                 lines!(
                     ax,
@@ -712,24 +715,18 @@ fig_estimation = begin
                     linestyle=:dash,
                     linewidth=1.5,
                     alpha=0.7,
+                    label=lab,
                 )
             end
             if show_int
-                lines!(
+                band!(
                     ax,
                     1:xlim,
-                    saturation(eff_a_low, pm)(1:xlim);
-                    color=colours[v],
-                    linestyle=:dot,
-                    linewidth=1.5,
-                )
-                lines!(
-                    ax,
-                    1:xlim,
+                    saturation(eff_a_low, pm)(1:xlim),
                     saturation(eff_a_upp, pm)(1:xlim);
                     color=colours[v],
-                    linestyle=:dot,
-                    linewidth=1.5,
+                    alpha=0.4,
+                    label=lab,
                 )
             end
             if show_lines
