@@ -117,111 +117,60 @@ push!(
 )
 sort!(within_bands, :offset)
 
-## Plot comparisons and bands
+## Confidence intervals
 
-# Combined figure
+# Extract quantile range for all offset
+overlap_bands = rename(unique_comps, :count => :med)
+select!(overlap_bands, Not(:label))
+
+# Add an Entry for offset of zero
+common = (;
+    set="ranges", variable="True-0.0", offset=0.0, n=maximum(overlap_bands.n), prop_sim=1.0
+)
+push!(overlap_bands, (; common..., countmeasure="overlap", med=1.0))
+push!(overlap_bands, (; common..., countmeasure="positive", med=0.0))
+push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
+sort!(overlap_bands, :offset)
+
+# Add confidence interval for the proportion
+@chain overlap_bands begin
+    @rtransform!(:x = round(Int, :med * :n))
+    @rtransform!(
+        :low = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[1],
+        :upp = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[2],
+    )
+    @select!(Not(:x))
+end
+
+## Plots results
+
+# Visualize
 begin
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
     d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"])
+    u = @rsubset(
+        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
+    )
 
     # Select results for bands
+    res = @rsubset(overlap_bands, :offset in set)
     res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
     var = :offset
 
-    # Figure options
-    f = Figure(; size=(800, 750))
-    rev = false
+    # Set colour palette
+    pal = Dict(
+        "negative" => Makie.wong_colors()[3],
+        "overlap" => Makie.wong_colors()[4],
+        "positive" => Makie.wong_colors()[2],
+    )
+    scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
+end
 
-    # Comparison panel
-    function make_comps_ax!(g1, g3; d=d, u=u, l1, rev=rev)
-        # Random seed for jitter
-        Random.seed!(42)
-
-        # Sorted sets for comparison
-        sort!(u, :offset)
-        sortedcomps = unique(u.variable)
-        sortedoffsets = [
-            o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for
-            o in unique(u.offset)
-        ]
-        # Main panel
-        d1 = @rsubset(d, :set == "ranges")
-        m = mapping(
-            :variable =>
-                renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
-            :value => "Efficiency compared to True Range";
-            color=:value => (x -> x > 0.0),
-        )
-        rains = visual(
-            RainClouds;
-            markersize=6,
-            jitter_width=0.30,
-            plot_boxplots=false,
-            clouds=nothing,
-            orientation=:horizontal,
-        )
-        vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
-        hline =
-            mapping([length(unique(u.variable)) / 2 + 0.5]) *
-            visual(HLines; linestyle=:solid, color=:lightgrey)
-        fg1 = draw!(g1, data(d1) * m * rains + vline + hline; axis=(; xreversed=rev))
-        pad = (-65, 0, 10, 0)
-        Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
-        Label(
-            g1[1, 1, TopLeft()],
-            "Over ⬆️";
-            padding=(0, 2, -40, 0),
-            halign=:right,
-            fontsize=12,
-        )
-        Label(
-            g1[1, 1, BottomLeft()],
-            "Under ⬇️";
-            padding=(0, 2, 0, -50),
-            halign=:right,
-            fontsize=12,
-        )
-
-        # Summary panels
-        d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
-        m34 = mapping(
-            :variable => sorter(sortedcomps),
-            [1];
-            stack=:countmeasure => sorter(["sign_neg", "sign_pos"]),
-            color=:countmeasure => sorter(["sign_neg", "sign_pos"]),
-            bar_labels=:label => verbatim,
-        )
-        v3 = visual(
-            BarPlot;
-            direction=:x,
-            label_position=:center,
-            label_color=:white,
-            label_font=:bold,
-            label_size=16,
-            alpha=0.85,
-        )
-        draw!(ax3, data(d3) * m34 * v3)
-        hideydecorations!(ax3)
-        hidexdecorations!(ax3; ticklabels=false, ticks=false)
-        hidespines!(ax3)
-
-        # Align axes
-        ax1 = g1.content[1].content
-        linkyaxes!(ax1, ax3)
-
-        # Add labels
-        pad = (0, 0, 10, 0)
-        Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-
-        return (g1, g3)
-    end
-
-    # Bands panel
+# Bands panel
+begin
     function make_bands_ax!(
-        f; res=res_bands, var=var, rev=rev, colour=true, arrowlabels=true
+        f; res=res_bands, var=var, rev=false, colour=true, arrowlabels=false
     )
         # Values
         x = res[:, var]
@@ -297,332 +246,21 @@ begin
 
         return ax
     end
+    let
+        # Figure options
+        f = Figure(; size=(900, 450))
 
-    # Create figure
-    g1 = GridLayout(f[1:6, 1:3])
-    g3 = GridLayout(f[1:6, end + 1])
-    g1, g3 = make_comps_ax!(
-        g1, g3; rev=rev, l1="A) Efficiency comparison between range estimations"
-    )
-    ax2 = make_bands_ax!(f[(end + 1):(end + 5), 1:(end - 1)]; rev=rev)
-    Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false)
-    Label(
-        f[7, 1, Top()],
-        "B) Percentile range of efficiency differences";
-        halign=:left,
-        font=:bold,
-        padding=(-65, 0, 10, 0),
-    )
-    # Align Axis labels
-    ax1 = content(g1[1, 1])
-    yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 2
-    ax1.yticklabelspace = yspace
-    ax2.yticklabelspace = yspace
-    # Save
-    save(plotsdir("ranges_efficiency.png"), f)
-    f
-end
-
-begin
-    # Figure options
-    f = Figure(; size=(900, 450))
-    rev = false
-
-    # Select results for bands
-    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
-    var = :offset
-
-    # Bands
-    p1 = f[1:5, 1:3]
-    ax = make_bands_ax!(p1; rev=false)
-    Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
-    # ax = Axis(p1)
-
-    # Select results for comparison
-    set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"])
-
-    # Comparison axis
-    Random.seed!(42)
-    col1 = Makie.wong_colors()[1]
-    col2 = Makie.wong_colors()[2]
-    colfunc(x) = [v < 0 ? col1 : col2 for v in x]
-    scatter!(
-        ax,
-        [o + 0.02 * (rand() - 0.5) for o in d.offset],
-        d.value;
-        color=colfunc(d.value),
-        markersize=5,
-        alpha=0.7,
-    )
-
-    # Set axis limits
-    ymin = minimum(res_bands.low)
-    ymax = maximum(res_bands.upp)
-    yoff = 0.1maximum(abs.([ymin, ymax]))
-    ylims!(ax, minimum(res_bands.low) - yoff, maximum(res_bands.upp) + yoff)
-
-    # Summary panel
-    d3 = @rsubset(u, :set == "ranges")
-    p2 = f[end + 1, 1:(end - 1)]
-    ax0 = Axis(p2; yticks=([0.5, 1.5], ["Negative", "Positive"]))
-    m34 = mapping(
-        :offset,
-        [1];
-        stack=:countmeasure => sorter(["sign_neg", "sign_pos"]),
-        color=:countmeasure => sorter(["sign_neg", "sign_pos"]),
-        bar_labels=:label => verbatim,
-    )
-    v3 = visual(
-        BarPlot;
-        direction=:y,
-        label_position=:center,
-        label_color=:white,
-        label_font=:bold,
-        label_size=14,
-        alpha=0.85,
-    )
-    draw!(ax0, data(d3) * m34 * v3)
-    hidexdecorations!(ax0;)
-    hideydecorations!(ax0; ticklabels=false, ticks=false)
-    hidespines!(ax0)
-
-    # Align axes
-    linkxaxes!(ax, ax0)
-
-    # Add labels
-    pad = (-65, 0, 10, 0)
-    Label(
-        p1[1, 1, Top()],
-        "Efficiency comparison between range estimations";
-        halign=:left,
-        font=:bold,
-        padding=pad,
-    )
-    Label(p2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
-
-    # Figure
-    save(plotsdir("ranges_efficiency_one.png"), f)
-    f
-end
-
-## Confidence intervals
-
-# Extract quantile range for all offset
-overlap_bands = rename(unique_comps, :count => :med)
-select!(overlap_bands, Not(:label))
-
-# Add an Entry for offset of zero
-common = (;
-    set="ranges", variable="True-0.0", offset=0.0, n=maximum(overlap_bands.n), prop_sim=1.0
-)
-push!(overlap_bands, (; common..., countmeasure="overlap", med=1.0))
-push!(overlap_bands, (; common..., countmeasure="positive", med=0.0))
-push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
-sort!(overlap_bands, :offset)
-
-# Add confidence interval for the proportion
-@chain overlap_bands begin
-    @rtransform!(:x = round(Int, :med * :n))
-    @rtransform!(
-        :low = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[1],
-        :upp = confint(BinomialTest(:x, :n); level=0.90, method=(^(:wilson)))[2],
-    )
-    @select!(Not(:x))
-end
-
-# Visualize
-begin
-    # Select results for comparison
-    set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(
-        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
-    )
-
-    # Select results for bands
-    res = @rsubset(overlap_bands, :offset in set)
-    var = :offset
-
-    # Figure options
-    f = Figure(; size=(800, 750))
-    rev = false
-
-    # Overlap panel
-    function make_overlap_ax!(g1, g3; d=d, u=u, l1, rev=rev, arrowlabels=true)
-        # Random seed for jitter
-        Random.seed!(42)
-
-        # Sorted sets for comparison
-        sort!(u, :offset)
-        sortedcomps = unique(u.variable)
-        sortedoffsets = [
-            o > 0.0 ? "+$(round(Int, 100o))" : "$(round(Int, 100o))" for
-            o in unique(u.offset)
-        ]
-
-        # Main panel
-        d1 = @rsubset(d, :set == "ranges")
-        m = mapping(
-            :variable =>
-                renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
-            :value => "Efficiency compared to True Range";
-            color=:overlap,
-        )
-        rains = visual(
-            RainClouds;
-            markersize=6,
-            jitter_width=0.30,
-            plot_boxplots=false,
-            clouds=nothing,
-            orientation=:horizontal,
-        )
-        vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
-        hline =
-            mapping([length(unique(u.variable)) / 2 + 0.5]) *
-            visual(HLines; linestyle=:solid, color=:lightgrey)
-        pal = [
-            "negative" => Makie.wong_colors()[3],
-            "overlap" => Makie.wong_colors()[4],
-            "positive" => Makie.wong_colors()[2],
-        ]
-        scl = scales(; Color=(; palette=pal))
-        fg1 = draw!(g1, data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
-        pad = (-65, 0, 10, 0)
-        Label(g1[1, 1, Top()], l1; halign=:left, font=:bold, padding=pad)
-
-        # Summary panels
-        d3 = @rsubset(u, :set == "ranges")
-        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
-        sortedmeasures = first.(pal)
-        m34 = mapping(
-            :variable => sorter(sortedcomps),
-            [1];
-            stack=:countmeasure => sorter(sortedmeasures),
-            color=:countmeasure,
-            bar_labels=:label => verbatim,
-        )
-        v3 = visual(
-            BarPlot;
-            direction=:x,
-            label_position=:center,
-            label_color=:white,
-            label_font=:bold,
-            label_size=16,
-            alpha=0.85,
-        )
-        draw!(ax3, data(d3) * m34 * v3, scl)
-        hideydecorations!(ax3)
-        hidexdecorations!(ax3; ticklabels=false, ticks=false)
-        hidespines!(ax3)
-
-        # Align axes
-        ax1 = g1.content[1].content
-        linkyaxes!(ax1, ax3)
-
-        # Add labels
-        pad = (0, 0, 10, 0)
-        Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-        if arrowlabels
-            Label(
-                g1[1, 1, TopLeft()],
-                "Over ⬆️";
-                padding=(0, 2, -40, 0),
-                halign=:right,
-                fontsize=12,
-            )
-            Label(
-                g1[1, 1, BottomLeft()],
-                "Under ⬇️";
-                padding=(0, 2, 0, -50),
-                halign=:right,
-                fontsize=12,
-            )
-        end
-
-        return (g1, g3)
+        p1 = f[1:5, 1:3]
+        ax = make_bands_ax!(p1; rev=false, colour=true, arrowlabels=true)
+        Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
+        f
     end
-
-    # Bands panel
-    function make_overlap_bands!(f; res=res, var=var, rev=rev, title="", addlines=false)
-        # Axis
-        t1, t2 = extrema(set)
-        ax = Axis(
-            f[1, 1];
-            xlabel="Range estimation difference (%)",
-            ylabel="Proportion of simulations",
-            xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
-            xtickformat=values ->
-                [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
-            xreversed=rev,
-            yticks=0.0:0.25:1.0,
-            title=title,
-        )
-        # Band colors
-        pal = Dict(
-            "negative" => Makie.wong_colors()[3],
-            "overlap" => Makie.wong_colors()[4],
-            "positive" => Makie.wong_colors()[2],
-        )
-        # Bands
-        for mes in ["overlap", "negative", "positive"]
-            r = @rsubset(res, :countmeasure == mes)
-            x = r[:, var]
-            med = r.med
-            low = r.low
-            upp = r.upp
-            lab = uppercasefirst(mes)
-            col = pal[mes]
-            band!(ax, x, low, upp; alpha=0.6, label=lab, color=col)
-            lines!(ax, x, med; label=lab, color=col)
-        end
-        # Common options
-        if addlines
-            vlines!(ax, 0.0; linestyle=:solid, color=:grey)
-            hlines!(ax, 0.0; linestyle=:dash, color=:black)
-        end
-
-        return ax
-    end
-
-    # Create figure
-    g1 = GridLayout(f[1:6, 1:2])
-    g3 = GridLayout(f[:, end + 1])
-    g4l = 7:9
-    make_overlap_ax!(g1, g3; l1="A) Efficiency comparison between range estimations")
-    # ax2 = make_overlap_bands!(f[g4l, 1:2]; addlines=true)
-    ax2 = make_overlap_bands!(
-        f[g4l, 1]; res=@rsubset(res, :offset <= 0.0), rev=true, title="Underestimation"
-    )
-    ax3 = make_overlap_bands!(
-        f[g4l, 2]; res=@rsubset(res, :offset >= 0.0), rev=false, title="Overestimation"
-    )
-    Legend(
-        f[g4l, end], ax2, "Comparison sign"; framevisible=false, merge=true, tellwidth=false
-    )
-    Label(
-        f[g4l, 1, Top()],
-        "B) Change in proportion of comparisons";
-        halign=:left,
-        font=:bold,
-        padding=(-65, 0, 30, 0),
-    )
-    # Align Axis labels
-    ax1 = content(g1[1, 1])
-    yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 2
-    ax1.yticklabelspace = yspace
-    ax2.yticklabelspace = yspace
-    ax3.yticklabelspace = yspace
-    # Save
-    save(plotsdir("ranges_overlap.png"), current_figure())
-    f
 end
 
+# Comparison scatter axis
 begin
     function make_comps_ax!(ax; d=d, res=res_bands)
         Random.seed!(42)
-        scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
         sc = scatter!(
             ax,
             [o + 0.02 * (rand() - 0.5) for o in d.offset],
@@ -641,16 +279,66 @@ begin
         return sc
     end
     let
-        f = Figure()
+        f = Figure(; size=(600, 300))
         ax = Axis(f[1, 1])
         sc = make_comps_ax!(ax; d=d, res=res_bands)
         f
     end
 end
 
+# Overlap lines and bands
+begin
+    function make_overlap_bands!(f; res=res, var=var, rev=false, title="", addlines=true)
+        # Axis
+        t1, t2 = extrema(set)
+        ax = Axis(
+            f[1, 1];
+            xlabel="Range estimation difference (%)",
+            ylabel="Proportion of simulations",
+            xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
+            xtickformat=values ->
+                [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
+            xreversed=rev,
+            yticks=0.0:0.25:1.0,
+            title=title,
+        )
+
+        # Common options
+        if addlines
+            vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey, linewidth=2.0)
+        end
+
+        # Bands
+        for mes in ["overlap", "negative", "positive"]
+            r = @rsubset(res, :countmeasure == mes)
+            x = r[:, var]
+            med = r.med
+            low = r.low
+            upp = r.upp
+            lab = uppercasefirst(mes)
+            col = pal[mes]
+            band!(ax, x, low, upp; alpha=0.6, label=lab, color=col)
+            lines!(ax, x, med; label=lab, color=col)
+        end
+
+        return ax
+    end
+    let
+        f = Figure(; size=(600, 300))
+        make_overlap_bands!(f; res=res, var=var, rev=false, title="", addlines=true)
+        f
+    end
+end
+
+# Summary count axis
 begin
     function make_summary_ax!(gp; u=u)
-        ax0 = Axis(gp; yticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
+        ax0 = Axis(
+            gp;
+            yticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]),
+            xaxisposition=:top,
+            xticks=sort(u.offset),
+        )
         m34 = mapping(
             :offset,
             [1];
@@ -668,7 +356,7 @@ begin
             alpha=0.85,
         )
         draw!(ax0, data(u) * m34 * v3, scl)
-        hidexdecorations!(ax0;)
+        hidexdecorations!(ax0; ticks=false)
         hideydecorations!(ax0; ticklabels=false, ticks=false)
         hidespines!(ax0)
         return ax0
@@ -683,144 +371,30 @@ end
 
 begin
     # Figure options
-    f = Figure(; size=(900, 450))
-    rev = false
-
-    # Select results for bands
-    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
-    var = :offset
-    # Select results for comparison
-    set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(
-        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
-    )
-    # Define colour palette
-    pal = Dict(
-        "negative" => Makie.wong_colors()[3],
-        "overlap" => Makie.wong_colors()[4],
-        "positive" => Makie.wong_colors()[2],
-    )
-
-    # GridLayout
-    g1 = GridLayout(f[1:5, 1:3])
-    g2 = GridLayout(f[1:5, 4])
-    g3 = GridLayout(f[6:7, 1:3])
-
-    # Bands
-    ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
-    # Comparison axis
-    sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
-    # Legend
-    Legend(g2[:, :], ax1; framevisible=false, merge=true)
-    # Summary panel
-    ax3 = make_summary_ax!(g3[:, :]; u=u)
-    # Align axes
-    linkxaxes!(ax1, ax3)
-
-    # Add labels
-    pad = (-65, 0, 10, 0)
-    Label(
-        g1[1, 1, Top()],
-        "Efficiency comparison between range estimations";
-        halign=:left,
-        font=:bold,
-        padding=pad,
-    )
-    Label(g3[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
-
-    # Figure
-    save(plotsdir("ranges_overlap_one.png"), f)
-    f
-end
-
-begin
-    # Figure options
     f = Figure(; size=(900, 700))
 
     # GridLayout
     g1 = GridLayout(f[1:5, 1:3])
     g1l = GridLayout(f[1:5, 4])
-    g2 = GridLayout(f[-1:0, 1:3])
-    g3 = GridLayout(f[(end + 1):(end + 4), 1:3])
-    g3l = GridLayout(f[(end - 3):end, 4])
+    g2 = GridLayout(f[(end + 1):(end + 4), 1:3])
+    g2l = GridLayout(f[(end - 3):end, 4])
 
     # Bands
     ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
     sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
-    # Legend
-    Legend(g1l[:, :], ax1; framevisible=false, merge=true, halign=:left)
-    # Summary panel
-    ax2 = make_summary_ax!(g2[:, :]; u=u)
-    vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey)
-    # ax2.xticksvisible=true
-    # ax2.xticks=[-0.5:0.1:-0.1..., 0.1:0.1:0.5...]
-    ax1.xticksmirrored = true
     # Overlap bands
-    ax3 = make_overlap_bands!(g3[:, :]; res=overlap_bands, rev=false, title="")
-    vlines!(ax3, [0.0]; linestyle=:solid, color=:lightgrey)
-    Legend(g3l[:, :], ax3; framevisible=false, merge=true, tellwidth=false, halign=:left)
-
-    # Align axes
-    linkxaxes!(ax1, ax2, ax3)
-
-    # Add labels
-    pad = (-65, 0, 10, 0)
-    Label(
-        g2[1, 1, Top()],
-        "a) Comparison of efficiencies between range estimations";
-        halign=:left,
-        font=:bold,
-        padding=pad,
-    )
-    # Label(g2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
-    Label(
-        g3[1, 1, Top()],
-        "b) Proportion of simulations per comparison sign";
-        font=:bold,
-        halign=:left,
-        padding=pad,
-    )
-
-    # Figure
-    save(plotsdir("ranges_overlap_one_and_bands.png"), f)
-    f
-end
-
-begin
-    # Figure options
-    f = Figure(; size=(900, 700))
-
-    # GridLayout
-    g1 = GridLayout(f[1:5, 1:3])
-    g1l = GridLayout(f[1:5, 4])
-    # g2 = GridLayout(f[-1:0, 1:3])
-    g3 = GridLayout(f[(end + 1):(end + 4), 1:3])
-    g3l = GridLayout(f[(end - 3):end, 4])
-
-    # Bands
-    ax1 = make_bands_ax!(
-        g1[:, :]; res=res_bands, var=var, rev=false, colour=false, arrowlabels=false
-    )
-    # Comparison axis
-    sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
-    # Summary panel
-    ax2 = make_summary_ax!(g2[:, :]; u=u)
-    vlines!(ax2, [0.0]; linestyle=:solid, color=:lightgrey, linewidth=2.0)
-    # Overlap bands
-    ax3 = make_overlap_bands!(g3[:, :]; res=overlap_bands, rev=false, title="")
-    vlines!(ax3, [0.0]; linestyle=:solid, color=:lightgrey, linewidth=2.0)
+    ax2 = make_overlap_bands!(g2[:, :]; res=overlap_bands, rev=false, title="")
 
     # Legends
     leg_opt = (; framevisible=false, merge=true, halign=:left)
     Legend(g1l[:, :], ax1, "Comparison values"; leg_opt...)
-    Legend(g3l[:, :], ax3, "Comparison sign"; leg_opt..., tellwidth=false)
+    Legend(g2l[:, :], ax2, "Comparison sign"; leg_opt..., tellwidth=false)
 
     # Align axes
-    linkxaxes!(ax1, ax2, ax3)
+    linkxaxes!(ax1, ax2)
 
-    # Add labels
+    # Add subpanel labels
     lab_opt = (; halign=:left, font=:bold)
     Label(
         g1[1, 1, Top()],
@@ -829,141 +403,30 @@ begin
         padding=(-65, 0, 30, 0),
     )
     Label(
-        g3[1, 1, Top()],
+        g2[1, 1, Top()],
         "b) Proportion of simulations per comparison sign";
         lab_opt...,
         padding=(-65, 0, 15, 0),
     )
+
+    # Add over-under info labels
     for g in [g1]
         opt = (; halign=:center, fontsize=12, tellheight=false, tellwidth=false)
         Label(g[1, 1, Top()], "⬅️ Underestimation"; padding=(-200, 0, -15, 0), opt...)
         Label(g[1, 1, Top()], "Overestimation ➡️"; padding=(200, 0, -15, 0), opt...)
     end
 
+    # Optionally add summary panel
+    addsummary = false
+    if addsummary
+        # g0 = GridLayout(f[-1:0, 1:3])
+        g0 = GridLayout(f[(end + 1):(end + 2), 1:3])
+        ax0 = make_summary_ax!(g0[:, :]; u=u)
+        vlines!(ax0, [0.0]; linestyle=:solid, color=:lightgrey, linewidth=2.0)
+        linkxaxes!(ax1, ax2, ax0)
+    end
+
     # Figure
     save(plotsdir("ranges_overlap_minimal.png"), f)
-    f
-end
-
-begin
-    # Figure options
-    f = Figure(; size=(900, 700))
-
-    # GridLayout
-    g1 = GridLayout(f[1:5, 1:4])
-    g1a = GridLayout(g1[:, 1:2])
-    g1b = GridLayout(g1[:, 3:4])
-    g1l = GridLayout(g1[:, 5])
-    g3 = GridLayout(f[(end + 1):(end + 4), :])
-    g3a = GridLayout(g3[:, 1:2])
-    g3b = GridLayout(g3[:, 3:4])
-    g3l = GridLayout(g3[:, 5])
-
-    # Bands
-    res1a = @rsubset(res_bands, :offset <= 0.0)
-    res1b = @rsubset(res_bands, :offset >= 0.0)
-    ax1a = make_bands_ax!(
-        g1a[:, :]; res=res1a, var=var, rev=false, colour=false, arrowlabels=false
-    )
-    ax1b = make_bands_ax!(
-        g1b[:, :]; res=res1b, var=var, rev=false, colour=false, arrowlabels=false
-    )
-    hideydecorations!(ax1b; grid=false)
-    # Comparison axis
-    d1a = @rsubset(d, :offset <= 0.0)
-    d1b = @rsubset(d, :offset >= 0.0)
-    sc1a = make_comps_ax!(ax1a; d=d1a, res=res1a)
-    sc1b = make_comps_ax!(ax1b; d=d1b, res=res1b)
-    # Overlap bands
-    res3a = @rsubset(overlap_bands, :offset <= 0.0)
-    res3b = @rsubset(overlap_bands, :offset >= 0.0)
-    ax3a = make_overlap_bands!(g3a[:, :]; res=res3a, rev=false, title="Underestimation")
-    ax3b = make_overlap_bands!(g3b[:, :]; res=res3b, rev=false, title="Overestimation")
-    vlines!(ax3a, [0.0]; linestyle=:solid, color=:lightgrey)
-    vlines!(ax3b, [0.0]; linestyle=:solid, color=:lightgrey)
-    hideydecorations!(ax3b; grid=false)
-
-    # Legends
-    leg_opt = (; framevisible=false, merge=true, halign=:left)
-    Legend(g1l[:, :], ax1a, "Comparison values"; leg_opt..., tellwidth=false)
-    Legend(g3l[:, :], ax3a, "Comparison sign"; leg_opt..., tellwidth=false)
-
-    # Adjust axis limits
-    ymin = minimum(res_bands.low)
-    ymax = maximum(res_bands.upp)
-    yabsmax = maximum(abs.([ymin, ymax]))
-    yoff = 0.1yabsmax
-    ylims!(ax1a, ymin - yoff, ymax + yoff)
-    ylims!(ax1b, ymin - yoff, ymax + yoff)
-
-    # Titles
-    ax1a.title = "Underestimation"
-    ax1b.title = "Overestimation"
-
-    # Align axes
-    # ax1a.xreversed=true
-    # ax3a.xreversed=true
-    linkxaxes!(ax1a, ax3a)
-    linkxaxes!(ax1b, ax3b)
-    linkyaxes!(ax1a, ax1b)
-    linkyaxes!(ax3a, ax3b)
-
-    # Add labels
-    pad = (-65, 0, 30, 0)
-    lab_opt = (; halign=:left, font=:bold, padding=pad)
-    Label(
-        g1[1, 1, Top()],
-        "a) Comparison of efficiencies between range estimations";
-        lab_opt...,
-    )
-    Label(g3[1, 1, Top()], "b) Proportion of simulations per comparison sign"; lab_opt...)
-
-    # Figure
-    save(plotsdir("ranges_overlap_minimal_split.png"), f)
-    f
-end
-
-## Mix overlap & efficiency sign
-
-begin
-    # Select results for comparison
-    set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(
-        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
-    )
-
-    # Select results for bands
-    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
-    var = :offset
-
-    # Figure options
-    f = Figure(; size=(800, 750))
-    rev = false
-
-    # Create figure
-    g1 = GridLayout(f[1:6, 1:2])
-    g3 = GridLayout(f[:, end + 1])
-    g1, g3 = make_overlap_ax!(
-        g1, g3; d=d, u=u, rev=rev, l1="A) Efficiency comparison between range estimations"
-    )
-    ax2 = make_bands_ax!(
-        f[(end + 1):(end + 5), 1:(end - 1)]; res=res_bands, var=var, rev=rev
-    )
-    Legend(f[7:end, end], ax2, "90% Percentile range"; framevisible=false, width=200)
-    Label(
-        f[7, 1, Top()],
-        "B) Percentile range of efficiency differences";
-        halign=:left,
-        font=:bold,
-        padding=(-65, 0, 10, 0),
-    )
-    # Align Axis labels
-    ax1 = content(g1[1, 1])
-    yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 10
-    ax1.yticklabelspace = yspace
-    ax2.yticklabelspace = yspace
-    # Save
-    save(plotsdir("ranges_mixed.png"), current_figure())
     f
 end

@@ -1,4 +1,8 @@
+## Extra figures
+
+# Run main script first
 include("09_ranges_plots.jl")
+
 ## Add sampling effort over area
 
 # Add area and sampling effort
@@ -156,5 +160,91 @@ begin
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "Range estimations"; halign=:left, font=:bold, padding=pad)
     save(plotsdir("supp", "ranges_efficiencies.png"), f)
+    f
+end
+
+## Band figures for sign only (no overlap)
+
+begin
+    # Figure options
+    f = Figure(; size=(900, 450))
+    rev = false
+
+    # Select results for bands
+    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
+    var = :offset
+
+    # Bands
+    p1 = f[1:5, 1:3]
+    ax = make_bands_ax!(p1; rev=false)
+    Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
+    # ax = Axis(p1)
+
+    # Select results for comparison
+    set = collect(-0.5:0.1:0.5)
+    d = @rsubset(within_comps, :offset in set)
+    u = @rsubset(unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"])
+
+    # Comparison axis
+    Random.seed!(42)
+    col1 = Makie.wong_colors()[1]
+    col2 = Makie.wong_colors()[2]
+    colfunc(x) = [v < 0 ? col1 : col2 for v in x]
+    scatter!(
+        ax,
+        [o + 0.02 * (rand() - 0.5) for o in d.offset],
+        d.value;
+        color=colfunc(d.value),
+        markersize=5,
+        alpha=0.7,
+    )
+
+    # Set axis limits
+    ymin = minimum(res_bands.low)
+    ymax = maximum(res_bands.upp)
+    yoff = 0.1maximum(abs.([ymin, ymax]))
+    ylims!(ax, minimum(res_bands.low) - yoff, maximum(res_bands.upp) + yoff)
+
+    # Summary panel
+    d3 = @rsubset(u, :set == "ranges")
+    p2 = f[end + 1, 1:(end - 1)]
+    ax0 = Axis(p2; yticks=([0.5, 1.5], ["Negative", "Positive"]))
+    m34 = mapping(
+        :offset,
+        [1];
+        stack=:countmeasure => sorter(["sign_neg", "sign_pos"]),
+        color=:countmeasure => sorter(["sign_neg", "sign_pos"]),
+        bar_labels=:label => verbatim,
+    )
+    v3 = visual(
+        BarPlot;
+        direction=:y,
+        label_position=:center,
+        label_color=:white,
+        label_font=:bold,
+        label_size=14,
+        alpha=0.85,
+    )
+    draw!(ax0, data(d3) * m34 * v3)
+    hidexdecorations!(ax0;)
+    hideydecorations!(ax0; ticklabels=false, ticks=false)
+    hidespines!(ax0)
+
+    # Align axes
+    linkxaxes!(ax, ax0)
+
+    # Add labels
+    pad = (-65, 0, 10, 0)
+    Label(
+        p1[1, 1, Top()],
+        "Efficiency comparison between range estimations";
+        halign=:left,
+        font=:bold,
+        padding=pad,
+    )
+    Label(p2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
+
+    # Figure
+    save(plotsdir("ranges_efficiency_one.png"), f)
     f
 end
