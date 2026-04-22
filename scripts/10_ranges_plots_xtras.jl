@@ -29,7 +29,7 @@ begin
         visual(ScatterLines; colorscale=(x -> x + 0.5), markersize=3, linewidth=0.5)
     vline = mapping([0.0]) * visual(VLines; linestyle=:dash, color=:grey)
     fg = draw(f + vline, scales(; Color=(; colormap=:broc)))
-    save(plotsdir("ranges_area_scatterlines.png"), fg)
+    save(plotsdir("supp", "ranges_area_scatterlines.png"), fg)
     fg
 end
 
@@ -70,7 +70,7 @@ begin
     scl = scales(; Color=(; colormap=:cividis))
     fg1 = draw(data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
     # Figure
-    save(plotsdir("ranges_area_scatter_area_per_site.png"), fg1)
+    save(plotsdir("supp", "ranges_area_scatter_area_per_site.png"), fg1)
     fg1
 end
 
@@ -245,6 +245,6 @@ begin
     Label(p2[1, 1, Top()], "Sign summary"; font=:bold, halign=:left, padding=pad)
 
     # Figure
-    save(plotsdir("ranges_efficiency_one.png"), f)
+    save(plotsdir("supp", "ranges_efficiency_one.png"), f)
     f
 end
