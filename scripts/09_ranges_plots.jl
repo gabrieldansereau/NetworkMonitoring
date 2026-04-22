@@ -427,6 +427,6 @@ begin
     end
 
     # Figure
-    save(plotsdir("ranges_overlap_minimal.png"), f)
+    save(plotsdir("ranges_overlap.png"), f)
     f
 end
