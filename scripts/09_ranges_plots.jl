@@ -4,7 +4,7 @@
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
-pmax_opt = "n_at_pmax3"
+pmax_opt = "n_at_pmax4"
 effs_estimations = CSV.read(datadir("efficiency_estimations-$pmax_opt.csv"), DataFrame)
 
 # Inverse lower and upper bounds
