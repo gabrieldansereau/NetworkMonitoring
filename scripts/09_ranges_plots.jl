@@ -113,6 +113,8 @@ sort!(within_bands, :offset)
 
 ## Add sampling effort over area
 
+#=
+
 # Add area and sampling effort
 @chain within_combined_all begin
     @rtransform!(:area = (1 + :offset) * :occ)
@@ -181,6 +183,9 @@ begin
     save(plotsdir("ranges_area_scatter_area_per_site.png"), fg1)
     fg1
 end
+
+=#
+
 ## Plot comparisons and bands
 
 # Combined figure
