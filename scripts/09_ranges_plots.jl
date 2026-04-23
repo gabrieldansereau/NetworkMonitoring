@@ -75,9 +75,9 @@ within_combined_all = comparewithin(
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
-    f=(n, n2) -> n / n2,
+    f=(n, n2) -> n - n2,
 )
-flipthatcomp!(within_combined_all, unique(within_combined_all.variable); f=n -> 1 / n)
+flipthatcomp!(within_combined_all, unique(within_combined_all.variable))
 @rtransform!(
     within_combined_all, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
 )
@@ -94,8 +94,8 @@ unique_comps = @chain within_combined_all begin
     @groupby(:set, :variable, :offset)
     @combine(
         :prop_sim = length(:value),
-        :count_pos = count(>=(1.0), :value) / length(:value),
-        :count_neg = count(<(1.0), :value) / length(:value)
+        :count_pos = count(>=(0), :value) / length(:value),
+        :count_neg = count(<(0), :value) / length(:value)
     )
     @transform(:prop_sim = :prop_sim ./ maximum(:prop_sim))
     stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
@@ -114,7 +114,7 @@ end
 # Add an Entry for offset of zero
 push!(
     within_bands,
-    (; set="ranges", variable="True-0.0", offset=0.0, low=1.0, med=1.0, upp=1.0),
+    (; set="ranges", variable="True-0.0", offset=0.0, low=0.0, med=0.0, upp=0.0),
 )
 sort!(within_bands, :offset)
 
@@ -228,7 +228,7 @@ begin
             :variable =>
                 renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
             :value => "Efficiency compared to True Range";
-            color=:value => (x -> x >= 1.0),
+            color=:value => (x -> x > 0.0),
         )
         rains = visual(
             RainClouds;
@@ -238,7 +238,7 @@ begin
             clouds=nothing,
             orientation=:horizontal,
         )
-        vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
+        vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
         hline =
             mapping([length(unique(u.variable)) / 2 + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey)
@@ -323,20 +323,20 @@ begin
         # Two band color option
         col1 = Makie.wong_colors()[1]
         col2 = Makie.wong_colors()[2]
-        lowpos = [l < 1 ? 1.0 : l for l in low]
-        lowneg = [l < 1 ? l : 1.0 for l in low]
-        upppos = [l < 1 ? 1.0 : l for l in upp]
-        uppneg = [l < 1 ? l : 1.0 for l in upp]
+        lowpos = [l < 0 ? 0.0 : l for l in low]
+        lowneg = [l < 0 ? l : 0.0 for l in low]
+        upppos = [l < 0 ? 0.0 : l for l in upp]
+        uppneg = [l < 0 ? l : 0.0 for l in upp]
         band!(ax, x, lowneg, uppneg; alpha=0.6, label="Lower efficiency", color=col1)
         band!(ax, x, lowpos, upppos; alpha=0.6, label="Higher efficiency", color=col2)
-        cf(x) = [v < 1 ? col1 : col2 for v in x]
+        cf(x) = [v < 0 ? col1 : col2 for v in x]
         lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
         lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
         lines!(ax, x, med; label="Median", color=col1)
 
         # Common options
         vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey)
-        hlines!(ax, 1.0; linestyle=:dash, color=:black)
+        hlines!(ax, 0.0; linestyle=:dash, color=:black)
 
         # Add labels
         Label(
@@ -407,7 +407,7 @@ effs_overlap = @chain effs_estimations begin
     # Assess the overlap sign
     @rtransform(
         :overlap_sign =
-            :overlap == false ? (:value < 1 ? "negative" : "positive") : "overlap"
+            :overlap == false ? (:value < 0 ? "negative" : "positive") : "overlap"
     )
     # Filter out columns used for intervals and order nicely
     @select(
@@ -495,7 +495,7 @@ begin
             clouds=nothing,
             orientation=:horizontal,
         )
-        vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
+        vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
         hline =
             mapping([length(unique(u.variable)) / 2 + 0.5]) *
             visual(HLines; linestyle=:solid, color=:lightgrey)
@@ -594,7 +594,7 @@ begin
         # Common options
         if addlines
             vlines!(ax, 0.0; linestyle=:solid, color=:grey)
-            hlines!(ax, 1.0; linestyle=:dash, color=:black)
+            hlines!(ax, 0.0; linestyle=:dash, color=:black)
         end
 
         return ax
