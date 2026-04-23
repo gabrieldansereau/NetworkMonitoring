@@ -162,7 +162,7 @@ function comparewithin(
 end
 
 # Flip some comparison values
-function flipthatcomp!(df, toflip)
+function flipthatcomp!(df, toflip; f=(x) -> -x)
     for comp in toflip
         # Arrange new comparison
         v1, v2 = split(replace(comp, "Δ" => ""), "_")
@@ -172,7 +172,7 @@ function flipthatcomp!(df, toflip)
         # Update
         new = @view df[inds, :]
         @rtransform!(new, :variable = newcomp)
-        @rtransform!(new, :value = -(:value))
+        @rtransform!(new, :value = f(:value))
     end
     return df
 end
