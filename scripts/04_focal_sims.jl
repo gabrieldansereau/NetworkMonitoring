@@ -296,7 +296,7 @@ if adjust_effort
     nbons
 else
     nmax = 500
-    bonrange = collect(0:50:nmax)
+    bonrange = collect(0:STEP:nmax)
     replace!(bonrange, 0 => 1)
     nbons = Dict{Float64,Vector{Int64}}(off => bonrange for off in offsets)
 end
