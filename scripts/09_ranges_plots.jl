@@ -369,6 +369,7 @@ begin
         font=:bold,
         padding=(-65, 0, 10, 0),
     )
+    Label(f[end:end, end, Bottom()], string(pmax_opt); font=:bold)
     # Align Axis labels
     ax1 = content(g1[1, 1])
     yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 2
@@ -614,6 +615,7 @@ begin
         font=:bold,
         padding=(-65, 0, 30, 0),
     )
+    Label(f[end:end, end, Bottom()], string(pmax_opt); font=:bold)
     # Align Axis labels
     ax1 = content(g1[1, 1])
     yspace = maximum(tight_yticklabel_spacing!, [ax1, ax2]) + 2
