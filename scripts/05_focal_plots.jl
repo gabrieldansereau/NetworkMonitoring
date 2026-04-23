@@ -685,7 +685,6 @@ fig_estimation = begin
             # Get the saturation parameter for the curve
             pm = pmax ? unique(b.pmax)[1] : 1.0
             eff_a = efficiency_gridsearch(b.nbon, b.med, pm; f=exp)
-            @info "$v: a = $eff_a"
             eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low, pm; f=exp)
             eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp, pm; f=exp)
             # Get the efficiencies for comparison
@@ -697,6 +696,7 @@ fig_estimation = begin
             eff_upp = efficiency(
                 b.nbon, b.confint_upp; f=exp, pmax=pm, option=option, n=nv, p=p
             )
+            @info "$v: a = $(round(Int, eff_a)), eff=$(round(Int, eff)), 90% CI=$(round.(Int, sort([eff_low, eff_upp])))"
             if v == "True-0.00"
                 global _nbon = b.nbon
                 global _med = b.med
@@ -778,6 +778,8 @@ fig_estimation = begin
             ax0.xlabel = "Efficiency integral $(pm_t)$(adj_n)$(adj_e)"
         elseif option == :n_at_p
             ax0.xlabel = "Number of sites at p = $p $(pm_t)$(adj_n)$(adj_e)"
+        elseif startswith(string(option), "n_at_pmax")
+            ax0.xlabel = "Number of sites at p = $p ($option)"
         elseif option == :p_at_n
             if n isa Dict
                 ax0.xlabel = "Proportion at maximum n"
@@ -880,17 +882,22 @@ efficiency_n_at_p(a_under_pmax / pmax, p * pmax, pmax)
 # est-ce que c'est valide dans tous les cas?
 efficiency_n_at_p(a_under_pmax, p * pmax, pmax) / pmax
 # équivalent
+(1 + (1 - pmax)) * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+# effet un peu moindre, peut-être plus raisonnable pour les cas où pmax est élevé
+# ex. pour pmax=0.5, donnerait (1+0.5)=1.5*eff vs 1/0.5=2.0*eff
 efficiency_n_at_p(a_under_pmax, p * pmax, pmax) / p
 # effet trop important? justifiable? quand même moins que over
 a_under / a_under_pmax
 a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
 # reverse-engineer de valeur sans correction! Genre de produit croisé? Justifiable ?
+# à faire seulement lorsque a_under_pmax < a_under?
 
 # autre alternative avec
 
 # n at pmax
-plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax, p=0.8, pmax=false)
-plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.8, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax1, p=0.8, pmax=true)
 plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax2, p=0.8, pmax=true)
 plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax3, p=0.8, pmax=true)
-plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax4, p=0.8, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax4, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax5, p=0.8, pmax=true)

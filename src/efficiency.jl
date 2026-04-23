@@ -58,10 +58,11 @@ function efficiency(
         :integral,
         :integral_at_n,
         :n_at_p,
-        :n_at_pmax,
+        :n_at_pmax1,
         :n_at_pmax2,
         :n_at_pmax3,
         :n_at_pmax4,
+        :n_at_pmax5,
         :p_at_n,
         :a,
     ]
@@ -77,22 +78,30 @@ function efficiency(
             p = 0.99pmax
         end
         ei = efficiency_n_at_p(a, p, pmax)
-    elseif option == :n_at_pmax
+    elseif option == :n_at_pmax1
         ei = efficiency_n_at_p(a, p * pmax, pmax)
     elseif option == :n_at_pmax2
-        ei = efficiency_n_at_p(a / pmax, p * pmax, pmax)
+        ei = efficiency_n_at_p(a, p * pmax, pmax) / pmax
     elseif option == :n_at_pmax3
-        if pmax < 1.0
-            ei = efficiency_n_at_p(a, p * pmax, pmax) / p
-        else
-            ei = efficiency_n_at_p(a, p * pmax, pmax)
-        end
+        ei = (1 + (1 - pmax)) * efficiency_n_at_p(a, p * pmax, pmax)
     elseif option == :n_at_pmax4
-        # should be
-        # ei = a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
-        # but with p < pmax, we can reverse-engineer it for a=a_under
-        ei = efficiency_n_at_p(a, p, 1.0)
+        # reverse-engineer of what we would get with pmax=false
+        a_under_pmax = a
+        a_under = efficiency_gridsearch(x, y, 1.0; kw...) # rmse=true on purpose
+        ei = a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
         # which is the same as option :n_at_p (when pmax=false to get a = a_under)
+        # and where we compute ei = efficiency_n_at_p(a, p, 1.0)
+    elseif option == :n_at_pmax5
+        # same as :n_at_pmax4 but only correcting when a_under_pmax < a_under (more efficient)
+        a_under_pmax = a
+        a_under = efficiency_gridsearch(x, y, 1.0; kw...) # rmse=true on purpose
+        if a_under_pmax < a_under
+            ei = a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+        else
+            ei = efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+        end
+        # which is the same as option :n_at_p (when pmax=false to get a = a_under)
+        # and where we compute ei = efficiency_n_at_p(a, p, 1.0)
     elseif option == :p_at_n
         ei = saturation(a, pmax)(n)
     elseif option == :a
