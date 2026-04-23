@@ -219,7 +219,7 @@ threshold = thresholds[indexin([sp], probranges.species)...]
 
 # Define the estimation offsets to explore (percentage of range)
 if OUTDIR == "efficiency"
-    offsets = collect(-0.5:0.05:0.5)
+    offsets = collect(-0.5:0.01:0.5)
 else
     offsets = collect([-0.5:0.5:0.5..., 2.0, 4.0]) # keep 2.0 to test removal
 end

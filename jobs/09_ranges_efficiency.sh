@@ -3,7 +3,7 @@
 #SBATCH --array=1-200
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --job-name=09_ranges_efficiency
 #SBATCH --output=jobs/out/%x-%J.out
 
