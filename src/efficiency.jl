@@ -54,7 +54,17 @@ function efficiency(
     rmse=false,
     kw...,
 )
-    opts = [:integral, :integral_at_n, :n_at_p, :p_at_n, :a]
+    opts = [
+        :integral,
+        :integral_at_n,
+        :n_at_p,
+        :n_at_pmax,
+        :n_at_pmax2,
+        :n_at_pmax3,
+        :n_at_pmax4,
+        :p_at_n,
+        :a,
+    ]
     @assert option in opts || error("possible values for keyword option are $opts")
     a, _rmse = efficiency_gridsearch(x, y, pmax; rmse=true, kw...) # rmse=true on purpose
     if option == :integral
@@ -67,6 +77,22 @@ function efficiency(
             p = 0.99pmax
         end
         ei = efficiency_n_at_p(a, p, pmax)
+    elseif option == :n_at_pmax
+        ei = efficiency_n_at_p(a, p * pmax, pmax)
+    elseif option == :n_at_pmax2
+        ei = efficiency_n_at_p(a / pmax, p * pmax, pmax)
+    elseif option == :n_at_pmax3
+        if pmax < 1.0
+            ei = efficiency_n_at_p(a, p * pmax, pmax) / p
+        else
+            ei = efficiency_n_at_p(a, p * pmax, pmax)
+        end
+    elseif option == :n_at_pmax4
+        # should be
+        # ei = a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+        # but with p < pmax, we can reverse-engineer it for a=a_under
+        ei = efficiency_n_at_p(a, p, 1.0)
+        # which is the same as option :n_at_p (when pmax=false to get a = a_under)
     elseif option == :p_at_n
         ei = saturation(a, pmax)(n)
     elseif option == :a

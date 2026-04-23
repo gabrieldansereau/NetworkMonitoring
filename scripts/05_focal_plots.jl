@@ -685,6 +685,7 @@ fig_estimation = begin
             # Get the saturation parameter for the curve
             pm = pmax ? unique(b.pmax)[1] : 1.0
             eff_a = efficiency_gridsearch(b.nbon, b.med, pm; f=exp)
+            @info "$v: a = $eff_a"
             eff_a_low = efficiency_gridsearch(b.nbon, b.confint_low, pm; f=exp)
             eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp, pm; f=exp)
             # Get the efficiencies for comparison
@@ -852,3 +853,44 @@ plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.50, pmax=t
 
 # a - don't use a with pmax=true, only an option for convenience
 plot_focal(; adjust_effort=false, adjust_n=false, option=:a, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:a, pmax=true)
+
+p = 0.8
+pmax = 0.8947368421052632
+a_true = 333.3126399012809
+a_over = 497.2639203889265
+a_under = 356.7687128894338
+a_under_pmax = 308.2999298366703
+
+a_under / a_under_pmax
+a_under_pmax / a_under
+a_under_pmax / p
+
+efficiency_n_at_p(a_true, p, 1.0)
+efficiency_n_at_p(a_over, p, 1.0)
+# références
+efficiency_n_at_p(a_under, p, 1.0)
+# plus haut, juste mais pas bien étalonné
+efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+# bien étalonné, mais trop bas
+efficiency_n_at_p(a_under_pmax, p, 1.0)
+# revient au même
+efficiency_n_at_p(a_under_pmax / pmax, p * pmax, pmax)
+# bien étalonné, juste que ce soit plus bas
+# est-ce que c'est valide dans tous les cas?
+efficiency_n_at_p(a_under_pmax, p * pmax, pmax) / pmax
+# équivalent
+efficiency_n_at_p(a_under_pmax, p * pmax, pmax) / p
+# effet trop important? justifiable? quand même moins que over
+a_under / a_under_pmax
+a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+# reverse-engineer de valeur sans correction! Genre de produit croisé? Justifiable ?
+
+# autre alternative avec
+
+# n at pmax
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax, p=0.8, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax2, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax3, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax4, p=0.8, pmax=false)
