@@ -689,14 +689,16 @@ fig_estimation = begin
             eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp, pm; f=exp)
             # Get the efficiencies for comparison
             nv = n isa Dict ? n[v] : n
-            eff = efficiency(b.nbon, b.med; f=exp, pmax=pm, option=option, n=nv, p=p)
+            eff, rmse = efficiency(
+                b.nbon, b.med; f=exp, pmax=pm, option=option, n=nv, p=p, rmse=true
+            )
             eff_low = efficiency(
                 b.nbon, b.confint_low; f=exp, pmax=pm, option=option, n=nv, p=p
             )
             eff_upp = efficiency(
                 b.nbon, b.confint_upp; f=exp, pmax=pm, option=option, n=nv, p=p
             )
-            @info "$v: a = $(round(Int, eff_a)), eff=$(round(Int, eff)), 90% CI=$(round.(Int, sort([eff_low, eff_upp])))"
+            @info "$v: a = $(round(Int, eff_a)), eff=$(round(Int, eff)), 90% CI=$(round.(Int, sort([eff_low, eff_upp]))), rmse=$(round(rmse; sigdigits=3))"
             if v == "True-0.00"
                 global _nbon = b.nbon
                 global _med = b.med
@@ -859,10 +861,10 @@ plot_focal(; adjust_effort=false, adjust_n=false, option=:a, pmax=true)
 
 p = 0.8
 pmax = 0.8947368421052632
-a_true = 333.3126399012809
-a_over = 497.2639203889265
-a_under = 356.7687128894338
-a_under_pmax = 308.2999298366703
+a_true = 323
+a_over = 499
+a_under = 353
+a_under_pmax = 284
 
 a_under / a_under_pmax
 a_under_pmax / a_under
