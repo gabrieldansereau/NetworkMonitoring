@@ -58,6 +58,7 @@ function efficiency(
         :integral,
         :integral_at_n,
         :n_at_p,
+        :n_at_pmax0,
         :n_at_pmax1,
         :n_at_pmax2,
         :n_at_pmax3,
@@ -67,6 +68,10 @@ function efficiency(
         :a,
     ]
     @assert option in opts || error("possible values for keyword option are $opts")
+    if option == :n_at_pmax0
+        pmax = 1.0
+        option = :n_at_pmax1
+    end
     a, _rmse = efficiency_gridsearch(x, y, pmax; rmse=true, kw...) # rmse=true on purpose
     if option == :integral
         ei = efficiency_integral(a, k, pmax)
