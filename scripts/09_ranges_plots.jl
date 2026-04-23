@@ -4,7 +4,14 @@
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
-effs_estimations = CSV.read(datadir("efficiency_estimations.csv"), DataFrame)
+pmax_opt = "n_at_pmax1"
+effs_estimations = CSV.read(datadir("efficiency_estimations-$pmax_opt.csv"), DataFrame)
+
+# Inverse lower and upper bounds
+@chain effs_estimations begin
+    @rename!(:eff_low1 = :eff_low, :eff_upp1 = :eff_upp)
+    @rename!(:eff_low = :eff_upp1, :eff_upp = :eff_low1)
+end
 
 ## Fill-in all possible offset values for simulations with missing results
 
@@ -495,7 +502,7 @@ begin
         pal = [
             "negative" => Makie.wong_colors()[3],
             "overlap" => Makie.wong_colors()[4],
-            "positive" => :grey,
+            "positive" => Makie.wong_colors()[2],
         ]
         scl = scales(; Color=(; palette=pal))
         fg1 = draw!(g1, data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
@@ -570,7 +577,7 @@ begin
         pal = Dict(
             "negative" => Makie.wong_colors()[3],
             "overlap" => Makie.wong_colors()[4],
-            "positive" => :grey,
+            "positive" => Makie.wong_colors()[2],
         )
         # Bands
         for mes in ["overlap", "negative", "positive"]
