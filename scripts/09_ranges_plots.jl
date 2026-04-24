@@ -4,7 +4,7 @@
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
-pmax_opt = "n_at_pmax4"
+pmax_opt = "n_at_pmax0"
 effs_estimations = CSV.read(datadir("efficiency_estimations-$pmax_opt.csv"), DataFrame)
 
 # Inverse lower and upper bounds
@@ -52,6 +52,7 @@ for sim in sims_missing
             r.eff = max_row.eff[1]
             r.eff_low = max_row.eff_low[1]
             r.eff_upp = max_row.eff_upp[1]
+            r.rmse = max_row.rmse[1]
             r.occ = max_row.occ[1]
             r.deg = max_row.deg
             r.pmax = max_row.pmax
