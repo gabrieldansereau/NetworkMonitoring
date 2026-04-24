@@ -49,7 +49,18 @@ sims_optimized = sims_dict["optimized"]
 sims_species = sims_dict["spp"]
 sims_estimations = sims_dict["estimations"]
 
-## Efficiency
+# Calculate occupancy
+files = filter(startswith("layer_sp_range"), readdir(datadir("efficiency")))
+sort!(files; by=x -> parse(Int, replace(x, "layer_sp_range-" => "", ".tiff" => "")))
+occup = Dict()
+for (i, f) in enumerate(files)
+    l = SDT.SDMLayer(datadir("efficiency", f); bandnumber=1)
+    occup[i] = occupancy(l)
+end
+occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
+sort!(occupdf, :sim)
+
+## Efficiency example
 
 # Select UncertaintySampling only as example
 sims_set = @rsubset(sims_samplers, :sampler == "Uncertainty Sampling")
@@ -76,18 +87,7 @@ begin
 end
 save(plotsdir("supp", "efficiency_example.png"), f)
 
-## Occupancy
-
-# Calculate occupancy
-files = filter(startswith("layer_sp_range"), readdir(datadir("efficiency")))
-sort!(files; by=x -> parse(Int, replace(x, "layer_sp_range-" => "", ".tiff" => "")))
-occup = Dict()
-for (i, f) in enumerate(files)
-    l = SDT.SDMLayer(datadir("efficiency", f); bandnumber=1)
-    occup[i] = occupancy(l)
-end
-occupdf = DataFrame(; sim=collect(keys(occup)), occ=collect(values(occup)))
-sort!(occupdf, :sim)
+## Efficiency for species, samplers and optimized simulations
 
 # Calculate efficiency & assign occupancy
 effs_species = @chain sims_species begin
@@ -107,8 +107,98 @@ effs_optimized = @chain sims_optimized begin
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
 end
-effs_estimations = @chain sims_estimations begin
-    @groupby(:sim, :set, :layer)
+
+# Export
+CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
+CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
+CSV.write(datadir("efficiency_species.csv"), effs_species);
+
+## Efficiency for range estimations
+
+# Prior transformations and grouping for range estimations
+gdf = @chain sims_estimations begin
+    @rtransform(:degmax = :degmax / :deg)
+    rename(:degmax => :pmax)
+    @groupby(:sim, :layer, :offset)
+end
+
+# Calculate the efficiency for the range estimations
+effs_estimations = DataFrame()
+pmax_opt = :n_at_pmax4
+@showprogress "Efficiency for range estimations" for gd in gdf
+    # Extract group info
+    sim = first(gd.sim)
+    layer = first(gd.layer)
+    offset = first(gd.offset)
+    deg = first(gd.deg)
+    pmax = first(gd.pmax)
+    occ = occup[sim]
+    set = first(gd.set)
+    # Compute efficiency
+    eff, rmse = efficiency(
+        gd.nbon, gd.med; f=exp, pmax=pmax, p=0.80, option=pmax_opt, rmse=true
+    )
+    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=pmax, p=0.80, option=pmax_opt)
+    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=pmax, p=0.80, option=pmax_opt)
+    # Export
+    row = (;
+        sim=sim,
+        variable=layer,
+        offset=offset,
+        eff=eff,
+        eff_low=eff_low,
+        eff_upp=eff_upp,
+        rmse=rmse,
+        deg=deg,
+        pmax=pmax,
+        occ=occ,
+        set=set,
+    )
+    push!(effs_estimations, row)
+end
+effs_estimations
+
+# Export
+CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
+
+## Adjust efficiency estimation for point density
+
+# Reference values
+nbon_max = maximum(sims_estimations.nbon)
+nbon_ref = maximum(@rsubset(sims_estimations, :offset == 0.0).nbon)
+ref_file = first(filter(startswith("layer_sp_range"), readdir(datadir("efficiency"))))
+ntot = length(SDT.SDMLayer(datadir("efficiency", ref_file); bandnumber=1))
+ref_density = Dict(k => nbon_ref / (ntot * v) for (k, v) in occup)
+
+# Adjust sampling effort
+sims_effort = @chain sims_estimations begin
+    # Remove unnecessary extreme simulations
+    @rsubset(:offset <= 0.5)
+    # Prepare the columns
+    @select(:sim, :layer, :offset, :nbon)
+    @rtransform(:occ = occup[:sim])
+    # Measure the total area given the offset
+    @rtransform(:area = (1 + :offset) * :occ)
+    @rtransform(:area = :area > 1.0 ? 1.0 : :area)
+    # Get the sampling density and effort-adjusted number of sites
+    @rtransform(
+        :sampling_density = :nbon / (ntot * :area),
+        :ref_density = ref_density[:sim],
+        :nmax = round(Int, nbon_ref * (1 + :offset))
+    )
+    @rtransform(:neff = :nbon * nbon_max / :nmax)
+    # Arrange columns
+    @rselect(:sim, :layer, :offset, :nbon, :nmax, :neff, Not(:area))
+    # Select the sampling-adjusted observations
+    # @rsubset(:sampling_density <= :ref_density)
+    @rsubset(:neff <= nbon_max)
+    # Join back with monitoring resuts
+    leftjoin(sims_estimations; on=[:sim, :layer, :offset, :nbon])
+end
+
+# Calculate efficiency on effort-adjusted n
+effs_effort = @chain sims_effort begin
+    @groupby(:sim, :set, :layer, :offset)
     @combine(
         :eff = efficiency(:nbon, :med; f=exp),
         :eff_low = efficiency(:nbon, :confint_low; f=exp),
@@ -118,30 +208,8 @@ effs_estimations = @chain sims_estimations begin
     rename(:layer => :variable)
 end
 
-# Rename estimations with same number of digits
-@transform!(
-    effs_estimations,
-    :variable = [
-        @sprintf("%s-%.2f", s[1], parse(Float64, s[2])) for s in split.(:variable, "-")
-    ]
-)
-
-# Add the offset as a column
-@chain effs_estimations begin
-    @rtransform!(
-        :offset = parse(
-            Float64, replace(:variable, "Over-" => "", "Under" => "", "True-" => "")
-        )
-    )
-    select!(:sim, :set, :variable, :offset, All())
-    sort!(:sim)
-end
-
 # Export
-CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
-CSV.write(datadir("efficiency_optimized.csv"), effs_optimized);
-CSV.write(datadir("efficiency_species.csv"), effs_species);
-CSV.write(datadir("efficiency_estimations.csv"), effs_estimations);
+CSV.write(datadir("efficiency_estimations-effort_adjusted.csv"), effs_effort);
 
 ## Within-simulation variation
 

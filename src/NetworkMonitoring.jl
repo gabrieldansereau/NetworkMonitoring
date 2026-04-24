@@ -12,6 +12,7 @@ using Reexport
     using Distributions
     using GeoMakie
     using NeutralLandscapes
+    using Printf
     using ProgressMeter
     using Random
     using SparseArrays
@@ -38,6 +39,7 @@ end
 include("colours.jl")
 include("efficiency.jl")
 include("focal.jl")
+include("focal-summary.jl")
 include("metaweb.jl")
 include("monitor.jl")
 include("plots.jl")
