@@ -66,7 +66,7 @@ begin
     pad = (-45, 0, 20, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
-    save(plotsdir("efficiency_distribution.png"), f)
+    save(plotsdir("supp", "efficiency_distribution.png"), f)
     f
 end
 
@@ -121,7 +121,7 @@ begin
     pad = (-50, 0, 30, 0)
     Label(f[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(f[2, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
-    save(plotsdir("efficiency_occupancy.png"), f)
+    save(plotsdir("supp", "efficiency_occupancy.png"), f)
     f
 end
 
@@ -282,7 +282,7 @@ let d = within_combined_dif, u = unique_df
     Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
     Label(g4[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
 
-    save(plotsdir("efficiency_comparison.png"), current_figure())
+    save(plotsdir("supp", "efficiency_comparison_all.png"), current_figure())
     f
 end
 
