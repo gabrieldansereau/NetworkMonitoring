@@ -143,7 +143,7 @@ let
     # Main panels
     d1 = @rsubset(res_comps, :set == "samplers")
     d2 = @rsubset(res_comps, :set == "layers")
-    m = mapping(:variable => sorter(sortedcomps) => "", :value => log2; color=:overlap)
+    m = mapping(:variable => sorter(sortedcomps) => "", :value; color=:overlap)
     rains = visual(
         RainClouds;
         markersize=5,
@@ -152,7 +152,7 @@ let
         clouds=nothing,
         orientation=:horizontal,
     )
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+    vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
     # Tweak axis
     xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
     xticks = [-6, -4, -2, 0, 2, 4]
@@ -160,8 +160,8 @@ let
     xlab1 = "Efficiency compared to reference (Uncertainty Sampling)"
     xlab2 = "Efficiency compared to reference (Focal Range)"
     # Draw figures
-    fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1, xaxis...))
-    fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2, xaxis...))
+    fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1))
+    fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2))
     linkxaxes!(fg1..., fg2...)
     # Add labels
     pad = (-150, 0, 10, 0)
