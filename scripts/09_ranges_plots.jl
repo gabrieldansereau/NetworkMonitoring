@@ -156,21 +156,22 @@ end
 begin
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(
+    res_comps = @rsubset(within_comps, :offset in set)
+    res_summary = @rsubset(
         unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
     )
 
     # Select results for bands
-    res = @rsubset(overlap_bands, :offset in set)
+    # res_overlap = @rsubset(overlap_bands, :offset in collect(-0.5:0.04:0.5))
+    res_overlap = @rsubset(overlap_bands, :offset >= -0.5, :offset <= 0.5)
     res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
     var = :offset
 
     # Set colour palette
     pal = Dict(
-        "negative" => Makie.wong_colors()[3],
+        "negative" => Makie.wong_colors()[2],
         "overlap" => Makie.wong_colors()[4],
-        "positive" => Makie.wong_colors()[2],
+        "positive" => Makie.wong_colors()[3],
     )
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
 end
@@ -205,10 +206,10 @@ begin
 
         # Two band color option
         if colour
-            col1 = Makie.wong_colors()[1]
-            col2 = Makie.wong_colors()[2]
-            lab1 = "Lower efficiency"
-            lab2 = "Higher efficiency"
+            col1 = Makie.wong_colors()[2]
+            col2 = Makie.wong_colors()[1]
+            lab1 = "Higher efficiency"
+            lab2 = "Lower efficiency"
         else
             col1 = :grey
             col2 = :grey
@@ -224,7 +225,7 @@ begin
         cf(x) = [v < 0 ? col1 : col2 for v in x]
         lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
         lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
-        lines!(ax, x, med; label="Median", color=col1)
+        lines!(ax, x, med; label="Median", color=col2)
 
         # Common options
         vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey, linewidth=2.0)
@@ -259,7 +260,7 @@ begin
         f = Figure(; size=(900, 450))
 
         p1 = f[1:5, 1:3]
-        ax = make_bands_ax!(p1; rev=false, colour=true, arrowlabels=true)
+        ax = make_bands_ax!(p1; res=res_bands, rev=false, colour=true, arrowlabels=true)
         Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
         f
     end
@@ -267,20 +268,22 @@ end
 
 # Comparison scatter axis
 begin
-    function make_comps_ax!(ax; d=d, res=res_bands)
+    function make_comps_ax!(ax; res=res_comps, bands=res_bands)
         Random.seed!(42)
         sc = scatter!(
             ax,
-            [o + 0.02 * (rand() - 0.5) for o in d.offset],
-            d.value;
-            color=[pal[v] for v in d.overlap],
-            label=[uppercasefirst(v) => (; color=pal[v], markersize=8) for v in d.overlap],
+            [o + 0.02 * (rand() - 0.5) for o in res.offset],
+            res.value;
+            color=[pal[v] for v in res.overlap],
+            label=[
+                uppercasefirst(v) => (; color=pal[v], markersize=8) for v in res.overlap
+            ],
             markersize=5,
             alpha=0.9,
         )
         # Set axis limits
-        ymin = minimum(res.low)
-        ymax = maximum(res.upp)
+        ymin = minimum(bands.low)
+        ymax = maximum(bands.upp)
         yabsmax = maximum(abs.([ymin, ymax]))
         yoff = 0.1yabsmax
         ylims!(ax, ymin - yoff, ymax + yoff)
@@ -289,14 +292,16 @@ begin
     let
         f = Figure(; size=(600, 300))
         ax = Axis(f[1, 1])
-        sc = make_comps_ax!(ax; d=d, res=res_bands)
+        sc = make_comps_ax!(ax; res=res_comps, bands=res_bands)
         f
     end
 end
 
 # Overlap lines and bands
 begin
-    function make_overlap_bands!(f; res=res, var=var, rev=false, title="", addlines=true)
+    function make_overlap_bands!(
+        f; res=res_overlap, var=var, rev=false, title="", addlines=true
+    )
         # Axis
         t1, t2 = extrema(set)
         ax = Axis(
@@ -333,19 +338,19 @@ begin
     end
     let
         f = Figure(; size=(600, 300))
-        make_overlap_bands!(f; res=res, var=var, rev=false, title="", addlines=true)
+        make_overlap_bands!(f; res=res_overlap, var=var, rev=false, title="", addlines=true)
         f
     end
 end
 
 # Summary count axis
 begin
-    function make_summary_ax!(gp; u=u)
+    function make_summary_ax!(gp; res=res_summary)
         ax0 = Axis(
             gp;
             yticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]),
             xaxisposition=:top,
-            xticks=sort(u.offset),
+            xticks=sort(res.offset),
         )
         m34 = mapping(
             :offset,
@@ -363,7 +368,7 @@ begin
             label_size=14,
             alpha=0.85,
         )
-        draw!(ax0, data(u) * m34 * v3, scl)
+        draw!(ax0, data(res) * m34 * v3, scl)
         hidexdecorations!(ax0; ticks=false)
         hideydecorations!(ax0; ticklabels=false, ticks=false)
         hidespines!(ax0)
@@ -372,7 +377,7 @@ begin
     let
         f = Figure(; size=(700, 200))
         g = GridLayout(f[:, :])
-        ax = make_summary_ax!(g[:, :]; u=u)
+        ax = make_summary_ax!(g[:, :]; res=res_summary)
         f
     end
 end
@@ -390,9 +395,9 @@ begin
     # Bands
     ax1 = make_bands_ax!(g1[:, :]; res=res_bands, var=var, rev=false, colour=false)
     # Comparison axis
-    sc1 = make_comps_ax!(ax1; d=d, res=res_bands)
+    sc1 = make_comps_ax!(ax1; res=res_comps, bands=res_bands)
     # Overlap bands
-    ax2 = make_overlap_bands!(g2[:, :]; res=overlap_bands, rev=false, title="")
+    ax2 = make_overlap_bands!(g2[:, :]; res=res_overlap, rev=false, title="")
 
     # Legends
     leg_opt = (; framevisible=false, merge=true, halign=:left)
@@ -429,7 +434,7 @@ begin
     if addsummary
         # g0 = GridLayout(f[-1:0, 1:3])
         g0 = GridLayout(f[(end + 1):(end + 2), 1:3])
-        ax0 = make_summary_ax!(g0[:, :]; u=u)
+        ax0 = make_summary_ax!(g0[:, :]; res=res_summary)
         vlines!(ax0, [0.0]; linestyle=:solid, color=:lightgrey, linewidth=2.0)
         linkxaxes!(ax1, ax2, ax0)
     end

@@ -6,16 +6,16 @@ include("09_ranges_plots.jl")
 ## Add sampling effort over area
 
 # Add area and sampling effort
-@chain within_comps begin
-    @rtransform!(:area = (1 + :offset) * :occ)
-    @rtransform!(:area = :area > 1.0 ? 1.0 : :area)
-    @rtransform!(:area_per_site = :area / 500 * 100)
-    @rtransform!(:site_per_area = (500 / 10_000) / :area)
+within_comps_xtras = @chain within_comps begin
+    @rtransform(:area = (1 + :offset) * :occ)
+    @rtransform(:area = :area > 1.0 ? 1.0 : :area)
+    @rtransform(:area_per_site = :area / 500 * 100)
+    @rtransform(:site_per_area = (500 / 10_000) / :area)
 end
 
 # Visualize area
-begin
-    u = @rsubset(within_comps, :offset >= -0.5, :offset <= 0.5)
+let
+    u = @rsubset(within_comps_xtras, :offset >= -0.5, :offset <= 0.5)
     @rtransform!(u, :side = first(split(:variable, "-")))
     f =
         data(u) *
@@ -34,10 +34,10 @@ begin
 end
 
 # Area per site
-begin
+let
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
+    d = @rsubset(within_comps_xtras, :offset in set)
     rev = true
 
     # Random seed for jitter
@@ -95,48 +95,9 @@ for v in sorted
     palette[v] = col
 end
 
-# Plot all efficiencies
-begin
-    Random.seed!(42) # for jitter
-    eff = :eff => "efficiency"
-    layer =
-        mapping(
-            :variable => sorter(sorted) => "", eff; color=:variable => (x -> palette[x])
-        ) * visual(
-            RainClouds;
-            markersize=5,
-            jitter_width=0.1,
-            plot_boxplots=false,
-            orientation=:horizontal,
-        )
-    vline = mapping([med]) * visual(VLines; linestyle=:dash)
-    f1 = data(effs_estimations) * layer + vline
-    f = Figure(; size=(700, 800))
-    # sc = scales(; Color=(; palette=palette))
-    ylog2 = (; axis=(;))
-    fg1 = draw!(f[1, 1], f1; ylog2...)
-    pad = (-45, 0, 20, 0)
-    Label(f[1, 1, Top()], "Range estimations"; halign=:left, font=:bold, padding=pad)
-    save(plotsdir("supp", "ranges_efficiencies_all.png"), f)
-    f
-end
-
-# Plot subset
-begin
-    set = [
-        "Under-0.50",
-        "Under-0.40",
-        "Under-0.30",
-        "Under-0.20",
-        "Under-0.10",
-        "True-0.00",
-        "Over-0.10",
-        "Over-0.20",
-        "Over-0.30",
-        "Over-0.40",
-        "Over-0.50",
-    ]
-    res = filter(:variable => in(set), effs_estimations)
+# Plot subset of efficiencies
+let
+    res = filter(:offset => in(collect(-0.5:0.1:0.5)), effs_estimations)
     Random.seed!(42) # for jitter
     eff = :eff => "efficiency"
     layer =
@@ -165,36 +126,33 @@ end
 
 ## Band figures for sign only (no overlap)
 
-begin
+let
     # Figure options
     f = Figure(; size=(900, 450))
     rev = false
 
-    # Select results for bands
-    res_bands = @rsubset(within_bands, :offset >= -0.5, :offset <= 0.5)
-    var = :offset
-
     # Bands
     p1 = f[1:5, 1:3]
-    ax = make_bands_ax!(p1; rev=false)
+    ax = make_bands_ax!(p1; res=res_bands, rev=false)
     Legend(f[:, end + 1], ax, "90% Percentile range"; framevisible=false)
     # ax = Axis(p1)
 
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
-    d = @rsubset(within_comps, :offset in set)
-    u = @rsubset(unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"])
+    res_sign_summary = @rsubset(
+        unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"]
+    )
 
     # Comparison axis
     Random.seed!(42)
-    col1 = Makie.wong_colors()[1]
-    col2 = Makie.wong_colors()[2]
+    col1 = Makie.wong_colors()[2]
+    col2 = Makie.wong_colors()[1]
     colfunc(x) = [v < 0 ? col1 : col2 for v in x]
     scatter!(
         ax,
-        [o + 0.02 * (rand() - 0.5) for o in d.offset],
-        d.value;
-        color=colfunc(d.value),
+        [o + 0.02 * (rand() - 0.5) for o in res_comps.offset],
+        res_comps.value;
+        color=colfunc(res_comps.value),
         markersize=5,
         alpha=0.7,
     )
@@ -206,14 +164,13 @@ begin
     ylims!(ax, minimum(res_bands.low) - yoff, maximum(res_bands.upp) + yoff)
 
     # Summary panel
-    d3 = @rsubset(u, :set == "ranges")
     p2 = f[end + 1, 1:(end - 1)]
     ax0 = Axis(p2; yticks=([0.5, 1.5], ["Negative", "Positive"]))
     m34 = mapping(
         :offset,
         [1];
         stack=:countmeasure => sorter(["sign_neg", "sign_pos"]),
-        color=:countmeasure => sorter(["sign_neg", "sign_pos"]),
+        color=:countmeasure => sorter(["sign_pos", "sign_neg"]),
         bar_labels=:label => verbatim,
     )
     v3 = visual(
@@ -225,7 +182,7 @@ begin
         label_size=14,
         alpha=0.85,
     )
-    draw!(ax0, data(d3) * m34 * v3)
+    draw!(ax0, data(res_sign_summary) * m34 * v3)
     hidexdecorations!(ax0;)
     hideydecorations!(ax0; ticklabels=false, ticks=false)
     hidespines!(ax0)
