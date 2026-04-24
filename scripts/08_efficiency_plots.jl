@@ -27,11 +27,10 @@ effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
 # Define sorting order across figures
 sortedsamplers = [
+    "Balanced Acceptance",
+    "Balanced Mask",
     "Uncertainty Sampling",
     "Weighted Balanced Acceptance",
-    "Simple Random",
-    "Balanced Acceptance",
-    "Simple Random Mask",
 ]
 sortedlayers = [
     "Focal species range",
@@ -55,6 +54,7 @@ compsdict = Dict(
     "Weighted Balanced Acceptance" => "WBA",
     "Simple Random" => "RS",
     "Balanced Acceptance" => "BA",
+    "Balanced Mask" => "BM",
     "Simple Random Mask" => "SRM",
     "Focal species range" => "FR",
     "Realized interactions" => "RI",
@@ -95,10 +95,10 @@ end
 # Select a reduced number of comparisons
 reducedcomps_dict = Dict(
     # Samplers
-    "ΔRS_US" => "Simple Random",
-    "ΔWBA_US" => "Weighted Balanced Acceptance",
-    "ΔBA_US" => "Balanced Acceptance",
-    "ΔSRM_US" => "Simple Random Mask",
+    "ΔWBA_BA" => "Weighted Balanced Acceptance",
+    "ΔBM_BA" => "Balanced Mask",
+    "ΔUS_BA" => "Uncertainty Sampling",
+    "ΔSRM_BA" => "Simple Random Mask",
     # Layers
     "ΔRI_FR" => "Realized Interactions",
     "ΔSR_FR" => "Species Richness",
@@ -106,7 +106,7 @@ reducedcomps_dict = Dict(
 )
 # Select them
 within_comps = @rsubset within_comps_all :variable in collect(keys(reducedcomps_dict))
-unique_comps = @rsubset res_summary_all :variable in collect(keys(reducedcomps_dict))
+unique_comps = @rsubset unique_comps_all :variable in collect(keys(reducedcomps_dict))
 # Rename simply
 @rtransform! within_comps :variable = reducedcomps_dict[:variable]
 @rtransform! unique_comps :variable = reducedcomps_dict[:variable]

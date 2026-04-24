@@ -50,6 +50,7 @@ function summarize_focal(df; id=0, confint=false, α=0.05)
             monitored.sampler,
             "UncertaintySampling" => "Uncertainty Sampling",
             "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+            "BalancedAcceptanceMask" => "Balanced Mask",
             "BalancedAcceptance" => "Balanced Acceptance",
             "SimpleRandomMask" => "Simple Random Mask",
             "SimpleRandom" => "Simple Random",
