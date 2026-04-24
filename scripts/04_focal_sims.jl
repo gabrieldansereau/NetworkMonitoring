@@ -12,6 +12,9 @@ mkpath(datadir(OUTDIR))
 
 # Use job id to random results
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
+if (@isdefined idn)
+    id += idn
+end
 idp = lpad(id, 3, "0")
 
 # Set number of replicates for short interactive run
@@ -44,7 +47,7 @@ SDT.SimpleSDMLayers.save(
 )
 
 # Test run focal monitoring
-@info "Test run"
+@info "Test run - id=$id"
 Random.seed!(333)
 monitored_sp = focal_monitoring(
     nets_dict, sp; name="test", type=[:possible], nrep=2, nbons=1:5:100
