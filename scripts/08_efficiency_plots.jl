@@ -143,11 +143,7 @@ let
     # Main panels
     d1 = @rsubset(res_comps, :set == "samplers")
     d2 = @rsubset(res_comps, :set == "layers")
-    m = mapping(
-        :variable => sorter(sortedcomps) => "",
-        :value => "Efficiency compared to reference (Uncertainty Sampling)";
-        color=:overlap,
-    )
+    m = mapping(:variable => sorter(sortedcomps) => "", :value => log2; color=:overlap)
     rains = visual(
         RainClouds;
         markersize=5,
@@ -156,19 +152,18 @@ let
         clouds=nothing,
         orientation=:horizontal,
     )
-    vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
-
-    xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
-    xlog2 = (; axis=(; xtickformat=xlog2f))
-    # xaxis = (; axis=(; xticks=0:2:10))
-    fg1 = draw!(g1, data(d1) * m * rains + vline, scl;)
-    fg2 = draw!(
-        g2,
-        data(d2) * m * rains + vline,
-        scl;
-        axis=(; xlabel="Efficiency compared to reference (Focal Range)"),
-    )
+    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+    # Tweak axis
+    xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
+    xticks = [-6, -4, -2, 0, 2, 4]
+    xaxis = (; xticks=xticks, xtickformat=xlog2f)
+    xlab1 = "Efficiency compared to reference (Uncertainty Sampling)"
+    xlab2 = "Efficiency compared to reference (Focal Range)"
+    # Draw figures
+    fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1, xaxis...))
+    fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2, xaxis...))
     linkxaxes!(fg1..., fg2...)
+    # Add labels
     pad = (-150, 0, 10, 0)
     Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
