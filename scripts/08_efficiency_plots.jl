@@ -63,13 +63,13 @@ compsdict = Dict(
 )
 set = unique(effs_combined.variable)
 within_comps_all = comparewithin(
-    effs_combined, set; labels=compsdict, f=(n1, n2) -> n1 - n2
+    effs_combined, set; labels=compsdict, f=(n1, n2) -> n1 / n2
 )
 
 # Let's flip a comparison for illustration
 all_comps = unique(within_comps_all.variable)
 toflip = all_comps
-flipthatcomp!(within_comps_all, toflip; f=n -> -n)
+flipthatcomp!(within_comps_all, toflip; f=n -> 1 / n)
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
 unique_comps_all = @chain within_comps_all begin
@@ -156,17 +156,12 @@ let
     # Tweak axis
     xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
     xticks = [-6, -4, -2, 0, 2, 4]
-    # xaxis = (; xticks=xticks, xtickformat=xlog2f)
-    xmax = maximum(res_comps.value)
-    xticks = collect(-6000:3000:6000)
-    xaxis = (;
-        xticks=xticks, xtickformat="{:.0f}", limits=((-xmax, xmax), (nothing, nothing))
-    )
+    xaxis = (; xticks=xticks, xtickformat=xlog2f)
     xlab1 = "Efficiency compared to reference (Uncertainty Sampling)"
     xlab2 = "Efficiency compared to reference (Focal Range)"
     # Draw figures
-    fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1, xaxis...))
-    fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2, xaxis...))
+    fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1))
+    fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2))
     linkxaxes!(fg1..., fg2...)
     # Add labels
     pad = (-150, 0, 10, 0)
