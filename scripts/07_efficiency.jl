@@ -27,10 +27,7 @@ for set in sets
         filter!(:monitored => !ismissing, monitored_all)
 
         # Summmarize results not combined previously
-        _confint = set == "estimations" ? true : false
-        monitored = summarize_focal(
-            monitored_all; id=parse(Int, id), confint=_confint, α=0.10
-        )
+        monitored = summarize_focal(monitored_all; id=parse(Int, id), confint=true, α=0.10)
 
         # Add species rank and occupancy
         if set == "spp"
@@ -90,22 +87,43 @@ save(plotsdir("supp", "efficiency_example.png"), f)
 ## Efficiency for species, samplers and optimized simulations
 
 # Calculate efficiency & assign occupancy
+eff_opt = (; f=exp, option=:n_at_p, p=0.8)
+gp_vars = [:sim, :set]
+ordered_vars = [:sim, :variable, :eff, :eff_low, :eff_upp, :rmse, :occ, :set]
 effs_species = @chain sims_species begin
-    @groupby(:sim, :set, :sp, :deg, :rank, :occ)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
+    @groupby(gp_vars, :sp, :deg, :rank, :occ)
+    @combine(
+        :eff = Ref(efficiency(:nbon, :med; eff_opt..., rmse=true)),
+        :eff_low = efficiency(:nbon, :confint_low; eff_opt...),
+        :eff_upp = efficiency(:nbon, :confint_upp; eff_opt...),
+    )
+    @rtransform(:rmse = getfield(:eff, ^(:rmse)), :eff = getfield(:eff, ^(:ei)))
     rename(:sp => :variable)
+    select(ordered_vars, All())
 end
 effs_samplers = @chain sims_samplers begin
-    @groupby(:sim, :set, :sampler)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
+    @groupby(gp_vars, :sampler)
+    @combine(
+        :eff = Ref(efficiency(:nbon, :med; eff_opt..., rmse=true)),
+        :eff_low = efficiency(:nbon, :confint_low; eff_opt...),
+        :eff_upp = efficiency(:nbon, :confint_upp; eff_opt...),
+    )
+    @rtransform(:rmse = getfield(:eff, ^(:rmse)), :eff = getfield(:eff, ^(:ei)))
     @rtransform(:occ = occup[:sim])
     rename(:sampler => :variable)
+    select(ordered_vars, All())
 end
 effs_optimized = @chain sims_optimized begin
-    @groupby(:sim, :set, :layer)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
+    @groupby(gp_vars, :layer)
+    @combine(
+        :eff = Ref(efficiency(:nbon, :med; eff_opt..., rmse=true)),
+        :eff_low = efficiency(:nbon, :confint_low; eff_opt...),
+        :eff_upp = efficiency(:nbon, :confint_upp; eff_opt...),
+    )
+    @rtransform(:rmse = getfield(:eff, ^(:rmse)), :eff = getfield(:eff, ^(:ei)))
     @rtransform(:occ = occup[:sim])
     rename(:layer => :variable)
+    select(ordered_vars, All())
 end
 
 # Export
