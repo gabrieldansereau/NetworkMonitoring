@@ -47,9 +47,52 @@ sort!(effs_samplers, order(:variable; by=x -> sorteddict[x]))
 sort!(effs_optimized, order(:variable; by=x -> sorteddict[x]))
 sort!(effs_combined, order(:variable; by=x -> sorteddict[x]))
 
-## Within-simulation comparisons - Reduced number of comparison
+## Within-simulation comparisons
 
-# Reduce number of comparisons
+# Separate results per simulation
+compsdict = Dict(
+    "Uncertainty Sampling" => "US",
+    "Weighted Balanced Acceptance" => "WBA",
+    "Simple Random" => "RS",
+    "Balanced Acceptance" => "BA",
+    "Simple Random Mask" => "SRM",
+    "Focal species range" => "FR",
+    "Realized interactions" => "RI",
+    "Probabilistic range" => "PR",
+    "Species richness" => "SR",
+)
+set = unique(effs_combined.variable)
+within_comps_all = comparewithin(
+    effs_combined, set; labels=compsdict, f=(n1, n2) -> n1 / n2
+)
+
+# Let's flip a comparison for illustration
+all_comps = unique(within_comps_all.variable)
+toflip = all_comps
+flipthatcomp!(within_comps_all, toflip; f=n -> 1 / n)
+
+# Count positive and negative comparisons per set and variable (across simulations/replicates)
+unique_comps_all = @chain within_comps_all begin
+    @groupby :set :variable
+    @combine(
+        :n = length(:value),
+        :sign_pos = count(>(1), :value) / length(:value),
+        :sign_neg = count(<=(0), :value) / length(:value),
+        :positive = count(==("positive"), :overlap) / length(:overlap),
+        :negative = count(==("negative"), :overlap) / length(:overlap),
+        :overlap = count(==("overlap"), :overlap) / length(:overlap),
+    )
+    @transform :prop_sim = :n ./ maximum(:n)
+    stack(
+        [:sign_pos, :sign_neg, :positive, :negative, :overlap];
+        variable_name=:countmeasure,
+        value_name=:count,
+    )
+    @rtransform :label = "$(round(Int, :count *100)) %"
+    @rtransform :label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label
+end
+
+# Select a reduced number of comparisons
 reducedcomps_dict = Dict(
     # Samplers
     "ΔRS_US" => "Simple Random",
@@ -61,47 +104,49 @@ reducedcomps_dict = Dict(
     "ΔSR_FR" => "Species Richness",
     "ΔPR_FR" => "Probabilistic Range",
 )
-within_combined_dif2 = comparewithin(
-    effs_combined,
-    set;
-    to=["Uncertainty Sampling", "Focal species range"],
-    labels=compsdict,
-    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
-    f=(n, n2) -> n - n2,
-)
-flipthatcomp!(within_combined_dif2, unique(within_combined_dif2.variable))
-@rtransform!(within_combined_dif2, :variable = reducedcomps_dict[:variable])
+# Select them
+within_comps = @rsubset within_comps_all :variable in collect(keys(reducedcomps_dict))
+unique_comps = @rsubset res_summary_all :variable in collect(keys(reducedcomps_dict))
+# Rename simply
+@rtransform! within_comps :variable = reducedcomps_dict[:variable]
+@rtransform! unique_comps :variable = reducedcomps_dict[:variable]
 
-# Count number of positive and negative comparisons
-unique_df2 = @chain within_combined_dif2 begin
-    @groupby(:set, :variable)
-    @combine(
-        :count_pos = count(>(0), :value) / length(:value),
-        :count_neg = count(<=(0), :value) / length(:value)
-    )
-    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
-    @rtransform(:label = "$(round(Int, :count *100)) %")
-    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
-end
+## Plot the comparison
 
 # Visualize
-let d = within_combined_dif2, u = unique_df2, sortedcomps = unique(u.variable)
+begin
+    # Select results for comparison
+    res_comps = within_comps
+    res_summary = @rsubset(
+        unique_comps, :countmeasure in ["positive", "negative", "overlap"]
+    )
+    sortedcomps = unique(res_summary.variable)
+
+    # Set colour palette
+    pal = Dict(
+        "negative" => Makie.wong_colors()[2],
+        "overlap" => Makie.wong_colors()[4],
+        "positive" => Makie.wong_colors()[3],
+    )
+    scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
+end;
+let
     Random.seed!(42)
 
     # Figure
-    f = Figure(; size=(750, 450))
-    g1 = GridLayout(f[1:3, 1:5])
-    g2 = GridLayout(f[4:6, 1:5])
+    f = Figure(; size=(850, 450))
+    g1 = GridLayout(f[1:3, 1:4])
+    g2 = GridLayout(f[4:6, 1:4])
     g3 = GridLayout(f[1:3, (end + 1):(end + 2)])
     g4 = GridLayout(f[4:end, (end - 1):end])
 
     # Main panels
-    d1 = @rsubset(d, :set == "samplers")
-    d2 = @rsubset(d, :set == "layers")
+    d1 = @rsubset(res_comps, :set == "samplers")
+    d2 = @rsubset(res_comps, :set == "layers")
     m = mapping(
         :variable => sorter(sortedcomps) => "",
         :value => "Efficiency compared to reference (Uncertainty Sampling)";
-        color=:value => (x -> x <= 0.0),
+        color=:overlap,
     )
     rains = visual(
         RainClouds;
@@ -111,15 +156,16 @@ let d = within_combined_dif2, u = unique_df2, sortedcomps = unique(u.variable)
         clouds=nothing,
         orientation=:horizontal,
     )
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
+    vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
 
     xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
     xlog2 = (; axis=(; xtickformat=xlog2f))
     # xaxis = (; axis=(; xticks=0:2:10))
-    fg1 = draw!(g1, data(d1) * m * rains + vline;)
+    fg1 = draw!(g1, data(d1) * m * rains + vline, scl;)
     fg2 = draw!(
         g2,
-        data(d2) * m * rains + vline;
+        data(d2) * m * rains + vline,
+        scl;
         axis=(; xlabel="Efficiency compared to reference (Focal Range)"),
     )
     linkxaxes!(fg1..., fg2...)
@@ -128,15 +174,15 @@ let d = within_combined_dif2, u = unique_df2, sortedcomps = unique(u.variable)
     Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
-    d3 = @rsubset(u, :set == "samplers")
-    d4 = @rsubset(u, :set == "layers")
-    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
-    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
+    d3 = @rsubset(res_summary, :set == "samplers")
+    d4 = @rsubset(res_summary, :set == "layers")
+    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
+    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
     m34 = mapping(
         :variable => sorter(sortedcomps),
         [1];
-        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
-        color=:countmeasure => sorter(["count_pos", "count_neg"]),
+        stack=:countmeasure => sorter(["negative", "overlap", "positive"]),
+        color=:countmeasure,
         bar_labels=:label => verbatim,
     )
     v3 = visual(
@@ -157,8 +203,8 @@ let d = within_combined_dif2, u = unique_df2, sortedcomps = unique(u.variable)
         label_size=14,
         alpha=0.85,
     )
-    draw!(ax3, data(d3) * m34 * v3)
-    draw!(ax4, data(d4) * m34 * v4)
+    draw!(ax3, data(d3) * m34 * v3, scl)
+    draw!(ax4, data(d4) * m34 * v4, scl)
 
     hideydecorations!(ax3)
     hidexdecorations!(ax3; ticklabels=false, ticks=false)
@@ -178,43 +224,6 @@ end
 
 ## Within-simulation - All comparisons
 
-# Separate results per simulation
-compsdict = Dict(
-    "Uncertainty Sampling" => "US",
-    "Weighted Balanced Acceptance" => "WBA",
-    "Simple Random" => "RS",
-    "Balanced Acceptance" => "BA",
-    "Simple Random Mask" => "SRM",
-    "Focal species range" => "FR",
-    "Realized interactions" => "RI",
-    "Probabilistic range" => "PR",
-    "Species richness" => "SR",
-)
-set = unique(effs_combined.variable)
-within_combined_dif = comparewithin(
-    effs_combined,
-    set;
-    labels=compsdict,
-    # f=(n, n2) -> efficiency_difference(n, n2; k=10_000),
-    f=(n, n2) -> n - n2,
-)
-
-# Let's flip a comparison for illustration
-toflip = ["ΔFR_RI"]
-flipthatcomp!(within_combined_dif, toflip)
-
-# Count number of positive and negative comparisons
-unique_df = @chain within_combined_dif begin
-    @groupby(:set, :variable)
-    @combine(
-        :count_pos = count(>(0), :value) / length(:value),
-        :count_neg = count(<=(0), :value) / length(:value)
-    )
-    stack([:count_pos, :count_neg]; variable_name=:countmeasure, value_name=:count)
-    @rtransform(:label = "$(round(Int, :count *100)) %")
-    @rtransform(:label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label)
-end
-
 # Visualize
 sortedcomps = [
     # Samplers
@@ -232,10 +241,10 @@ sortedcomps = [
     "ΔRI_PR"
     "ΔRI_SR"
 ]
-let d = within_combined_dif, u = unique_df
+let res_comps = within_comps_all, res_summary = res_summary_all
     Random.seed!(42)
-    d0 = @rsubset(d, :variable in sortedcomps)
-    u0 = @rsubset(u, :variable in sortedcomps)
+    d0 = @rsubset(res_comps, :variable in sortedcomps)
+    u0 = @rsubset(res_summary, :variable in sortedcomps)
 
     # Figure & grid
     f = Figure(; size=(700, 450))
