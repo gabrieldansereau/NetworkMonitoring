@@ -11,6 +11,17 @@ effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 # Remove Simple Random Mask
 @rsubset!(effs_samplers, :variable != "Simple Random Mask")
 
+# Convert outliers - Efficiency should not go beyond 10,000 sites (maximum in landscape)
+# when efficiency is measured as the number of sites to reach 80% of interactions
+for effs in [effs_samplers, effs_optimized, effs_species]
+    lim = 10_000.0
+    @rtransform! effs begin
+        :eff = :eff > lim ? lim : :eff
+        :eff_low = :eff_low > lim ? lim : :eff_low
+        :eff_upp = :eff > lim ? lim : :eff_upp
+    end
+end
+
 # Combine for convenience
 effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
