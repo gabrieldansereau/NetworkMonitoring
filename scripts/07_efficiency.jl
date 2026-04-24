@@ -124,7 +124,7 @@ end
 
 # Calculate the efficiency for the range estimations
 effs_estimations = DataFrame()
-pmax_opt = :n_at_pmax0
+pmax_opt = :n_at_pmax4
 @showprogress "Efficiency for range estimations" for gd in gdf
     # Extract group info
     sim = first(gd.sim)
