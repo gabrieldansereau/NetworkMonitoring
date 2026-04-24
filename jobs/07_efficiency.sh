@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=ctb-tpoisot
-#SBATCH --array=1-100
+#SBATCH --array=1-200
 #SBATCH --ntasks=1
 #SBATCH --mem=4G
 #SBATCH --time=01:40:00

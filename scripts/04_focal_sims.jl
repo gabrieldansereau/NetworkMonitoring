@@ -129,13 +129,11 @@ CSV.write(datadir(OUTDIR, "monitored_spp_occ-$idp.csv"), monitored_spp_occ)
 
 ## Explore variations with different sampler
 
-#=
-
 # Run with replicates
 @info "Samplers"
 Random.seed!(id * 22)
-samplers = [UncertaintySampling, WeightedBalancedAcceptance, SimpleRandom]
-STEP = (OUTDIR == "dev" ? 50 : 5)
+samplers = [UncertaintySampling, WeightedBalancedAcceptance, BalancedAcceptance]
+STEP = (OUTDIR == "dev" ? 50 : 10)
 monitored_samplers = focal_monitoring(
     nets_dict,
     sp,
@@ -143,13 +141,13 @@ monitored_samplers = focal_monitoring(
     name="samplers",
     type=[:realized],
     sampler=samplers,
-    nbons=1:STEP:500,
+    nbons=[1, STEP:STEP:500...],
     nrep=NREP,
     combined=false,
 )
 
 # Variation with focal range mask
-@info "Focal range mask"
+@info "Samplers - Focal range mask"
 Random.seed!(id * 23)
 monitored_mask = focal_monitoring(
     nets_dict,
@@ -157,30 +155,25 @@ monitored_mask = focal_monitoring(
     sp_mask;
     name="samplers",
     type=[:realized],
-    sampler=[BalancedAcceptance, SimpleRandom],
-    nbons=1:STEP:500,
+    sampler=[BalancedAcceptance],
+    nbons=[1, STEP:STEP:500...],
     nrep=NREP,
     combined=false,
 )
-@rtransform!(monitored_mask, :sampler = string(:sampler))
-replace!(monitored_mask.sampler, "SimpleRandom" => "SimpleRandomMask")
+@rtransform!(monitored_mask, :sampler = "BalancedAcceptanceMask")
 append!(monitored_samplers, monitored_mask; promote=true)
 
 # Export
 CSV.write(datadir(OUTDIR, "monitored_samplers-$idp.csv"), monitored_samplers)
 
-=#
-
 ## Explore variations with optimization layers
-
-#=
 
 # Optimize with UncertaintySampling
 @info "Optimization layers"
 Random.seed!(id * 44)
 optim = [richness_spp, degree_realized, probsp_range]
 optimlabels = ["Species richness", "Realized interactions", "Probabilistic range"]
-STEP = (OUTDIR == "dev" ? 50 : 5)
+STEP = (OUTDIR == "dev" ? 50 : 10)
 monitored_optimized = focal_monitoring(
     nets_dict,
     sp,
@@ -188,7 +181,7 @@ monitored_optimized = focal_monitoring(
     name="layers",
     type=[:realized],
     sampler=[UncertaintySampling],
-    nbons=1:STEP:500,
+    nbons=[1, STEP:STEP:500...],
     nrep=NREP,
     combined=false,
 )
@@ -210,9 +203,9 @@ end
 # Export
 CSV.write(datadir(OUTDIR, "monitored_optimized-$idp.csv"), monitored_optimized)
 
-=#
-
 ## Range estimation
+
+#=
 
 # Extract the current threshold
 threshold = thresholds[indexin([sp], probranges.species)...]
@@ -373,3 +366,5 @@ CSV.write(datadir(OUTDIR, "monitored_estimations-$idp.csv"), monitored_estimatio
 SDT.SimpleSDMLayers.save(
     datadir(OUTDIR, "layer_range_estimations-$idp.tiff"), [layers[s] for s in set]
 )
+
+=#
