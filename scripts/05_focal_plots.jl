@@ -609,9 +609,11 @@ fig_estimation = begin
         adjust_n = adjust_n
 
         # Adjust sampling effort
-        _bons = bons_adj
         if adjust_effort
+            _bons = bons_adj
             @rsubset!(res, :nbon <= :nmax)
+        else
+            _bons = bons
         end
         if adjust_n
             @rtransform!(res, :nbon = :neff)
