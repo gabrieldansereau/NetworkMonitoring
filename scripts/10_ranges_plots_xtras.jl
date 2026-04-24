@@ -27,7 +27,7 @@ let
             row=:side,
         ) *
         visual(ScatterLines; colorscale=(x -> x + 0.5), markersize=3, linewidth=0.5)
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash, color=:grey)
+    vline = mapping([1.0]) * visual(VLines; linestyle=:dash, color=:grey)
     fg = draw(f + vline, scales(; Color=(; colormap=:broc)))
     save(plotsdir("supp", "ranges_area_scatterlines.png"), fg)
     fg
@@ -38,7 +38,7 @@ let
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
     d = @rsubset(within_comps_xtras, :offset in set)
-    rev = true
+    rev = false
 
     # Random seed for jitter
     Random.seed!(42)
@@ -58,17 +58,22 @@ let
     rains = visual(
         RainClouds;
         markersize=6,
-        jitter_width=0.30,
+        jitter_width=0.50,
         plot_boxplots=false,
         clouds=nothing,
-        orientation=:horizontal,
+        # orientation=:horizontal,
     )
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
-    hline =
+    hline = mapping([1.0]) * visual(HLines; linestyle=:dash)
+    vline =
         mapping([length(unique(d1.variable)) / 2 + 0.5]) *
-        visual(HLines; linestyle=:solid, color=:lightgrey)
+        visual(VLines; linestyle=:solid, color=:lightgrey)
     scl = scales(; Color=(; colormap=:cividis))
-    fg1 = draw(data(d1) * m * rains + vline + hline, scl; axis=(; xreversed=rev))
+    fg1 = draw(
+        data(d1) * m * rains + vline + hline,
+        scl;
+        axis=(; yreversed=rev, limits=((nothing, nothing), (nothing, 2.2))),
+        figure=(; size=(800, 450)),
+    )
     # Figure
     save(plotsdir("supp", "ranges_area_scatter_area_per_site.png"), fg1)
     fg1

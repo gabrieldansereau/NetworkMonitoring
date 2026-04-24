@@ -76,9 +76,10 @@ within_comps = comparewithin(
     set_all;
     to="True-0.00",
     labels=Dict("True-0.00" => "True"),
-    f=(n, n2) -> n - n2,
+    f=(n, n2) -> n / n2,
+    vref=1.0,
 )
-flipthatcomp!(within_comps, unique(within_comps.variable))
+flipthatcomp!(within_comps, unique(within_comps.variable); f=n -> 1 / n)
 @rtransform!(
     within_comps, :variable = replace(:variable, "Δ" => "", "True" => "", "_" => "")
 )
@@ -94,8 +95,8 @@ unique_comps = @chain within_comps begin
     @groupby :set :variable :offset
     @combine(
         :n = length(:value),
-        :sign_pos = count(>=(0), :value) / length(:value),
-        :sign_neg = count(<(0), :value) / length(:value),
+        :sign_pos = count(>(1), :value) / length(:value),
+        :sign_neg = count(<=(0), :value) / length(:value),
         :positive = count(==("positive"), :overlap) / length(:overlap),
         :negative = count(==("negative"), :overlap) / length(:overlap),
         :overlap = count(==("overlap"), :overlap) / length(:overlap),
@@ -121,7 +122,7 @@ end
 # Add an Entry for offset of zero
 push!(
     within_bands,
-    (; set="ranges", variable="True-0.0", offset=0.0, low=0.0, med=0.0, upp=0.0),
+    (; set="ranges", variable="True-0.0", offset=0.0, low=1.0, med=1.0, upp=1.0),
 )
 sort!(within_bands, :offset)
 
@@ -199,6 +200,8 @@ begin
             xtickformat=values ->
                 [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
             yreversed=rev,
+            yticks=0.8:0.2:1.6,
+            ytickformat=values -> [@sprintf("%.2f", v) for v in values],
         )
         if !rev
             # limits!(ax, (nothing, nothing), (-1500, 1500))
@@ -216,20 +219,20 @@ begin
             lab1 = "90% Percentile range"
             lab2 = lab1
         end
-        lowpos = [l < 0 ? 0.0 : l for l in low]
-        lowneg = [l < 0 ? l : 0.0 for l in low]
-        upppos = [l < 0 ? 0.0 : l for l in upp]
-        uppneg = [l < 0 ? l : 0.0 for l in upp]
-        band!(ax, x, lowneg, uppneg; alpha=0.6, label=lab1, color=col1)
+        lowpos = [l < 1.0 ? 1.0 : l for l in low]
+        lowneg = [l < 1.0 ? l : 1.0 for l in low]
+        upppos = [l < 1.0 ? 1.0 : l for l in upp]
+        uppneg = [l < 1.0 ? l : 1.0 for l in upp]
         band!(ax, x, lowpos, upppos; alpha=0.6, label=lab2, color=col2)
-        cf(x) = [v < 0 ? col1 : col2 for v in x]
-        lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
+        band!(ax, x, lowneg, uppneg; alpha=0.6, label=lab1, color=col1)
+        cf(x) = [v <= 1.0 ? col1 : col2 for v in x]
         lines!(ax, x, upp; linewidth=0.5, alpha=0.5, color=cf(upp))
+        lines!(ax, x, low; linewidth=0.5, alpha=0.5, color=cf(low))
         lines!(ax, x, med; label="Median", color=col2)
 
         # Common options
         vlines!(ax, 0.0; linestyle=:solid, color=:lightgrey, linewidth=2.0)
-        hlines!(ax, 0.0; linestyle=:dash, color=:black)
+        hlines!(ax, 1.0; linestyle=:dash, color=:black)
 
         # Add labels
         if arrowlabels
@@ -322,7 +325,7 @@ begin
         end
 
         # Bands
-        for mes in ["overlap", "negative", "positive"]
+        for mes in ["overlap", "positive", "negative"]
             r = @rsubset(res, :countmeasure == mes)
             x = r[:, var]
             med = r.med
@@ -402,7 +405,9 @@ begin
     # Legends
     leg_opt = (; framevisible=false, merge=true, halign=:left)
     Legend(g1l[:, :], ax1, "Comparison values"; leg_opt...)
-    Legend(g2l[:, :], ax2, "Comparison sign"; leg_opt..., tellwidth=false)
+    Legend(
+        g2l[:, :], ax2, "Sign proportion\nconfidence interval"; leg_opt..., tellwidth=false
+    )
 
     # Align axes
     linkxaxes!(ax1, ax2)

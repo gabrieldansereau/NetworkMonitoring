@@ -121,7 +121,7 @@ end
 
 # Compare efficiencies within simulations
 function comparewithin(
-    effs_combined, set; to=nothing, labels=Dict(set .=> set), f=(x, y) -> -(x, y)
+    effs_combined, set; to=nothing, labels=Dict(set .=> set), f=(x, y) -> -(x, y), vref=1.0
 )
     # Make sure all labels are defined
     all_labels = Dict(s in keys(labels) ? s => labels[s] : s => s for s in set)
@@ -182,7 +182,7 @@ function comparewithin(
                 # Overlap of confidence intervals
                 r.overlap = eff1.low <= eff2.upp && eff2.low <= eff1.upp
                 r.overlap_sign =
-                    r.overlap ? "overlap" : (r.value < 0 ? "negative" : "positive")
+                    r.overlap ? "overlap" : (r.value <= vref ? "negative" : "positive")
             end
         end
         # Simplify & export
