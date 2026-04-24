@@ -172,7 +172,7 @@ let d = within_combined_dif2, u = unique_df2, sortedcomps = unique(u.variable)
     Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
     Label(g4[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
 
-    save(plotsdir("efficiency_comparison_reduced.png"), current_figure())
+    save(plotsdir("efficiency_comparison.png"), current_figure())
     f
 end
 
