@@ -4,7 +4,14 @@
 include("include.jl") # see note regarding why we cannot use the module
 
 # Load data
+# pmax_opt = "n_at_pmax4"
 effs_estimations = CSV.read(datadir("efficiency_estimations.csv"), DataFrame)
+
+# Inverse lower and upper bounds
+@chain effs_estimations begin
+    @rename!(:eff_low1 = :eff_low, :eff_upp1 = :eff_upp)
+    @rename!(:eff_low = :eff_upp1, :eff_upp = :eff_low1)
+end
 
 ## Fill-in all possible offset values for simulations with missing results
 
@@ -45,6 +52,7 @@ for sim in sims_missing
             r.eff = max_row.eff[1]
             r.eff_low = max_row.eff_low[1]
             r.eff_upp = max_row.eff_upp[1]
+            r.rmse = max_row.rmse[1]
             r.occ = max_row.occ[1]
             r.deg = max_row.deg
             r.pmax = max_row.pmax

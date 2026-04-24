@@ -609,9 +609,11 @@ fig_estimation = begin
         adjust_n = adjust_n
 
         # Adjust sampling effort
-        _bons = bons_adj
         if adjust_effort
+            _bons = bons_adj
             @rsubset!(res, :nbon <= :nmax)
+        else
+            _bons = bons
         end
         if adjust_n
             @rtransform!(res, :nbon = :neff)
@@ -689,13 +691,16 @@ fig_estimation = begin
             eff_a_upp = efficiency_gridsearch(b.nbon, b.confint_upp, pm; f=exp)
             # Get the efficiencies for comparison
             nv = n isa Dict ? n[v] : n
-            eff = efficiency(b.nbon, b.med; f=exp, pmax=pm, option=option, n=nv, p=p)
+            eff, rmse = efficiency(
+                b.nbon, b.med; f=exp, pmax=pm, option=option, n=nv, p=p, rmse=true
+            )
             eff_low = efficiency(
                 b.nbon, b.confint_low; f=exp, pmax=pm, option=option, n=nv, p=p
             )
             eff_upp = efficiency(
                 b.nbon, b.confint_upp; f=exp, pmax=pm, option=option, n=nv, p=p
             )
+            @info "$v: a = $(round(Int, eff_a)), eff=$(round(Int, eff)), 90% CI=$(round.(Int, sort([eff_low, eff_upp]))), rmse=$(round(rmse; sigdigits=3))"
             if v == "True-0.00"
                 global _nbon = b.nbon
                 global _med = b.med
@@ -777,6 +782,8 @@ fig_estimation = begin
             ax0.xlabel = "Efficiency integral $(pm_t)$(adj_n)$(adj_e)"
         elseif option == :n_at_p
             ax0.xlabel = "Number of sites at p = $p $(pm_t)$(adj_n)$(adj_e)"
+        elseif startswith(string(option), "n_at_pmax")
+            ax0.xlabel = "Number of sites at p = $p ($option)"
         elseif option == :p_at_n
             if n isa Dict
                 ax0.xlabel = "Proportion at maximum n"
@@ -852,3 +859,49 @@ plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.50, pmax=t
 
 # a - don't use a with pmax=true, only an option for convenience
 plot_focal(; adjust_effort=false, adjust_n=false, option=:a, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:a, pmax=true)
+
+p = 0.8
+pmax = 0.8947368421052632
+a_true = 323
+a_over = 499
+a_under = 353
+a_under_pmax = 284
+
+a_under / a_under_pmax
+a_under_pmax / a_under
+a_under_pmax / p
+
+efficiency_n_at_p(a_true, p, 1.0)
+efficiency_n_at_p(a_over, p, 1.0)
+# références
+efficiency_n_at_p(a_under, p, 1.0)
+# plus haut, juste mais pas bien étalonné
+efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+# bien étalonné, mais trop bas
+efficiency_n_at_p(a_under_pmax, p, 1.0)
+# revient au même
+efficiency_n_at_p(a_under_pmax / pmax, p * pmax, pmax)
+# bien étalonné, juste que ce soit plus bas
+# est-ce que c'est valide dans tous les cas?
+efficiency_n_at_p(a_under_pmax, p * pmax, pmax) / pmax
+# équivalent
+(1 + (1 - pmax)) * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+# effet un peu moindre, peut-être plus raisonnable pour les cas où pmax est élevé
+# ex. pour pmax=0.5, donnerait (1+0.5)=1.5*eff vs 1/0.5=2.0*eff
+efficiency_n_at_p(a_under_pmax, p * pmax, pmax) / p
+# effet trop important? justifiable? quand même moins que over
+a_under / a_under_pmax
+a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+# reverse-engineer de valeur sans correction! Genre de produit croisé? Justifiable ?
+# à faire seulement lorsque a_under_pmax < a_under?
+
+# autre alternative avec
+
+# n at pmax
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_p, p=0.8, pmax=false)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax1, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax2, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax3, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax4, p=0.8, pmax=true)
+plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax5, p=0.8, pmax=true)

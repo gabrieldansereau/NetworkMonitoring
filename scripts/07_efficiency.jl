@@ -124,6 +124,7 @@ end
 
 # Calculate the efficiency for the range estimations
 effs_estimations = DataFrame()
+pmax_opt = :n_at_pmax4
 @showprogress "Efficiency for range estimations" for gd in gdf
     # Extract group info
     sim = first(gd.sim)
@@ -134,9 +135,11 @@ effs_estimations = DataFrame()
     occ = occup[sim]
     set = first(gd.set)
     # Compute efficiency
-    eff = efficiency(gd.nbon, gd.med; f=exp, pmax=1.0, option=:integral)
-    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=1.0, option=:integral)
-    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=1.0, option=:integral)
+    eff, rmse = efficiency(
+        gd.nbon, gd.med; f=exp, pmax=pmax, p=0.80, option=pmax_opt, rmse=true
+    )
+    eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=pmax, p=0.80, option=pmax_opt)
+    eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=pmax, p=0.80, option=pmax_opt)
     # Export
     row = (;
         sim=sim,
@@ -145,6 +148,7 @@ effs_estimations = DataFrame()
         eff=eff,
         eff_low=eff_low,
         eff_upp=eff_upp,
+        rmse=rmse,
         deg=deg,
         pmax=pmax,
         occ=occ,

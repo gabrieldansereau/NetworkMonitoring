@@ -54,8 +54,24 @@ function efficiency(
     rmse=false,
     kw...,
 )
-    opts = [:integral, :integral_at_n, :n_at_p, :p_at_n, :a]
+    opts = [
+        :integral,
+        :integral_at_n,
+        :n_at_p,
+        :n_at_pmax0,
+        :n_at_pmax1,
+        :n_at_pmax2,
+        :n_at_pmax3,
+        :n_at_pmax4,
+        :n_at_pmax5,
+        :p_at_n,
+        :a,
+    ]
     @assert option in opts || error("possible values for keyword option are $opts")
+    if option == :n_at_pmax0
+        pmax = 1.0
+        option = :n_at_pmax1
+    end
     a, _rmse = efficiency_gridsearch(x, y, pmax; rmse=true, kw...) # rmse=true on purpose
     if option == :integral
         ei = efficiency_integral(a, k, pmax)
@@ -67,6 +83,30 @@ function efficiency(
             p = 0.99pmax
         end
         ei = efficiency_n_at_p(a, p, pmax)
+    elseif option == :n_at_pmax1
+        ei = efficiency_n_at_p(a, p * pmax, pmax)
+    elseif option == :n_at_pmax2
+        ei = efficiency_n_at_p(a, p * pmax, pmax) / pmax
+    elseif option == :n_at_pmax3
+        ei = (1 + (1 - pmax)) * efficiency_n_at_p(a, p * pmax, pmax)
+    elseif option == :n_at_pmax4
+        # reverse-engineer of what we would get with pmax=false
+        a_under_pmax = a
+        a_under = efficiency_gridsearch(x, y, 1.0; kw...) # rmse=true on purpose
+        ei = a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+        # which is the same as option :n_at_p (when pmax=false to get a = a_under)
+        # and where we compute ei = efficiency_n_at_p(a, p, 1.0)
+    elseif option == :n_at_pmax5
+        # same as :n_at_pmax4 but only correcting when a_under_pmax < a_under (more efficient)
+        a_under_pmax = a
+        a_under = efficiency_gridsearch(x, y, 1.0; kw...) # rmse=true on purpose
+        if a_under_pmax < a_under
+            ei = a_under / a_under_pmax * efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+        else
+            ei = efficiency_n_at_p(a_under_pmax, p * pmax, pmax)
+        end
+        # which is the same as option :n_at_p (when pmax=false to get a = a_under)
+        # and where we compute ei = efficiency_n_at_p(a, p, 1.0)
     elseif option == :p_at_n
         ei = saturation(a, pmax)(n)
     elseif option == :a
@@ -156,7 +196,7 @@ function comparewithin(
 end
 
 # Flip some comparison values
-function flipthatcomp!(df, toflip)
+function flipthatcomp!(df, toflip; f=(x) -> -x)
     for comp in toflip
         # Arrange new comparison
         v1, v2 = split(replace(comp, "Δ" => ""), "_")
@@ -168,7 +208,7 @@ function flipthatcomp!(df, toflip)
         @rtransform!(
             new,
             :variable = newcomp,
-            :value = -(:value),
+            :value = f(:value),
             :overlap = replace(:overlap, "positive" => "negative", "negative" => "positive")
         )
     end
