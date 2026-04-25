@@ -163,6 +163,9 @@ begin
     # # Scatter option
     # m = mapping(:value, :variable => sorter(sortedcomps) => ""; color=:overlap)
     # rains = visual(Scatter; markersize=5)
+    # Swarmplot option
+    # m = mapping(:value, :variable => sorter(sortedcomps) => ""; color=:overlap)
+    # rains = visual(Beeswarm; markersize=5, direction=:y)
     # Common options
     vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
     # Tweak axis
@@ -233,6 +236,14 @@ begin
     save(plotsdir("efficiency_comparison.png"), current_figure())
     f
 end
+
+# begin
+#     data(d1) *
+#     mapping(:variable, :value; color=:overlap) *
+#     # visual(Beeswarm; algorithm=UniformJitter(5.0, 0.0), markersize=5, direction=:x) |>
+#     visual(Beeswarm; algorithm=SimpleBeeswarm2(), markersize=5, direction=:y, gutter=0.3) |>
+#     draw
+# end
 
 ## Within-simulation - All comparisons
 

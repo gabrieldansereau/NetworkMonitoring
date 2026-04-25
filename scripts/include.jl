@@ -19,6 +19,7 @@ using ProgressMeter
 using Random
 using Revise
 using Statistics
+using SwarmMakie
 import SpeciesDistributionToolkit as SDT
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
