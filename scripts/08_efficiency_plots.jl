@@ -178,9 +178,9 @@ begin
             d.variable,
             d.value;
             color=[pal[ov] for ov in d.overlap],
-            # dodge=[overlapdict[ov] for ov in d.overlap],
+            dodge=[overlapdict[ov] for ov in d.overlap],
             markersize=5,
-            jitter_width=0.5,
+            jitter_width=1.0,
             plot_boxplots=false,
             clouds=nothing,
             orientation=:horizontal,
