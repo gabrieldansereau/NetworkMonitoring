@@ -214,3 +214,29 @@ function flipthatcomp!(df, toflip; f=(x) -> -x)
     end
     return df
 end
+
+# Count positive and negative comparisons per set and variable (across simulations/replicates)
+function summarizecomps(
+    within_comps; gp_vars=[:set, :variable], value=:value, overlap=:overlap
+)
+    unique_comps = @chain within_comps begin
+        @groupby(gp_vars)
+        @combine(
+            :n = length($value),
+            :sign_pos = count(>(1), $value) / length($value),
+            :sign_neg = count(<=(0), $value) / length($value),
+            :higher = count(==("higher"), $overlap) / length($overlap),
+            :lower = count(==("lower"), $overlap) / length($overlap),
+            :equal = count(==("equal"), $overlap) / length($overlap),
+        )
+        @transform :prop_sim = :n ./ maximum(:n)
+        stack(
+            [:sign_pos, :sign_neg, :higher, :lower, :equal];
+            variable_name=:countmeasure,
+            value_name=:count,
+        )
+        @rtransform :label = "$(round(Int, :count *100)) %"
+        @rtransform :label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label
+    end
+    return unique_comps
+end

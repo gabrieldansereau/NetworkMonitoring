@@ -66,31 +66,15 @@ within_comps_all = comparewithin(
     effs_combined, set; labels=compsdict, f=(n1, n2) -> n1 - n2
 )
 
-# Let's flip a comparison for illustration
+# Flip the comparisons
 all_comps = unique(within_comps_all.variable)
 toflip = all_comps
 flipthatcomp!(within_comps_all, toflip; f=n -> -n)
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_comps_all = @chain within_comps_all begin
-    @groupby :set :variable
-    @combine(
-        :n = length(:value),
-        :sign_pos = count(>(1), :value) / length(:value),
-        :sign_neg = count(<=(0), :value) / length(:value),
-        :higher = count(==("higher"), :overlap) / length(:overlap),
-        :lower = count(==("lower"), :overlap) / length(:overlap),
-        :equal = count(==("equal"), :overlap) / length(:overlap),
-    )
-    @transform :prop_sim = :n ./ maximum(:n)
-    stack(
-        [:sign_pos, :sign_neg, :higher, :lower, :equal];
-        variable_name=:countmeasure,
-        value_name=:count,
-    )
-    @rtransform :label = "$(round(Int, :count *100)) %"
-    @rtransform :label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label
-end
+comps_summary_all = summarizecomps(
+    within_comps_all; gp_vars=[:set, :variable], value=:value, overlap=:overlap
+)
 
 # Select a reduced number of comparisons
 reducedcomps_dict = Dict(
@@ -106,10 +90,10 @@ reducedcomps_dict = Dict(
 )
 # Select them
 within_comps = @rsubset within_comps_all :variable in collect(keys(reducedcomps_dict))
-unique_comps = @rsubset unique_comps_all :variable in collect(keys(reducedcomps_dict))
+comps_summary = @rsubset comps_summary_all :variable in collect(keys(reducedcomps_dict))
 # Rename simply
 @rtransform! within_comps :variable = reducedcomps_dict[:variable]
-@rtransform! unique_comps :variable = reducedcomps_dict[:variable]
+@rtransform! comps_summary :variable = reducedcomps_dict[:variable]
 
 ## Plot the comparison
 
@@ -117,7 +101,7 @@ unique_comps = @rsubset unique_comps_all :variable in collect(keys(reducedcomps_
 begin
     # Select results for comparison
     res_comps = within_comps
-    res_summary = @rsubset(unique_comps, :countmeasure in ["higher", "lower", "equal"])
+    res_summary = @rsubset(comps_summary, :countmeasure in ["higher", "lower", "equal"])
     sortedcomps = unique(res_summary.variable)
 
     # Set colour palette

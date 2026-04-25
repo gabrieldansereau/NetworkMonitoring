@@ -145,7 +145,7 @@ let
     # Select results for comparison
     set = collect(-0.5:0.1:0.5)
     res_sign_summary = @rsubset(
-        unique_comps, :offset in set, :countmeasure in ["sign_pos", "sign_neg"]
+        comps_summary, :offset in set, :countmeasure in ["sign_pos", "sign_neg"]
     )
 
     # Comparison axis

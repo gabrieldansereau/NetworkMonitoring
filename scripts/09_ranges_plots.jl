@@ -85,25 +85,9 @@ flipthatcomp!(within_comps, unique(within_comps.variable); f=n -> 1 / n)
 select!(within_comps, :sim, :variable, :offset, :value, :overlap, Not(:set), All(), :set)
 
 # Count positive and negative comparisons per set and variable (across simulations/replicates)
-unique_comps = @chain within_comps begin
-    @groupby :set :variable :offset
-    @combine(
-        :n = length(:value),
-        :sign_pos = count(>(1), :value) / length(:value),
-        :sign_neg = count(<=(0), :value) / length(:value),
-        :higher = count(==("higher"), :overlap) / length(:overlap),
-        :lower = count(==("lower"), :overlap) / length(:overlap),
-        :equal = count(==("equal"), :overlap) / length(:overlap),
-    )
-    @transform :prop_sim = :n ./ maximum(:n)
-    stack(
-        [:sign_pos, :sign_neg, :higher, :lower, :equal];
-        variable_name=:countmeasure,
-        value_name=:count,
-    )
-    @rtransform :label = "$(round(Int, :count *100)) %"
-    @rtransform :label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label
-end
+comps_summary = summarizecomps(
+    within_comps; gp_vars=[:set, :variable, :offset], value=:value, overlap=:overlap
+)
 
 # Extract quantile range for all offset
 within_bands = @chain within_comps begin
@@ -123,7 +107,7 @@ sort!(within_bands, :offset)
 ## Confidence intervals
 
 # Extract quantile range for all offset
-overlap_bands = rename(unique_comps, :count => :med)
+overlap_bands = rename(comps_summary, :count => :med)
 select!(overlap_bands, Not(:label))
 
 # Add an Entry for offset of zero
@@ -153,7 +137,7 @@ begin
     set = collect(-0.5:0.1:0.5)
     res_comps = @rsubset(within_comps, :offset in set)
     res_summary = @rsubset(
-        unique_comps, :offset in set, :countmeasure in ["higher", "lower", "equal"]
+        comps_summary, :offset in set, :countmeasure in ["higher", "lower", "equal"]
     )
 
     # Select results for bands
