@@ -154,19 +154,7 @@ begin
     # Main panels
     d1 = @rsubset(res_comps, :set == "samplers")
     d2 = @rsubset(res_comps, :set == "layers")
-    # Rainclouds option
-    m = mapping(:variable => sorter(sortedcomps) => "", :value; color=:overlap)
-    rains = visual(
-        RainClouds;
-        markersize=5,
-        jitter_width=0.5,
-        plot_boxplots=false,
-        clouds=nothing,
-        orientation=:horizontal,
-    )
-    # Common options
-    vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
-    # Tweak axis
+    # Axis options
     xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
     xticks = [-6, -4, -2, 0, 2, 4]
     # xaxis = (; xticks=xticks, xtickformat=xlog2f)
@@ -177,10 +165,30 @@ begin
     )
     xlab1 = "Number of sites compared to reference ($(sortedsamplers[1]))"
     xlab2 = "Number of sites compared to reference ($(sortedlayers[1]))"
-    # Draw figures
-    fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1, xaxis...))
-    fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2, xaxis...))
-    linkxaxes!(fg1..., fg2...)
+    # Axis
+    ax1 = Axis(g1[:, :]; xlabel=xlab1, xaxis...)
+    ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
+    linkxaxes!(ax1, ax2)
+    # Raincloud
+    overlapdict = Dict("positive" => 3, "overlap" => 2, "negative" => 1)
+    for (ax, d) in zip([ax1, ax2], [d1, d2])
+        vlines!(ax, [0.0]; linestyle=:dash, color=:black)
+        rainclouds!(
+            ax,
+            d.variable,
+            d.value;
+            color=[pal[ov] for ov in d.overlap],
+            # dodge=[overlapdict[ov] for ov in d.overlap],
+            markersize=5,
+            jitter_width=0.5,
+            plot_boxplots=false,
+            clouds=nothing,
+            orientation=:horizontal,
+            side_nudge=0.0,
+        )
+        yvars = unique(d.variable)
+        ax.yticks = (1:length(yvars), yvars)
+    end
     # Add labels
     pad = (-150, 0, 10, 0)
     Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
@@ -226,6 +234,9 @@ begin
     hideydecorations!(ax4)
     hidexdecorations!(ax4; ticklabels=false, ticks=false)
     hidespines!(ax4)
+
+    linkyaxes!(ax1, ax3)
+    linkyaxes!(ax2, ax4)
 
     pad = (0, 0, 10, 0)
     Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
