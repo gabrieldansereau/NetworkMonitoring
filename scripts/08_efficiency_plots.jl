@@ -34,10 +34,10 @@ effs_combined = vcat(effs_samplers, effs_optimized; cols=:union)
 
 # Define sorting order across figures
 sortedsamplers = [
-    "Balanced Acceptance",
-    "Balanced Mask",
     "Uncertainty Sampling",
+    "Balanced Mask",
     "Weighted Balanced Acceptance",
+    "Balanced Acceptance",
 ]
 sortedlayers = [
     "Focal species range",
@@ -102,10 +102,10 @@ end
 # Select a reduced number of comparisons
 reducedcomps_dict = Dict(
     # Samplers
-    "ΔWBA_BA" => "Weighted Balanced Acceptance",
-    "ΔBM_BA" => "Balanced Mask",
-    "ΔUS_BA" => "Uncertainty Sampling",
-    "ΔSRM_BA" => "Simple Random Mask",
+    "ΔWBA_US" => "Weighted Balanced Acceptance",
+    "ΔBM_US" => "Balanced Mask",
+    "ΔBA_US" => "Balanced Acceptance",
+    "ΔSRM_US" => "Simple Random Mask",
     # Layers
     "ΔRI_FR" => "Realized Interactions",
     "ΔSR_FR" => "Species Richness",
@@ -150,15 +150,20 @@ begin
     # Main panels
     d1 = @rsubset(res_comps, :set == "samplers")
     d2 = @rsubset(res_comps, :set == "layers")
+    # Rainclouds option
     m = mapping(:variable => sorter(sortedcomps) => "", :value; color=:overlap)
     rains = visual(
         RainClouds;
         markersize=5,
-        jitter_width=0.3,
+        jitter_width=0.5,
         plot_boxplots=false,
         clouds=nothing,
         orientation=:horizontal,
     )
+    # # Scatter option
+    # m = mapping(:value, :variable => sorter(sortedcomps) => ""; color=:overlap)
+    # rains = visual(Scatter; markersize=5)
+    # Common options
     vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
     # Tweak axis
     xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
@@ -169,8 +174,8 @@ begin
     xaxis = (;
         xticks=xticks, xtickformat="{:.0f}", limits=((-xmax, xmax), (nothing, nothing))
     )
-    xlab1 = "Number of sites compared to reference (Balanced Acceptance)"
-    xlab2 = "Number of sites compared to reference (Focal Range)"
+    xlab1 = "Number of sites compared to reference ($(sortedsamplers[1]))"
+    xlab2 = "Number of sites compared to reference ($(sortedlayers[1]))"
     # Draw figures
     fg1 = draw!(g1, data(d1) * m * rains + vline, scl; axis=(; xlabel=xlab1, xaxis...))
     fg2 = draw!(g2, data(d2) * m * rains + vline, scl; axis=(; xlabel=xlab2, xaxis...))
@@ -230,6 +235,8 @@ begin
 end
 
 ## Within-simulation - All comparisons
+
+#=
 
 # Visualize
 sortedcomps = [
@@ -438,3 +445,5 @@ begin
     save(plotsdir("supp", "efficiency_occupancy_species.png"), f)
     f
 end
+
+=#
