@@ -170,24 +170,31 @@ begin
     ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
     linkxaxes!(ax1, ax2)
     # Raincloud
-    overlapdict = Dict("positive" => 3, "overlap" => 2, "negative" => 1)
+    overlapdict = Dict("positive" => 3, "negative" => 2, "overlap" => 1)
     for (ax, d) in zip([ax1, ax2], [d1, d2])
+        # Add vline for reference
         vlines!(ax, [0.0]; linestyle=:dash, color=:black)
-        rainclouds!(
-            ax,
-            d.variable,
-            d.value;
-            color=[pal[ov] for ov in d.overlap],
-            dodge=[overlapdict[ov] for ov in d.overlap],
-            markersize=5,
-            jitter_width=1.0,
-            plot_boxplots=false,
-            clouds=nothing,
-            orientation=:horizontal,
-            side_nudge=0.0,
-        )
+        # Select variables
         yvars = unique(d.variable)
         ax.yticks = (1:length(yvars), yvars)
+        for (i, v) in enumerate(yvars)
+            dc = @rsubset d :variable == v
+            nrow(dc) > 0 || continue
+            overlaps = sort(unique(dc.overlap); by=x -> overlapdict[x])
+            rainclouds!(
+                ax,
+                [i],
+                dc.value;
+                color=[pal[ov] for ov in dc.overlap],
+                dodge=[first(indexin([ov], overlaps)) for ov in dc.overlap],
+                markersize=5,
+                jitter_width=0.4 * length(overlaps),
+                plot_boxplots=false,
+                clouds=nothing,
+                orientation=:horizontal,
+                side_nudge=0.0,
+            )
+        end
     end
     # Add labels
     pad = (-150, 0, 10, 0)
