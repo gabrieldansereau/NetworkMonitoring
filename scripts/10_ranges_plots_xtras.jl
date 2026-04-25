@@ -52,7 +52,7 @@ let
     m = mapping(
         :variable =>
             renamer(sortedcomps .=> sortedoffsets) => "Range estimation difference (%)",
-        :value => "Efficiency compared to True Range";
+        :value => "Proportion of sites compared to True Range";
         color=:area_per_site,
     )
     rains = visual(
@@ -152,7 +152,7 @@ let
     Random.seed!(42)
     col1 = Makie.wong_colors()[2]
     col2 = Makie.wong_colors()[1]
-    colfunc(x) = [v < 0 ? col1 : col2 for v in x]
+    colfunc(x) = [v < 1 ? col1 : col2 for v in x]
     scatter!(
         ax,
         [o + 0.02 * (rand() - 0.5) for o in res_comps.offset],

@@ -173,7 +173,7 @@ begin
         ax = Axis(
             f;
             xlabel="Range estimation difference (%)",
-            ylabel="Efficiency compared to True Range",
+            ylabel="Proportion of sites comp to True Range",
             xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
             xtickformat=values ->
                 [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
