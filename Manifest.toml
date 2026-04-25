@@ -1642,6 +1642,7 @@ version = "1.2.0"
 [[deps.NeutralLandscapes]]
 deps = ["DataStructures", "Distributions", "HaltonSequences", "NaNMath", "NearestNeighbors", "Random", "Statistics", "StatsBase"]
 git-tree-sha1 = "0a60c655c7186eb49a7ff0c8bc7d838058d75a1b"
+pinned = true
 uuid = "71847384-8354-4223-ac08-659a5128069f"
 version = "0.1.5"
 
@@ -2141,6 +2142,7 @@ version = "1.0.4"
 [[deps.SimpleSDMLayers]]
 deps = ["ArchGDAL", "Distances", "Proj", "Statistics", "StatsBase", "Tables", "TestItems"]
 git-tree-sha1 = "590feadab477405c514f319ba9197470ad59b91d"
+pinned = true
 uuid = "2c645270-77db-11e9-22c3-0f302a89c64c"
 version = "1.2.1"
 weakdeps = ["Clustering", "MultivariateStats", "NeutralLandscapes"]
@@ -2202,6 +2204,7 @@ weakdeps = ["ChainRulesCore"]
 [[deps.SpeciesDistributionToolkit]]
 deps = ["Distances", "Downloads", "Fauxcurrences", "GBIF", "GeoJSON", "HTTP", "MakieCore", "OccurrencesInterface", "Phylopic", "PolygonOps", "Reexport", "SDeMo", "SimpleSDMDatasets", "SimpleSDMLayers", "StatsBase", "TestItems", "ZipArchives"]
 git-tree-sha1 = "18dedcef31890005823e3c8114676c0357605330"
+pinned = true
 uuid = "72b53823-5c0b-4575-ad0e-8e97227ad13b"
 version = "1.4.3"
 
@@ -2216,6 +2219,7 @@ version = "1.4.3"
 [[deps.SpeciesInteractionNetworks]]
 deps = ["Combinatorics", "DataStructures", "DelimitedFiles", "Distributions", "LinearAlgebra", "Mangal", "Random", "Requires", "SparseArrays", "Statistics", "StatsBase", "Tables", "TestItems"]
 git-tree-sha1 = "ad5a9fa7587525bd378f6c39b6a7982926fe0753"
+pinned = true
 uuid = "49e116ef-912f-4766-9e56-896a49944adc"
 version = "0.0.1"
 
