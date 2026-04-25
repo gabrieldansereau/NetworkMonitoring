@@ -2,6 +2,8 @@ module NetworkMonitoring
 
 using Reexport
 
+__precompile__(false)
+
 @reexport begin
     # Load packages
     using AlgebraOfGraphics
