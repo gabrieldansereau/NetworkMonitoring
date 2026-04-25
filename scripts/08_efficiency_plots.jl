@@ -186,9 +186,9 @@ begin
                 [i],
                 dc.value;
                 color=[pal[ov] for ov in dc.overlap],
-                dodge=[first(indexin([ov], overlaps)) for ov in dc.overlap],
+                # dodge=[first(indexin([ov], overlaps)) for ov in dc.overlap],
                 markersize=5,
-                jitter_width=0.4 * length(overlaps),
+                jitter_width=0.5,
                 plot_boxplots=false,
                 clouds=nothing,
                 orientation=:horizontal,
