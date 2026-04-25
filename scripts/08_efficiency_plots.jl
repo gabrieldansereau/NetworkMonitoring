@@ -15,10 +15,17 @@ effs_species = CSV.read(datadir("efficiency_species.csv"), DataFrame)
 # when efficiency is measured as the number of sites to reach 80% of interactions
 for effs in [effs_samplers, effs_optimized, effs_species]
     lim = 10_000.0
-    @rtransform! effs begin
-        :eff = :eff > lim ? lim : :eff
-        :eff_low = :eff_low > lim ? lim : :eff_low
-        :eff_upp = :eff > lim ? lim : :eff_upp
+    @chain effs begin
+        # Inverse lower and upper bounds
+        @rename!(:eff_low1 = :eff_low, :eff_upp1 = :eff_upp)
+        @rename!(:eff_low = :eff_upp1, :eff_upp = :eff_low1)
+        @select!(:sim, :variable, :eff, :eff_low, :eff_upp, All())
+        # Replace observations over limits
+        @rtransform!(
+            :eff = :eff > lim ? lim : :eff,
+            :eff_low = :eff_low > lim ? lim : :eff_low,
+            :eff_upp = :eff > lim ? lim : :eff_upp,
+        )
     end
 end
 
@@ -130,7 +137,7 @@ begin
     )
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
 end;
-let
+begin
     Random.seed!(42)
 
     # Figure
