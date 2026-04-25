@@ -142,10 +142,14 @@ begin
 
     # Figure
     f = Figure(; size=(850, 450))
-    g1 = GridLayout(f[1:3, 1:4])
-    g2 = GridLayout(f[4:6, 1:4])
-    g3 = GridLayout(f[1:3, (end + 1):(end + 2)])
-    g4 = GridLayout(f[4:end, (end - 1):end])
+    # Panels
+    ga = GridLayout(f[1:3, :])
+    gb = GridLayout(f[4:6, :])
+    # Side panels
+    g1 = GridLayout(ga[:, 1:4])
+    g2 = GridLayout(gb[:, 1:4])
+    g3 = GridLayout(ga[:, (end + 1):(end + 2)])
+    g4 = GridLayout(gb[:, (end + 1):(end + 2)])
 
     # Main panels
     d1 = @rsubset(res_comps, :set == "samplers")
@@ -160,12 +164,6 @@ begin
         clouds=nothing,
         orientation=:horizontal,
     )
-    # # Scatter option
-    # m = mapping(:value, :variable => sorter(sortedcomps) => ""; color=:overlap)
-    # rains = visual(Scatter; markersize=5)
-    # Swarmplot option
-    # m = mapping(:value, :variable => sorter(sortedcomps) => ""; color=:overlap)
-    # rains = visual(Beeswarm; markersize=5, direction=:y)
     # Common options
     vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
     # Tweak axis
@@ -236,14 +234,6 @@ begin
     save(plotsdir("efficiency_comparison.png"), current_figure())
     f
 end
-
-# begin
-#     data(d1) *
-#     mapping(:variable, :value; color=:overlap) *
-#     # visual(Beeswarm; algorithm=UniformJitter(5.0, 0.0), markersize=5, direction=:x) |>
-#     visual(Beeswarm; algorithm=SimpleBeeswarm2(), markersize=5, direction=:y, gutter=0.3) |>
-#     draw
-# end
 
 ## Within-simulation - All comparisons
 
