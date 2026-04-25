@@ -182,7 +182,7 @@ function comparewithin(
                 # Overlap of confidence intervals
                 r.overlap = eff1.low <= eff2.upp && eff2.low <= eff1.upp
                 r.overlap_sign =
-                    r.overlap ? "overlap" : (r.value <= vref ? "negative" : "positive")
+                    r.overlap ? "equal" : (r.value <= vref ? "lower" : "higher")
             end
         end
         # Simplify & export
@@ -209,7 +209,7 @@ function flipthatcomp!(df, toflip; f=(x) -> -x)
             new,
             :variable = newcomp,
             :value = f(:value),
-            :overlap = replace(:overlap, "positive" => "negative", "negative" => "positive")
+            :overlap = replace(:overlap, "higher" => "lower", "lower" => "higher")
         )
     end
     return df

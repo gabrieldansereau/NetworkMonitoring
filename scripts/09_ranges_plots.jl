@@ -97,13 +97,13 @@ unique_comps = @chain within_comps begin
         :n = length(:value),
         :sign_pos = count(>(1), :value) / length(:value),
         :sign_neg = count(<=(0), :value) / length(:value),
-        :positive = count(==("positive"), :overlap) / length(:overlap),
-        :negative = count(==("negative"), :overlap) / length(:overlap),
-        :overlap = count(==("overlap"), :overlap) / length(:overlap),
+        :higher = count(==("higher"), :overlap) / length(:overlap),
+        :lower = count(==("lower"), :overlap) / length(:overlap),
+        :equal = count(==("equal"), :overlap) / length(:overlap),
     )
     @transform :prop_sim = :n ./ maximum(:n)
     stack(
-        [:sign_pos, :sign_neg, :positive, :negative, :overlap];
+        [:sign_pos, :sign_neg, :higher, :lower, :equal];
         variable_name=:countmeasure,
         value_name=:count,
     )
@@ -136,9 +136,9 @@ select!(overlap_bands, Not(:label))
 common = (;
     set="ranges", variable="True-0.0", offset=0.0, n=maximum(overlap_bands.n), prop_sim=1.0
 )
-push!(overlap_bands, (; common..., countmeasure="overlap", med=1.0))
-push!(overlap_bands, (; common..., countmeasure="positive", med=0.0))
-push!(overlap_bands, (; common..., countmeasure="negative", med=0.0))
+push!(overlap_bands, (; common..., countmeasure="equal", med=1.0))
+push!(overlap_bands, (; common..., countmeasure="higher", med=0.0))
+push!(overlap_bands, (; common..., countmeasure="lower", med=0.0))
 sort!(overlap_bands, :offset)
 
 # Add confidence interval for the proportion
@@ -159,7 +159,7 @@ begin
     set = collect(-0.5:0.1:0.5)
     res_comps = @rsubset(within_comps, :offset in set)
     res_summary = @rsubset(
-        unique_comps, :offset in set, :countmeasure in ["positive", "negative", "overlap"]
+        unique_comps, :offset in set, :countmeasure in ["higher", "lower", "equal"]
     )
 
     # Select results for bands
@@ -170,9 +170,9 @@ begin
 
     # Set colour palette
     pal = Dict(
-        "negative" => Makie.wong_colors()[2],
-        "overlap" => Makie.wong_colors()[4],
-        "positive" => Makie.wong_colors()[3],
+        "lower" => Makie.wong_colors()[2],
+        "equal" => Makie.wong_colors()[4],
+        "higher" => Makie.wong_colors()[3],
     )
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
 end
@@ -211,8 +211,8 @@ begin
         if colour
             col1 = Makie.wong_colors()[2]
             col2 = Makie.wong_colors()[1]
-            lab1 = "Higher efficiency"
-            lab2 = "Lower efficiency"
+            lab1 = "Lower"
+            lab2 = "Higher"
         else
             col1 = :grey
             col2 = :grey
@@ -325,7 +325,7 @@ begin
         end
 
         # Bands
-        for mes in ["overlap", "positive", "negative"]
+        for mes in ["equal", "higher", "lower"]
             r = @rsubset(res, :countmeasure == mes)
             x = r[:, var]
             med = r.med
@@ -351,14 +351,14 @@ begin
     function make_summary_ax!(gp; res=res_summary)
         ax0 = Axis(
             gp;
-            yticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]),
+            yticks=([0.5, 1.5, 2.5], ["Lower", "Equal", "Higher"]),
             xaxisposition=:top,
             xticks=sort(res.offset),
         )
         m34 = mapping(
             :offset,
             [1];
-            stack=:countmeasure => sorter(["negative", "overlap", "positive"]),
+            stack=:countmeasure => sorter(["lower", "equal", "higher"]),
             color=:countmeasure,
             bar_labels=:label => verbatim,
         )

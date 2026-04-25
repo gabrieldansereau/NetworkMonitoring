@@ -170,7 +170,7 @@ let
 
     # Summary panel
     p2 = f[end + 1, 1:(end - 1)]
-    ax0 = Axis(p2; yticks=([0.5, 1.5], ["Negative", "Positive"]))
+    ax0 = Axis(p2; yticks=([0.5, 1.5], ["Lower", "Higher"]))
     m34 = mapping(
         :offset,
         [1];

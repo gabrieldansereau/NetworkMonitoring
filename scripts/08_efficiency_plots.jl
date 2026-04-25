@@ -85,13 +85,13 @@ unique_comps_all = @chain within_comps_all begin
         :n = length(:value),
         :sign_pos = count(>(1), :value) / length(:value),
         :sign_neg = count(<=(0), :value) / length(:value),
-        :positive = count(==("positive"), :overlap) / length(:overlap),
-        :negative = count(==("negative"), :overlap) / length(:overlap),
-        :overlap = count(==("overlap"), :overlap) / length(:overlap),
+        :higher = count(==("higher"), :overlap) / length(:overlap),
+        :lower = count(==("lower"), :overlap) / length(:overlap),
+        :equal = count(==("equal"), :overlap) / length(:overlap),
     )
     @transform :prop_sim = :n ./ maximum(:n)
     stack(
-        [:sign_pos, :sign_neg, :positive, :negative, :overlap];
+        [:sign_pos, :sign_neg, :higher, :lower, :equal];
         variable_name=:countmeasure,
         value_name=:count,
     )
@@ -124,16 +124,14 @@ unique_comps = @rsubset unique_comps_all :variable in collect(keys(reducedcomps_
 begin
     # Select results for comparison
     res_comps = within_comps
-    res_summary = @rsubset(
-        unique_comps, :countmeasure in ["positive", "negative", "overlap"]
-    )
+    res_summary = @rsubset(unique_comps, :countmeasure in ["higher", "lower", "equal"])
     sortedcomps = unique(res_summary.variable)
 
     # Set colour palette
     pal = Dict(
-        "negative" => Makie.wong_colors()[2],
-        "overlap" => Makie.wong_colors()[4],
-        "positive" => Makie.wong_colors()[3],
+        "lower" => Makie.wong_colors()[2],
+        "equal" => Makie.wong_colors()[4],
+        "higher" => Makie.wong_colors()[3],
     )
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
 end;
@@ -170,7 +168,7 @@ begin
     ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
     linkxaxes!(ax1, ax2)
     # Raincloud
-    overlapdict = Dict("positive" => 3, "negative" => 2, "overlap" => 1)
+    overlapdict = Dict("higher" => 3, "lower" => 2, "equal" => 1)
     for (ax, d) in zip([ax1, ax2], [d1, d2])
         # Add vline for reference
         vlines!(ax, [0.0]; linestyle=:dash, color=:black)
@@ -204,16 +202,17 @@ begin
     # Summary panels
     d3 = @rsubset(res_summary, :set == "samplers")
     d4 = @rsubset(res_summary, :set == "layers")
-    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
-    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5, 2.5], ["Negative", "Overlap", "Positive"]))
+    labs = ["lower" => "Lower", "equal" => "Equal", "higher" => "Higher"]
+    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], getindex.(labs, 2)))
+    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5, 2.5], getindex.(labs, 2)))
     m34 = mapping(
         :variable => sorter(sortedcomps),
         [1];
-        stack=:countmeasure => sorter(["negative", "overlap", "positive"]),
+        stack=:countmeasure => renamer(labs),
         color=:countmeasure,
         bar_labels=:label => verbatim,
     )
-    v3 = visual(
+    v34 = visual(
         BarPlot;
         direction=:x,
         label_position=:center,
@@ -222,17 +221,8 @@ begin
         label_size=14,
         alpha=0.85,
     )
-    v4 = visual(
-        BarPlot;
-        direction=:x,
-        label_position=:center,
-        label_color=:white,
-        label_font=:bold,
-        label_size=14,
-        alpha=0.85,
-    )
-    draw!(ax3, data(d3) * m34 * v3, scl)
-    draw!(ax4, data(d4) * m34 * v4, scl)
+    draw!(ax3, data(d3) * m34 * v34, scl)
+    draw!(ax4, data(d4) * m34 * v34, scl)
 
     hideydecorations!(ax3)
     hidexdecorations!(ax3; ticklabels=false, ticks=false)
@@ -246,8 +236,8 @@ begin
     linkyaxes!(ax2, ax4)
 
     pad = (0, 0, 10, 0)
-    Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-    Label(g4[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
+    Label(g3[1, 1, Top()], "Comparison summary"; font=:bold, padding=pad)
+    Label(g4[1, 1, Top()], "Comparison summary"; font=:bold, padding=pad)
 
     save(plotsdir("efficiency_comparison.png"), current_figure())
     f
@@ -316,8 +306,8 @@ let res_comps = within_comps_all, res_summary = res_summary_all
     # Summary panels
     d3 = @rsubset(u0, :set == "samplers")
     d4 = @rsubset(u0, :set == "layers")
-    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
-    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5], ["Negative", "Positive"]))
+    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["lower", "higher"]))
+    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5], ["lower", "higher"]))
     m34 = mapping(
         :variable => sorter(sortedcomps),
         [1];
