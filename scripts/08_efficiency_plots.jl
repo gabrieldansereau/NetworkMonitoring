@@ -165,7 +165,7 @@ begin
     # rains = visual(Scatter; markersize=5)
     # Swarmplot option
     # m = mapping(:value, :variable => sorter(sortedcomps) => ""; color=:overlap)
-    # rains = visual(Beeswarm; markersize=5, direction=:y)
+    rains = visual(Beeswarm; markersize=4, direction=:x, gutter=0.2)
     # Common options
     vline = mapping([1.0]) * visual(VLines; linestyle=:dash)
     # Tweak axis
@@ -237,13 +237,26 @@ begin
     f
 end
 
-# begin
-#     data(d1) *
-#     mapping(:variable, :value; color=:overlap) *
-#     # visual(Beeswarm; algorithm=UniformJitter(5.0, 0.0), markersize=5, direction=:x) |>
-#     visual(Beeswarm; algorithm=SimpleBeeswarm2(), markersize=5, direction=:y, gutter=0.3) |>
-#     draw
-# end
+begin
+    vis =
+        data(d1) *
+        mapping(:variable, :value; color=:overlap) *
+        # visual(Beeswarm; algorithm=UniformJitter(5.0, 0.0), markersize=5, direction=:x) |>
+        visual(
+            Beeswarm;
+            algorithm=UniformJitter(5.0, 0.0),
+            markersize=5,
+            direction=:x,
+            gutter=0.3,
+        )
+    fg = draw(vis)
+    ax = fg.grid[1].axis
+    # hidexdecorations!(ax)
+    ax.yticks = ([1, 2, 3], ["aaa", "bbb", "ccc"])
+    ax.xticks = -6000:2000:10_000
+    ax.xtickformat = "{:.0f}"
+    fg
+end
 
 ## Within-simulation - All comparisons
 
