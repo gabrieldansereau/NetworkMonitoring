@@ -71,49 +71,55 @@ degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree-$idp.tiff"); bandnu
 
 # Generate BON examples
 begin
-    Random.seed!(42)
-    bons = Dict()
-    # Samplers
-    bons["Uncertainty Sampling"] = BON.sample(BON.UncertaintySampling(100), focal_sp_range)
-    bons["Weighted Balanced Acceptance"] = BON.sample(
-        BON.WeightedBalancedAcceptance(100), focal_sp_range
+    Random.seed!(33)
+    bons = Dict(
+        # Samplers
+        "Uncertainty Sampling" => BON.sample(BON.UncertaintySampling(100), focal_sp_range),
+        "Weighted Balanced Acceptance" =>
+            BON.sample(BON.WeightedBalancedAcceptance(100), focal_sp_range),
+        "Balanced Acceptance" => BON.sample(BON.BalancedAcceptance(100), focal_sp_range),
+        "Balanced Mask" => BON.sample(BON.BalancedAcceptance(100), focal_sp_mask),
+        # Layers,
+        "Species richness" => BON.sample(BON.UncertaintySampling(100), richness_spp),
+        "Realized interactions" =>
+            BON.sample(BON.UncertaintySampling(100), degree_realized),
+        "Probabilistic range" => BON.sample(BON.UncertaintySampling(100), probsp_range),
     )
-    bons["Balanced Acceptance"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_range)
-    bons["Balanced Mask"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_mask)
-    # Layers
     bons["Focal species range"] = bons["Uncertainty Sampling"]
-    bons["Species richness"] = BON.sample(BON.UncertaintySampling(100), richness_spp)
-    bons["Realized interactions"] = BON.sample(
-        BON.UncertaintySampling(100), degree_realized
-    )
-    bons["Probabilistic range"] = BON.sample(BON.UncertaintySampling(100), probsp_range)
 end
 
 # Collect layers
-begin
-    layers = Dict()
+layers = Dict(
     # Samplers
-    layers["Uncertainty Sampling"] = focal_sp_range
-    layers["Weighted Balanced Acceptance"] = focal_sp_range
-    layers["Balanced Acceptance"] = focal_sp_range
-    layers["Balanced Mask"] = focal_sp_mask
+    "Uncertainty Sampling" => focal_sp_range,
+    "Weighted Balanced Acceptance" => focal_sp_range,
+    "Balanced Acceptance" => focal_sp_range,
+    "Balanced Mask" => focal_sp_mask,
     # Layers
-    layers["Focal species range"] = focal_sp_range
-    layers["Species richness"] = richness_spp
-    layers["Realized interactions"] = degree_realized
-    layers["Probabilistic range"] = probsp_range
-end
+    "Focal species range" => focal_sp_range,
+    "Species richness" => richness_spp,
+    "Realized interactions" => degree_realized,
+    "Probabilistic range" => probsp_range,
+)
 
 ## Visualize
 
-# Join
-fig_joined = let
-    ## Define sets to use in both panels
-    # Set 1
-    res1 = monitored_samplers
-    # Set 2
-    res2 = monitored_optimized
+# Set labels
+labs = Dict(
+    # Samplers
+    "Balanced Mask" => "Balanced Within Range",
+    "Uncertainty Sampling" => "Targeted Sampling",
+    "Weighted Balanced Acceptance" => "Weighted Sampling",
+    "Balanced Acceptance" => "Balanced Sampling",
+    # Layers
+    "Realized interactions" => "Realized Interactions",
+    "Focal species range" => "Focal Species Range",
+    "Probabilistic range" => "Probabilistic Range",
+    "Species richness" => "Species Richness",
+)
 
+# Joined panels
+fig_joined = let
     # Create main figure elements
     fig = Figure(; size=(650, 1100))
     g1 = GridLayout(fig[1, :])
@@ -150,8 +156,8 @@ fig_joined = let
         vals = unique(res[:, var])
         for v in vals
             b = filter(var => ==(v), res)
-            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
-            lines!(ax, b.nbon, b.med; label=v, color=colours[v])
+            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=labs[v], color=colours[v])
+            lines!(ax, b.nbon, b.med; label=labs[v], color=colours[v])
         end
         hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
         # Heatmaps & BON example
@@ -160,7 +166,7 @@ fig_joined = let
             scatter!(
                 a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5
             )
-            a.ylabel = v
+            a.ylabel = labs[v]
         end
 
         # Subpanel labels

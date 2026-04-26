@@ -84,9 +84,9 @@ reducedcomps_dict = Dict(
     "ΔBA_US" => "Balanced Acceptance",
     "ΔSRM_US" => "Simple Random Mask",
     # Layers
-    "ΔRI_FR" => "Realized Interactions",
-    "ΔSR_FR" => "Species Richness",
-    "ΔPR_FR" => "Probabilistic Range",
+    "ΔRI_FR" => "Realized interactions",
+    "ΔSR_FR" => "Species richness",
+    "ΔPR_FR" => "Probabilistic range",
 )
 # Select them
 within_comps = @rsubset within_comps_all :variable in collect(keys(reducedcomps_dict))
@@ -111,7 +111,21 @@ begin
         "higher" => Makie.wong_colors()[3],
     )
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
-end;
+
+    # Set labels
+    vlabs = Dict(
+        # Samplers
+        "Balanced Mask" => "Balanced Within Range",
+        "Uncertainty Sampling" => "Targeted Sampling",
+        "Weighted Balanced Acceptance" => "Weighted Sampling",
+        "Balanced Acceptance" => "Balanced Sampling",
+        # Layers
+        "Realized interactions" => "Realized Interactions",
+        "Focal species range" => "Focal Species Range",
+        "Probabilistic range" => "Probabilistic Range",
+        "Species richness" => "Species Richness",
+    )
+end
 begin
     Random.seed!(42)
 
@@ -138,8 +152,8 @@ begin
     xaxis = (;
         xticks=xticks, xtickformat="{:.0f}", limits=((-xmax, xmax), (nothing, nothing))
     )
-    xlab1 = "Number of sites compared to reference ($(sortedsamplers[1]))"
-    xlab2 = "Number of sites compared to reference ($(sortedlayers[1]))"
+    xlab1 = "Number of sites compared to reference ($(vlabs[sortedsamplers[1]]))"
+    xlab2 = "Number of sites compared to reference ($(vlabs[sortedlayers[1]]))"
     # Axis
     ax1 = Axis(g1[:, :]; xlabel=xlab1, xaxis...)
     ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
@@ -151,7 +165,8 @@ begin
         vlines!(ax, [0.0]; linestyle=:dash, color=:black)
         # Select variables
         yvars = unique(d.variable)
-        ax.yticks = (1:length(yvars), yvars)
+        ylabs = [vlabs[v] for v in yvars]
+        ax.yticks = (1:length(ylabs), ylabs)
         for (i, v) in enumerate(yvars)
             dc = @rsubset d :variable == v
             nrow(dc) > 0 || continue
