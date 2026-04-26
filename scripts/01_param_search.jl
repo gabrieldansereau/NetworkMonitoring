@@ -1,18 +1,6 @@
-using Distributed
-
-# Instantiate & precompile everywhere
-@everywhere begin
-    using Pkg
-    Pkg.activate(".")
-    Pkg.instantiate()
-    Pkg.precompile()
-end
-
 # Load environment
-@everywhere using DrWatson
-@everywhere begin
-    @quickactivate :NetworkMonitoring
-end
+using DrWatson
+@quickactivate :NetworkMonitoring
 
 # Define script options
 Random.seed!(42)
@@ -21,26 +9,31 @@ const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 ## Run parameter search
 
 # Define parameters to explore
+STEP = (OUTDIR == "dev" ? 50 : 10)
 const params = Dict(
-    :nbon => collect(1:100), :nrep => collect(1:100), :refmethod => ["metawebify", "global"]
+    :nbon => collect([1, STEP:STEP:500...]), :nrep => collect(1:3), :refmethod => ["global"]
 )
 const output = :prop # :monitored or :prop
 const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
 const dicts = dict_list(params)
+
+# Set directory to export results
+if !(@isdefined OUTDIR)
+    const OUTDIR = "dev/sim-$output" # dev (local), sim-prop (remote)
+end
+mkpath(datadir(OUTDIR))
 
 # Set progress bar display time from environment variable on cluster
 const DT = parse(Float64, get(ENV, "PROGRESS_BARS_DT", "0.1"))
 
 # Run for all combinations
 function main()
-    @showprogress dt = DT @distributed for (i, d) in collect(enumerate(dicts))
+    @showprogress dt = DT for (i, d) in collect(enumerate(dicts))
         Random.seed!(i)
         try
             res = runsim(; output=output, sampler=sampler, d...)
             d2 = merge(d, res)
-            tagsave(
-                datadir("sim-$output", savename(d, "jld2")), tostringdict(d2); warn=false
-            )
+            tagsave(datadir(OUTDIR, savename(d, "jld2")), tostringdict(d2); warn=false)
             true
         catch e
             false
@@ -57,7 +50,7 @@ main()
 if output == :prop
 
     # Collect results
-    param_grid = collect_results(datadir("sim-$output"))
+    param_grid = collect_results(datadir(OUTDIR))
     select!(param_grid, Not(:path))
 
     # Sort results
