@@ -19,7 +19,6 @@ using Reexport
     using SpeciesInteractionNetworks
     using SpeciesInteractionSamplers
     using Statistics
-    using SwarmMakie
 
     # Import packages with shorter names for convenience
     import BiodiversityObservationNetworks as BON
