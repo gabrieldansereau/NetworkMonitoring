@@ -9,7 +9,8 @@ colours = Dict{Any,Any}(
     "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
     "Simple Random" => Makie.wong_colors()[1],
     "Balanced Acceptance" => Makie.wong_colors()[1],
-    "Balanced Acceptance Mask" => :grey,
+    # "Balanced Mask" => Makie.wong_colors()[7],
+    "Balanced Mask" => :grey,
     "Simple Random Mask" => :turquoise,
     # Layers
     "Focal species range" => Makie.wong_colors()[2],

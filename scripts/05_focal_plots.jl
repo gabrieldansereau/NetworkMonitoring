@@ -11,14 +11,14 @@ idp = lpad(id, 3, "0")
 
 # Set directory to import results
 if !(@isdefined OUTDIR)
-    const OUTDIR = "focal_array" # dev(local), focal_array or efficiency
+    const OUTDIR = "efficiency" # dev(local), focal_array or efficiency
 end
 
 # Load & summarize test results
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
 monitored_test = summarize_focal(monitored_test_all; id=id)
 
-## Explore variations with different samplers & layers
+## Prepare results for samplers & layers
 
 # Load results
 monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
@@ -27,12 +27,39 @@ monitored_optimized_all = CSV.read(
 )
 
 # Summarize
-monitored_samplers = summarize_focal(monitored_samplers_all; id=idp)
+monitored_samplers = summarize_focal(monitored_samplers_all; id=id)
 monitored_optimized = summarize_focal(monitored_optimized_all; id=id)
+
+# Reorder columns nicely
+@rtransform!(monitored_samplers, :variable = :sampler)
+@rtransform!(monitored_optimized, :variable = :layer)
+_cols = [:sim, :set, :variable, :nbon, :low, :med, :upp, :deg]
+select!(monitored_samplers, _cols, All())
+select!(monitored_optimized, _cols, All())
+
+# Reorder rows for display
+_order = Dict(
+    # Samplers
+    "Balanced Mask" => 1,
+    "Uncertainty Sampling" => 2,
+    "Weighted Balanced Acceptance" => 3,
+    "Balanced Acceptance" => 4,
+    # Layers
+    "Realized interactions" => 1,
+    "Focal species range" => 2,
+    "Probabilistic range" => 3,
+    "Species richness" => 4,
+)
+sort!(monitored_samplers, order(:sampler; by=x -> _order[x]))
+sort!(monitored_optimized, order(:layer; by=x -> _order[x]))
+
+# Export example
 if id == 1
     CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
     CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
 end
+
+## Prepare layers and BON examples for display
 
 # Load layers used for optimization
 focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
@@ -40,8 +67,6 @@ probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnum
 focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
 richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness-$idp.tiff"); bandnumber=1)
 degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree-$idp.tiff"); bandnumber=1)
-
-unique(monitored_samplers.sampler)
 
 # Generate BON examples
 begin
@@ -52,9 +77,8 @@ begin
     bons["Weighted Balanced Acceptance"] = BON.sample(
         BON.WeightedBalancedAcceptance(100), focal_sp_range
     )
-    bons["Simple Random"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
-    bons["Balanced Acceptance"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_mask)
-    bons["Simple Random Mask"] = BON.sample(BON.SimpleRandom(100), focal_sp_mask)
+    bons["Balanced Acceptance"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_range)
+    bons["Balanced Mask"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_mask)
     # Layers
     bons["Focal species range"] = bons["Uncertainty Sampling"]
     bons["Species richness"] = BON.sample(BON.UncertaintySampling(100), richness_spp)
@@ -67,20 +91,19 @@ end
 # Collect layers
 begin
     layers = Dict()
+    # Samplers
+    layers["Uncertainty Sampling"] = focal_sp_range
+    layers["Weighted Balanced Acceptance"] = focal_sp_range
+    layers["Balanced Acceptance"] = focal_sp_range
+    layers["Balanced Mask"] = focal_sp_mask
+    # Layers
     layers["Focal species range"] = focal_sp_range
     layers["Species richness"] = richness_spp
     layers["Realized interactions"] = degree_realized
     layers["Probabilistic range"] = probsp_range
 end
 
-# Reorder elements for display
-_order = Dict(
-    "Realized interactions" => 1,
-    "Focal species range" => 2,
-    "Probabilistic range" => 3,
-    "Species richness" => 4,
-)
-sort!(monitored_optimized, order(:layer; by=x -> _order[x]))
+## Visualize
 
 # Join
 fig_joined = let
@@ -89,9 +112,9 @@ fig_joined = let
     res1 = monitored_samplers
     var1 = :sampler
     set1 = [
+        "Balanced Mask",
         "Uncertainty Sampling",
         "Weighted Balanced Acceptance",
-        "Simple Random",
         "Balanced Acceptance",
     ]
     # Set 2
@@ -123,7 +146,7 @@ fig_joined = let
     ax = Axis(
         ga[1, 1];
         xlabel="Sites in BON",
-        ylabel="Monitored interactions",
+        ylabel="Proportion of monitored interactions",
         xticks=0:100:500,
     )
     ax1 = Axis(
@@ -151,10 +174,10 @@ fig_joined = let
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
         lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
-        heatmap!(a, ifelse(v == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
+        heatmap!(a, layers[v])
         scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
         a.ylabel = v
     end
@@ -188,7 +211,7 @@ fig_joined = let
     ax = Axis(
         ga[1, 1];
         xlabel="Sites in BON",
-        ylabel="Monitored interactions",
+        ylabel="Proportion of monitored interactions",
         xticks=0:100:500,
     )
     ax1 = Axis(
@@ -215,7 +238,7 @@ fig_joined = let
         band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
         lines!(ax, b.nbon, b.med; label=v, color=colours[v])
     end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="Metaweb")
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
     # Heatmaps & BON example
     for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
         heatmap!(a, layers[v])
@@ -247,9 +270,9 @@ fig_joined = let
     Label(g1[1, :, TopLeft()], "A)"; padding=(0, 0, 5, 0), font=:bold)
     Label(g2[1, :, TopLeft()], "B)"; padding=(0, 0, 5, 0), font=:bold)
     # Show figure
+    save(plotsdir("focal_joined.png"), fig)
     fig
 end
-save(plotsdir("focal_joined.png"), fig_joined)
 
 ## Range estimation
 
@@ -381,7 +404,7 @@ fig_estimation = begin
         ax = Axis(
             ga[1, 1:3];
             xlabel="Sites in BON",
-            ylabel="Monitored interactions",
+            ylabel="Proportion of monitored interactions",
             xticks=0:100:500,
             limits=((nothing, 1.02 * xlim), (nothing, nothing)),
         )
@@ -646,7 +669,7 @@ fig_types = let
     ax = Axis(
         fig[1, 1];
         xlabel="Sites in BON",
-        ylabel="Monitored interactions",
+        ylabel="Proportion of monitored interactions",
         xticks=0:25:100,
     )
     for v in vals
@@ -670,7 +693,7 @@ fig_types2 = let
     ax = Axis(
         fig[1, 1];
         xlabel="Sites in BON",
-        ylabel="Monitored interactions",
+        ylabel="Proportion of monitored interactions",
         xticks=0:2000:10_000,
     )
     for v in vals
@@ -705,7 +728,7 @@ fig_spp = let
     var = :sp
     vals = unique(res[:, var])
     fig = Figure(; size=(600, 600))
-    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions", xticks=0:100:500, yticks=0:10:60)
+    ax1 = Axis(fig[1, 1]; ylabel="Proportion of monitored interactions", xticks=0:100:500, yticks=0:10:60)
     ax2 = Axis(
         fig[2, 1];
         ylabel="Proportion monitored",

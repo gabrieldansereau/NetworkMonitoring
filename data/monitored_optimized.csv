@@ -1,401 +1,205 @@
-sim,set,sp,type,sampler,layer,nbon,low,med,upp,deg
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,1,0.0,0.0,0.0008771929824560905,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,6,0.0,0.0,0.03508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,11,0.0,0.0,0.05350877192982451,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,16,0.0,0.017543859649122806,0.05263157894736842,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,21,0.0,0.017543859649122806,0.05350877192982451,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,26,0.0,0.017543859649122806,0.07017543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,31,0.0,0.03508771929824561,0.08771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,36,0.0,0.03508771929824561,0.08859649122807013,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,41,0.0,0.05263157894736842,0.10526315789473684,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,46,0.017543859649122806,0.05263157894736842,0.12280701754385964,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,51,0.017543859649122806,0.05263157894736842,0.14122807017543854,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,56,0.017543859649122806,0.06140350877192982,0.10526315789473684,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,61,0.017543859649122806,0.07017543859649122,0.14035087719298245,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,66,0.017543859649122806,0.07017543859649122,0.14035087719298245,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,71,0.03508771929824561,0.08771929824561403,0.14122807017543854,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,76,0.034210526315789476,0.08771929824561403,0.15789473684210525,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,81,0.03508771929824561,0.10526315789473684,0.15789473684210525,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,86,0.03508771929824561,0.10526315789473684,0.17543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,91,0.03508771929824561,0.10526315789473684,0.15789473684210525,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,96,0.0692982456140351,0.10526315789473684,0.15877192982456134,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,101,0.05263157894736842,0.11403508771929824,0.19298245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,106,0.05263157894736842,0.10526315789473684,0.21052631578947367,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,111,0.05263157894736842,0.10526315789473684,0.21052631578947367,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,116,0.05263157894736842,0.10526315789473684,0.2114035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,121,0.0692982456140351,0.12280701754385964,0.19298245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,126,0.05263157894736842,0.12280701754385964,0.21052631578947367,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,131,0.07017543859649122,0.14035087719298245,0.22807017543859648,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,136,0.08771929824561403,0.14035087719298245,0.21052631578947367,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,141,0.07017543859649122,0.14035087719298245,0.2114035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,146,0.05263157894736842,0.15789473684210525,0.2114035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,151,0.08771929824561403,0.15789473684210525,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,156,0.08771929824561403,0.17543859649122806,0.22807017543859648,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,161,0.08771929824561403,0.17543859649122806,0.2631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,166,0.08771929824561403,0.15789473684210525,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,171,0.08771929824561403,0.17543859649122806,0.2289473684210526,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,176,0.12280701754385964,0.17543859649122806,0.2464912280701754,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,181,0.10526315789473684,0.17543859649122806,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,186,0.10526315789473684,0.17543859649122806,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,191,0.10438596491228071,0.19298245614035087,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,196,0.12192982456140351,0.19298245614035087,0.2640350877192982,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,201,0.10526315789473684,0.19298245614035087,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,206,0.14035087719298245,0.21052631578947367,0.281578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,211,0.12280701754385964,0.21052631578947367,0.281578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,216,0.12280701754385964,0.21052631578947367,0.2991228070175438,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,221,0.12280701754385964,0.21052631578947367,0.2982456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,226,0.15789473684210525,0.22807017543859648,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,231,0.14035087719298245,0.21052631578947367,0.2982456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,236,0.15789473684210525,0.21052631578947367,0.2982456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,241,0.1394736842105263,0.21052631578947367,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,246,0.15789473684210525,0.22807017543859648,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,251,0.14035087719298245,0.23684210526315788,0.3166666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,256,0.15789473684210525,0.22807017543859648,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,261,0.1570175438596491,0.22807017543859648,0.3342105263157894,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,266,0.15789473684210525,0.24561403508771928,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,271,0.17543859649122806,0.2543859649122807,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,276,0.14035087719298245,0.24561403508771928,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,281,0.17543859649122806,0.2631578947368421,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,286,0.17543859649122806,0.2631578947368421,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,291,0.17543859649122806,0.2631578947368421,0.3517543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,296,0.17543859649122806,0.2631578947368421,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,301,0.15789473684210525,0.2631578947368421,0.3517543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,306,0.19298245614035087,0.2807017543859649,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,311,0.19210526315789475,0.2807017543859649,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,316,0.19298245614035087,0.2807017543859649,0.3526315789473683,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,321,0.19210526315789475,0.2982456140350877,0.369298245614035,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,326,0.19210526315789475,0.2807017543859649,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,331,0.17543859649122806,0.2807017543859649,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,336,0.21052631578947367,0.2982456140350877,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,341,0.21052631578947367,0.2982456140350877,0.369298245614035,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,346,0.21052631578947367,0.2807017543859649,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,351,0.21052631578947367,0.2982456140350877,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,356,0.21052631578947367,0.3157894736842105,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,361,0.20964912280701753,0.2982456140350877,0.40350877192982454,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,366,0.22719298245614034,0.3157894736842105,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,371,0.21052631578947367,0.3157894736842105,0.42192982456140343,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,376,0.22719298245614034,0.3157894736842105,0.40350877192982454,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,381,0.24561403508771928,0.3157894736842105,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,386,0.22719298245614034,0.3157894736842105,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,391,0.22807017543859648,0.3157894736842105,0.4043859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,396,0.21052631578947367,0.3157894736842105,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,401,0.24473684210526314,0.3333333333333333,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,406,0.22719298245614034,0.3333333333333333,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,411,0.24561403508771928,0.3333333333333333,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,416,0.24473684210526314,0.3333333333333333,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,421,0.22807017543859648,0.3508771929824561,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,426,0.2631578947368421,0.3508771929824561,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,431,0.262280701754386,0.3508771929824561,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,436,0.262280701754386,0.3333333333333333,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,441,0.24561403508771928,0.3508771929824561,0.42192982456140343,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,446,0.2631578947368421,0.3508771929824561,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,451,0.2789473684210526,0.3684210526315789,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,456,0.2631578947368421,0.3508771929824561,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,461,0.27982456140350875,0.35964912280701755,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,466,0.2631578947368421,0.3684210526315789,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,471,0.27982456140350875,0.3684210526315789,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,476,0.2807017543859649,0.35964912280701755,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,481,0.2631578947368421,0.3684210526315789,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,486,0.27982456140350875,0.3684210526315789,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,491,0.2982456140350877,0.3684210526315789,0.4570175438596491,57
-1,layers,node_55,realized,Uncertainty Sampling,Species richness,496,0.29736842105263156,0.38596491228070173,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,1,0.017543859649122806,0.017543859649122806,0.03508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,6,0.07017543859649122,0.12280701754385964,0.15789473684210525,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,11,0.15789473684210525,0.19298245614035087,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,16,0.19298245614035087,0.2631578947368421,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,21,0.24561403508771928,0.2982456140350877,0.3517543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,26,0.2982456140350877,0.3684210526315789,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,31,0.31491228070175437,0.38596491228070173,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,36,0.3508771929824561,0.42105263157894735,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,41,0.40350877192982454,0.45614035087719296,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,46,0.42105263157894735,0.49122807017543857,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,51,0.4552631578947368,0.5263157894736842,0.5964912280701754,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,56,0.49122807017543857,0.543859649122807,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,61,0.49122807017543857,0.5614035087719298,0.631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,66,0.5087719298245614,0.5789473684210527,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,71,0.5254385964912281,0.5964912280701754,0.6666666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,76,0.543859649122807,0.6140350877192983,0.7017543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,81,0.5614035087719298,0.631578947368421,0.7017543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,86,0.5780701754385965,0.631578947368421,0.7017543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,91,0.5789473684210527,0.6491228070175439,0.7192982456140351,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,96,0.5964912280701754,0.6666666666666666,0.7368421052631579,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,101,0.6140350877192983,0.6666666666666666,0.737719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,106,0.6140350877192983,0.6666666666666666,0.7543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,111,0.6140350877192983,0.7017543859649122,0.7719298245614035,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,116,0.6307017543859649,0.7017543859649122,0.7894736842105263,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,121,0.631578947368421,0.7192982456140351,0.7894736842105263,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,126,0.6491228070175439,0.7192982456140351,0.7894736842105263,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,131,0.6491228070175439,0.7192982456140351,0.7894736842105263,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,136,0.6666666666666666,0.7368421052631579,0.8070175438596491,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,141,0.6666666666666666,0.7456140350877193,0.8078947368421052,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,146,0.6666666666666666,0.7368421052631579,0.8245614035087719,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,151,0.6666666666666666,0.7543859649122807,0.8070175438596491,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,156,0.7008771929824562,0.7543859649122807,0.8245614035087719,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,161,0.7017543859649122,0.7543859649122807,0.8421052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,166,0.718421052631579,0.7719298245614035,0.8421052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,171,0.7008771929824562,0.7719298245614035,0.825438596491228,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,176,0.7192982456140351,0.7894736842105263,0.8421052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,181,0.7017543859649122,0.7894736842105263,0.8421052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,186,0.7359649122807017,0.7894736842105263,0.8421052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,191,0.7368421052631579,0.7894736842105263,0.8596491228070176,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,196,0.7359649122807017,0.8070175438596491,0.8596491228070176,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,201,0.7359649122807017,0.7982456140350878,0.8596491228070176,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,206,0.7543859649122807,0.8070175438596491,0.8596491228070176,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,211,0.7535087719298246,0.8070175438596491,0.8605263157894736,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,216,0.7368421052631579,0.8070175438596491,0.8771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,221,0.7543859649122807,0.8245614035087719,0.8771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,226,0.7543859649122807,0.8245614035087719,0.8780701754385964,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,231,0.7543859649122807,0.8245614035087719,0.8771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,236,0.7710526315789474,0.8245614035087719,0.8771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,241,0.7719298245614035,0.8245614035087719,0.8947368421052632,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,246,0.7719298245614035,0.8245614035087719,0.8947368421052632,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,251,0.7710526315789474,0.8421052631578947,0.9122807017543859,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,256,0.7885964912280702,0.8421052631578947,0.8780701754385964,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,261,0.7894736842105263,0.8421052631578947,0.8947368421052632,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,266,0.7894736842105263,0.8596491228070176,0.8956140350877192,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,271,0.7885964912280702,0.8421052631578947,0.8947368421052632,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,276,0.7894736842105263,0.8596491228070176,0.9122807017543859,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,281,0.7894736842105263,0.8596491228070176,0.9122807017543859,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,286,0.8070175438596491,0.8596491228070176,0.9131578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,291,0.7894736842105263,0.8596491228070176,0.9122807017543859,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,296,0.8070175438596491,0.8596491228070176,0.9131578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,301,0.8070175438596491,0.8596491228070176,0.9131578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,306,0.7885964912280702,0.8771929824561403,0.9131578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,311,0.8070175438596491,0.8596491228070176,0.9131578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,316,0.8070175438596491,0.8771929824561403,0.9122807017543859,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,321,0.8245614035087719,0.8771929824561403,0.9298245614035088,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,326,0.8245614035087719,0.8771929824561403,0.9298245614035088,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,331,0.8236842105263157,0.8771929824561403,0.9298245614035088,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,336,0.8245614035087719,0.8771929824561403,0.9298245614035088,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,341,0.8245614035087719,0.8771929824561403,0.9298245614035088,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,346,0.8412280701754387,0.8771929824561403,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,351,0.8412280701754387,0.8947368421052632,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,356,0.8412280701754387,0.8947368421052632,0.9298245614035088,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,361,0.8245614035087719,0.8947368421052632,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,366,0.8412280701754387,0.8947368421052632,0.9307017543859648,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,371,0.8421052631578947,0.8947368421052632,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,376,0.8245614035087719,0.8947368421052632,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,381,0.8421052631578947,0.8947368421052632,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,386,0.8412280701754387,0.8947368421052632,0.9482456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,391,0.8421052631578947,0.8947368421052632,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,396,0.8596491228070176,0.8947368421052632,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,401,0.8587719298245614,0.8947368421052632,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,406,0.8421052631578947,0.9122807017543859,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,411,0.8421052631578947,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,416,0.8421052631578947,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,421,0.8421052631578947,0.9122807017543859,0.9473684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,426,0.8421052631578947,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,431,0.8421052631578947,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,436,0.8596491228070176,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,441,0.8596491228070176,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,446,0.8763157894736842,0.9298245614035088,0.9482456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,451,0.8596491228070176,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,456,0.8771929824561403,0.9122807017543859,0.9657894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,461,0.8587719298245614,0.9122807017543859,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,466,0.8596491228070176,0.9298245614035088,0.9824561403508771,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,471,0.8771929824561403,0.9298245614035088,0.9649122807017544,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,476,0.8771929824561403,0.9298245614035088,0.9657894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,481,0.8771929824561403,0.9298245614035088,0.9824561403508771,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,486,0.8771929824561403,0.9298245614035088,0.9824561403508771,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,491,0.8771929824561403,0.9298245614035088,0.9657894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Realized interactions,496,0.893859649122807,0.9298245614035088,0.9657894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,1,0.0,0.0,0.017543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,6,0.0,0.0,0.03508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,11,0.0,0.017543859649122806,0.05263157894736842,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,16,0.0,0.017543859649122806,0.05350877192982451,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,21,0.0,0.03508771929824561,0.07017543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,26,0.0,0.03508771929824561,0.08771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,31,0.0,0.03508771929824561,0.08771929824561403,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,36,0.017543859649122806,0.05263157894736842,0.10526315789473684,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,41,0.017543859649122806,0.07017543859649122,0.12368421052631574,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,46,0.017543859649122806,0.07017543859649122,0.14035087719298245,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,51,0.017543859649122806,0.07017543859649122,0.12280701754385964,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,56,0.017543859649122806,0.07017543859649122,0.15789473684210525,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,61,0.03508771929824561,0.08771929824561403,0.14122807017543854,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,66,0.03508771929824561,0.08771929824561403,0.17543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,71,0.03508771929824561,0.08771929824561403,0.17543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,76,0.05263157894736842,0.10526315789473684,0.17543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,81,0.0692982456140351,0.12280701754385964,0.17543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,86,0.05263157894736842,0.12280701754385964,0.19298245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,91,0.05263157894736842,0.12280701754385964,0.19298245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,96,0.05263157894736842,0.12280701754385964,0.21052631578947367,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,101,0.05263157894736842,0.12280701754385964,0.19385964912280695,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,106,0.08771929824561403,0.14035087719298245,0.22807017543859648,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,111,0.0868421052631579,0.15789473684210525,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,116,0.08771929824561403,0.15789473684210525,0.22807017543859648,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,121,0.07017543859649122,0.14035087719298245,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,126,0.08771929824561403,0.15789473684210525,0.2631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,131,0.08771929824561403,0.17543859649122806,0.2631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,136,0.08771929824561403,0.17543859649122806,0.24561403508771928,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,141,0.10526315789473684,0.19298245614035087,0.2631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,146,0.10526315789473684,0.17543859649122806,0.2631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,151,0.10526315789473684,0.17543859649122806,0.2640350877192982,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,156,0.12280701754385964,0.19298245614035087,0.2982456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,161,0.10526315789473684,0.19298245614035087,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,166,0.10526315789473684,0.19298245614035087,0.281578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,171,0.14035087719298245,0.19298245614035087,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,176,0.12192982456140351,0.21052631578947367,0.2982456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,181,0.14035087719298245,0.22807017543859648,0.2991228070175438,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,186,0.1394736842105263,0.21052631578947367,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,191,0.14035087719298245,0.22807017543859648,0.3342105263157894,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,196,0.15789473684210525,0.22807017543859648,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,201,0.1394736842105263,0.24561403508771928,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,206,0.14035087719298245,0.24561403508771928,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,211,0.17543859649122806,0.2543859649122807,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,216,0.15789473684210525,0.24561403508771928,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,221,0.15789473684210525,0.2543859649122807,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,226,0.15789473684210525,0.2631578947368421,0.3517543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,231,0.17456140350877192,0.2631578947368421,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,236,0.17543859649122806,0.2631578947368421,0.3508771929824561,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,241,0.19298245614035087,0.2719298245614035,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,246,0.20964912280701753,0.2807017543859649,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,251,0.19210526315789475,0.2807017543859649,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,256,0.19210526315789475,0.2807017543859649,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,261,0.20964912280701753,0.2982456140350877,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,266,0.19298245614035087,0.2807017543859649,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,271,0.22807017543859648,0.2982456140350877,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,276,0.22719298245614034,0.2982456140350877,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,281,0.22807017543859648,0.2982456140350877,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,286,0.21052631578947367,0.3157894736842105,0.40350877192982454,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,291,0.22719298245614034,0.30701754385964913,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,296,0.21052631578947367,0.3157894736842105,0.4043859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,301,0.21052631578947367,0.30701754385964913,0.3868421052631578,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,306,0.22807017543859648,0.32456140350877194,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,311,0.24473684210526314,0.3157894736842105,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,316,0.24473684210526314,0.3157894736842105,0.40350877192982454,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,321,0.22807017543859648,0.3157894736842105,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,326,0.22807017543859648,0.3157894736842105,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,331,0.2631578947368421,0.3508771929824561,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,336,0.24561403508771928,0.3333333333333333,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,341,0.24561403508771928,0.3508771929824561,0.43947368421052624,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,346,0.24561403508771928,0.3508771929824561,0.4403508771929824,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,351,0.2631578947368421,0.3333333333333333,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,356,0.27982456140350875,0.3508771929824561,0.42192982456140343,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,361,0.2631578947368421,0.3508771929824561,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,366,0.2631578947368421,0.3508771929824561,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,371,0.2631578947368421,0.3684210526315789,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,376,0.2631578947368421,0.3508771929824561,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,381,0.2807017543859649,0.3684210526315789,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,386,0.29736842105263156,0.3684210526315789,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,391,0.2982456140350877,0.37719298245614036,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,396,0.27982456140350875,0.3684210526315789,0.49122807017543857,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,401,0.2631578947368421,0.38596491228070173,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,406,0.31491228070175437,0.38596491228070173,0.4745614035087719,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,411,0.2982456140350877,0.38596491228070173,0.49122807017543857,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,416,0.2982456140350877,0.38596491228070173,0.49122807017543857,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,421,0.2982456140350877,0.38596491228070173,0.4745614035087719,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,426,0.2807017543859649,0.40350877192982454,0.4921052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,431,0.29736842105263156,0.40350877192982454,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,436,0.3157894736842105,0.38596491228070173,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,441,0.3157894736842105,0.42105263157894735,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,446,0.3324561403508772,0.40350877192982454,0.49122807017543857,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,451,0.3157894736842105,0.42105263157894735,0.4921052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,456,0.3157894736842105,0.42105263157894735,0.5096491228070175,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,461,0.3157894736842105,0.40350877192982454,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,466,0.3333333333333333,0.42105263157894735,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,471,0.3157894736842105,0.42105263157894735,0.5263157894736842,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,476,0.3324561403508772,0.42105263157894735,0.5263157894736842,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,481,0.35,0.42105263157894735,0.5096491228070175,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,486,0.3508771929824561,0.43859649122807015,0.4921052631578947,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,491,0.3508771929824561,0.43859649122807015,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Probabilistic range,496,0.35,0.42105263157894735,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,1,0.0,0.0,0.017543859649122806,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,6,0.0,0.017543859649122806,0.05263157894736842,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,11,0.0,0.03508771929824561,0.07017543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,16,0.0,0.03508771929824561,0.10526315789473684,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,21,0.017543859649122806,0.05263157894736842,0.14035087719298245,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,26,0.017543859649122806,0.07017543859649122,0.14035087719298245,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,31,0.017543859649122806,0.07017543859649122,0.14035087719298245,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,36,0.05263157894736842,0.10526315789473684,0.14122807017543854,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,41,0.05263157894736842,0.10526315789473684,0.19298245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,46,0.07017543859649122,0.12280701754385964,0.17631578947368415,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,51,0.07017543859649122,0.12280701754385964,0.19298245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,56,0.07017543859649122,0.15789473684210525,0.2114035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,61,0.08771929824561403,0.14035087719298245,0.22807017543859648,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,66,0.10438596491228071,0.17543859649122806,0.2464912280701754,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,71,0.10526315789473684,0.17543859649122806,0.2640350877192982,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,76,0.10526315789473684,0.18421052631578946,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,81,0.12192982456140351,0.19298245614035087,0.2807017543859649,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,86,0.12192982456140351,0.19298245614035087,0.2640350877192982,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,91,0.12280701754385964,0.22807017543859648,0.2991228070175438,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,96,0.12280701754385964,0.21052631578947367,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,101,0.14035087719298245,0.22807017543859648,0.2982456140350877,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,106,0.15789473684210525,0.23684210526315788,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,111,0.15789473684210525,0.24561403508771928,0.3333333333333333,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,116,0.19210526315789475,0.24561403508771928,0.3157894736842105,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,121,0.15789473684210525,0.24561403508771928,0.3517543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,126,0.17456140350877192,0.2631578947368421,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,131,0.19298245614035087,0.2631578947368421,0.3517543859649122,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,136,0.19298245614035087,0.2807017543859649,0.3684210526315789,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,141,0.22807017543859648,0.2982456140350877,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,146,0.21052631578947367,0.2982456140350877,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,151,0.22807017543859648,0.2982456140350877,0.38596491228070173,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,156,0.24561403508771928,0.3157894736842105,0.40350877192982454,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,161,0.22807017543859648,0.3157894736842105,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,166,0.262280701754386,0.3333333333333333,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,171,0.24561403508771928,0.3333333333333333,0.40350877192982454,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,176,0.262280701754386,0.3508771929824561,0.42192982456140343,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,181,0.2631578947368421,0.3333333333333333,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,186,0.22807017543859648,0.3333333333333333,0.42105263157894735,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,191,0.2807017543859649,0.3508771929824561,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,196,0.27982456140350875,0.3684210526315789,0.4570175438596491,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,201,0.2807017543859649,0.3684210526315789,0.43859649122807015,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,206,0.2807017543859649,0.38596491228070173,0.45614035087719296,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,211,0.2807017543859649,0.38596491228070173,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,216,0.31491228070175437,0.38596491228070173,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,221,0.29736842105263156,0.38596491228070173,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,226,0.31491228070175437,0.39473684210526316,0.49122807017543857,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,231,0.3157894736842105,0.40350877192982454,0.49122807017543857,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,236,0.31491228070175437,0.40350877192982454,0.47368421052631576,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,241,0.3333333333333333,0.42105263157894735,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,246,0.3324561403508772,0.41228070175438597,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,251,0.35,0.43859649122807015,0.5087719298245614,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,256,0.3508771929824561,0.42105263157894735,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,261,0.3508771929824561,0.43859649122807015,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,266,0.3508771929824561,0.43859649122807015,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,271,0.3333333333333333,0.43859649122807015,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,276,0.3684210526315789,0.45614035087719296,0.5447368421052631,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,281,0.3508771929824561,0.45614035087719296,0.5447368421052631,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,286,0.3684210526315789,0.45614035087719296,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,291,0.3508771929824561,0.45614035087719296,0.543859649122807,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,296,0.40263157894736845,0.45614035087719296,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,301,0.40263157894736845,0.49122807017543857,0.5798245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,306,0.3684210526315789,0.47368421052631576,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,311,0.4201754385964912,0.49122807017543857,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,316,0.40350877192982454,0.47368421052631576,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,321,0.40263157894736845,0.49122807017543857,0.5614035087719298,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,326,0.40350877192982454,0.49122807017543857,0.5622807017543859,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,331,0.40350877192982454,0.49122807017543857,0.5973684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,336,0.4201754385964912,0.5087719298245614,0.5798245614035087,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,341,0.41842105263157897,0.5087719298245614,0.5964912280701754,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,346,0.42105263157894735,0.49122807017543857,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,351,0.42105263157894735,0.5087719298245614,0.5789473684210527,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,356,0.4201754385964912,0.5087719298245614,0.5973684210526315,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,361,0.42105263157894735,0.5175438596491229,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,366,0.40263157894736845,0.5087719298245614,0.5964912280701754,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,371,0.437719298245614,0.5263157894736842,0.6149122807017543,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,376,0.43859649122807015,0.5263157894736842,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,381,0.45614035087719296,0.5263157894736842,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,386,0.43859649122807015,0.5263157894736842,0.5964912280701754,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,391,0.43859649122807015,0.5263157894736842,0.6149122807017543,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,396,0.45614035087719296,0.5263157894736842,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,401,0.4728070175438597,0.543859649122807,0.6140350877192983,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,406,0.4552631578947368,0.543859649122807,0.631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,411,0.47368421052631576,0.543859649122807,0.631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,416,0.47368421052631576,0.543859649122807,0.631578947368421,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,421,0.45614035087719296,0.5614035087719298,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,426,0.4728070175438597,0.5614035087719298,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,431,0.45614035087719296,0.543859649122807,0.6324561403508772,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,436,0.4903508771929824,0.5614035087719298,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,441,0.4903508771929824,0.5614035087719298,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,446,0.49122807017543857,0.5614035087719298,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,451,0.5078947368421053,0.5614035087719298,0.6499999999999999,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,456,0.47368421052631576,0.5614035087719298,0.6491228070175439,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,461,0.5087719298245614,0.5789473684210527,0.6666666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,466,0.49122807017543857,0.5614035087719298,0.6324561403508772,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,471,0.47368421052631576,0.5789473684210527,0.6666666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,476,0.49122807017543857,0.5789473684210527,0.6666666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,481,0.49122807017543857,0.5789473684210527,0.6666666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,486,0.5087719298245614,0.5789473684210527,0.6842105263157895,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,491,0.49122807017543857,0.5789473684210527,0.6666666666666666,57
-1,layers,node_55,realized,Uncertainty Sampling,Focal species range,496,0.5087719298245614,0.5964912280701754,0.6666666666666666,57
+sim,set,variable,nbon,low,med,upp,deg,sp,type,sampler,layer
+1,layers,Realized interactions,1,0.017543859649122806,0.017543859649122806,0.03508771929824561,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,10,0.1307017543859649,0.17543859649122806,0.22807017543859648,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,20,0.2631578947368421,0.3157894736842105,0.37807017543859645,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,30,0.3333333333333333,0.38596491228070173,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,40,0.3938596491228071,0.45614035087719296,0.5184210526315789,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,50,0.42105263157894735,0.5087719298245614,0.5789473684210527,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,60,0.47368421052631576,0.5614035087719298,0.631578947368421,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,70,0.5166666666666667,0.6052631578947368,0.6666666666666666,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,80,0.5614035087719298,0.631578947368421,0.7017543859649122,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,90,0.5789473684210527,0.6491228070175439,0.7289473684210526,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,100,0.6219298245614036,0.6666666666666666,0.7464912280701754,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,110,0.6394736842105264,0.7017543859649122,0.781578947368421,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,120,0.631578947368421,0.7105263157894737,0.781578947368421,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,130,0.6570175438596492,0.7192982456140351,0.8070175438596491,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,140,0.6666666666666666,0.7368421052631579,0.8070175438596491,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,150,0.6842105263157895,0.7543859649122807,0.8070175438596491,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,160,0.7096491228070176,0.7631578947368421,0.8245614035087719,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,170,0.7096491228070176,0.7719298245614035,0.8421052631578947,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,180,0.7096491228070176,0.7719298245614035,0.8421052631578947,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,190,0.7192982456140351,0.7894736842105263,0.8421052631578947,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,200,0.7368421052631579,0.8070175438596491,0.8421052631578947,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,210,0.7271929824561404,0.8070175438596491,0.869298245614035,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,220,0.7447368421052633,0.8070175438596491,0.8596491228070176,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,230,0.7719298245614035,0.8333333333333334,0.8947368421052632,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,240,0.7798245614035089,0.8245614035087719,0.8771929824561403,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,250,0.7894736842105263,0.8245614035087719,0.8947368421052632,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,260,0.7894736842105263,0.8596491228070176,0.8947368421052632,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,270,0.7894736842105263,0.8421052631578947,0.9122807017543859,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,280,0.7894736842105263,0.8508771929824561,0.9122807017543859,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,290,0.7719298245614035,0.8596491228070176,0.8947368421052632,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,300,0.7894736842105263,0.868421052631579,0.9122807017543859,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,310,0.8070175438596491,0.868421052631579,0.9298245614035088,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,320,0.8149122807017545,0.8771929824561403,0.9298245614035088,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,330,0.8149122807017545,0.8771929824561403,0.9394736842105262,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,340,0.8324561403508772,0.8771929824561403,0.9122807017543859,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,350,0.8324561403508772,0.8771929824561403,0.9473684210526315,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,360,0.8324561403508772,0.8771929824561403,0.9298245614035088,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,370,0.8500000000000001,0.8947368421052632,0.9298245614035088,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,380,0.8596491228070176,0.9122807017543859,0.9649122807017544,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,390,0.8596491228070176,0.8947368421052632,0.9394736842105262,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,400,0.8245614035087719,0.8947368421052632,0.9473684210526315,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,410,0.8596491228070176,0.9035087719298246,0.9473684210526315,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,420,0.8421052631578947,0.9122807017543859,0.9649122807017544,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,430,0.8500000000000001,0.9122807017543859,0.9570175438596491,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,440,0.8596491228070176,0.9210526315789473,0.9649122807017544,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,450,0.8500000000000001,0.9122807017543859,0.9570175438596491,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,460,0.8771929824561403,0.9298245614035088,0.9473684210526315,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,470,0.8771929824561403,0.9122807017543859,0.9745614035087719,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,480,0.8771929824561403,0.9122807017543859,0.9745614035087719,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,490,0.8771929824561403,0.9298245614035088,0.9649122807017544,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Realized interactions,500,0.8771929824561403,0.9298245614035088,0.9745614035087719,57,node_55,realized,Uncertainty Sampling,Realized interactions
+1,layers,Focal species range,1,0.0,0.0,0.017543859649122806,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,10,0.0,0.017543859649122806,0.062280701754385916,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,20,0.017543859649122806,0.05263157894736842,0.12280701754385964,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,30,0.03508771929824561,0.07017543859649122,0.12280701754385964,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,40,0.05263157894736842,0.10526315789473684,0.17543859649122806,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,50,0.05263157894736842,0.12280701754385964,0.21052631578947367,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,60,0.0956140350877193,0.17543859649122806,0.21052631578947367,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,70,0.10526315789473684,0.17543859649122806,0.24561403508771928,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,80,0.14035087719298245,0.19298245614035087,0.2903508771929824,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,90,0.1307017543859649,0.18421052631578946,0.2631578947368421,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,100,0.15789473684210525,0.22807017543859648,0.3157894736842105,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,110,0.17543859649122806,0.24561403508771928,0.34298245614035083,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,120,0.18333333333333332,0.2543859649122807,0.3508771929824561,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,130,0.16578947368421051,0.2631578947368421,0.3333333333333333,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,140,0.22807017543859648,0.2807017543859649,0.3684210526315789,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,150,0.21052631578947367,0.3157894736842105,0.40350877192982454,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,160,0.22807017543859648,0.32456140350877194,0.41315789473684206,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,170,0.2535087719298246,0.3157894736842105,0.42105263157894735,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,180,0.2807017543859649,0.3508771929824561,0.42105263157894735,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,190,0.2631578947368421,0.3508771929824561,0.42105263157894735,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,200,0.2982456140350877,0.37719298245614036,0.45614035087719296,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,210,0.2982456140350877,0.3508771929824561,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,220,0.30614035087719305,0.38596491228070173,0.5008771929824561,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,230,0.3333333333333333,0.40350877192982454,0.5008771929824561,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,240,0.3157894736842105,0.42105263157894735,0.49122807017543857,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,250,0.3684210526315789,0.4298245614035088,0.5087719298245614,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,260,0.3587719298245614,0.45614035087719296,0.5535087719298245,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,270,0.3157894736842105,0.4473684210526316,0.5263157894736842,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,280,0.3684210526315789,0.45614035087719296,0.5280701754385964,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,290,0.32368421052631585,0.4473684210526316,0.5359649122807018,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,300,0.3684210526315789,0.49122807017543857,0.5789473684210527,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,310,0.40350877192982454,0.49122807017543857,0.543859649122807,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,320,0.38596491228070173,0.49122807017543857,0.5614035087719298,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,330,0.37631578947368427,0.49122807017543857,0.5789473684210527,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,340,0.4114035087719298,0.4824561403508772,0.5885964912280701,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,350,0.42894736842105263,0.5087719298245614,0.5789473684210527,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,360,0.40350877192982454,0.5087719298245614,0.6236842105263157,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,370,0.42105263157894735,0.5087719298245614,0.5885964912280701,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,380,0.4464912280701755,0.543859649122807,0.6140350877192983,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,390,0.45614035087719296,0.543859649122807,0.5964912280701754,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,400,0.45614035087719296,0.5614035087719298,0.631578947368421,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,410,0.47368421052631576,0.543859649122807,0.6412280701754386,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,420,0.4464912280701755,0.5789473684210527,0.6491228070175439,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,430,0.47368421052631576,0.543859649122807,0.6491228070175439,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,440,0.48157894736842105,0.5789473684210527,0.6491228070175439,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,450,0.48157894736842105,0.5614035087719298,0.6412280701754386,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,460,0.49122807017543857,0.5701754385964912,0.6491228070175439,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,470,0.49912280701754386,0.5789473684210527,0.6842105263157895,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,480,0.5263157894736842,0.5877192982456141,0.6412280701754386,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,490,0.5087719298245614,0.5964912280701754,0.6842105263157895,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Focal species range,500,0.5087719298245614,0.5964912280701754,0.6666666666666666,57,node_55,realized,Uncertainty Sampling,Focal species range
+1,layers,Probabilistic range,1,0.0,0.0,0.017543859649122806,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,10,0.0,0.008771929824561403,0.05263157894736842,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,20,0.0,0.017543859649122806,0.07017543859649122,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,30,0.0,0.03508771929824561,0.07017543859649122,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,40,0.025438596491228073,0.07017543859649122,0.11491228070175434,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,50,0.025438596491228073,0.07017543859649122,0.12280701754385964,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,60,0.03508771929824561,0.08771929824561403,0.15789473684210525,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,70,0.025438596491228073,0.10526315789473684,0.17543859649122806,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,80,0.05263157894736842,0.12280701754385964,0.19298245614035087,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,90,0.07017543859649122,0.12280701754385964,0.19298245614035087,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,100,0.07017543859649122,0.14035087719298245,0.21052631578947367,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,110,0.0780701754385965,0.14035087719298245,0.17543859649122806,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,120,0.08771929824561403,0.15789473684210525,0.22807017543859648,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,130,0.0780701754385965,0.16666666666666666,0.2552631578947368,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,140,0.10526315789473684,0.16666666666666666,0.2552631578947368,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,150,0.11315789473684211,0.17543859649122806,0.2631578947368421,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,160,0.12280701754385964,0.17543859649122806,0.2807017543859649,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,170,0.1482456140350877,0.21052631578947367,0.2807017543859649,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,180,0.1307017543859649,0.21052631578947367,0.2903508771929824,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,190,0.15789473684210525,0.22807017543859648,0.3157894736842105,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,200,0.17543859649122806,0.23684210526315788,0.34298245614035083,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,210,0.16578947368421051,0.24561403508771928,0.325438596491228,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,220,0.15789473684210525,0.24561403508771928,0.36052631578947364,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,230,0.19298245614035087,0.2631578947368421,0.3684210526315789,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,240,0.17543859649122806,0.2807017543859649,0.3508771929824561,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,250,0.21842105263157893,0.2631578947368421,0.3333333333333333,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,260,0.21052631578947367,0.2894736842105263,0.3684210526315789,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,270,0.20087719298245613,0.2982456140350877,0.36052631578947364,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,280,0.21052631578947367,0.30701754385964913,0.38596491228070173,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,290,0.21052631578947367,0.2894736842105263,0.40350877192982454,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,300,0.23596491228070174,0.3333333333333333,0.40350877192982454,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,310,0.2631578947368421,0.3157894736842105,0.40350877192982454,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,320,0.2535087719298246,0.3157894736842105,0.40350877192982454,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,330,0.2535087719298246,0.3333333333333333,0.40350877192982454,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,340,0.2535087719298246,0.3508771929824561,0.44824561403508767,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,350,0.2631578947368421,0.34210526315789475,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,360,0.2535087719298246,0.3684210526315789,0.45614035087719296,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,370,0.2807017543859649,0.35964912280701755,0.4657894736842105,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,380,0.2614035087719298,0.37719298245614036,0.47368421052631576,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,390,0.2982456140350877,0.38596491228070173,0.47368421052631576,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,400,0.2885964912280702,0.38596491228070173,0.4833333333333333,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,410,0.2885964912280702,0.3684210526315789,0.47368421052631576,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,420,0.2807017543859649,0.40350877192982454,0.4833333333333333,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,430,0.2885964912280702,0.40350877192982454,0.5280701754385964,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,440,0.3333333333333333,0.42105263157894735,0.47368421052631576,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,450,0.30614035087719305,0.39473684210526316,0.5087719298245614,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,460,0.3412280701754386,0.42105263157894735,0.4929824561403508,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,470,0.3333333333333333,0.42105263157894735,0.5263157894736842,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,480,0.3333333333333333,0.42105263157894735,0.5184210526315789,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,490,0.3412280701754386,0.4298245614035088,0.5087719298245614,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Probabilistic range,500,0.3508771929824561,0.4298245614035088,0.5008771929824561,57,node_55,realized,Uncertainty Sampling,Probabilistic range
+1,layers,Species richness,1,0.0,0.0,0.017543859649122806,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,10,0.0,0.008771929824561403,0.03508771929824561,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,20,0.0,0.017543859649122806,0.08771929824561403,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,30,0.0,0.017543859649122806,0.07017543859649122,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,40,0.0,0.03508771929824561,0.07982456140350873,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,50,0.017543859649122806,0.05263157894736842,0.12280701754385964,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,60,0.017543859649122806,0.05263157894736842,0.13245614035087713,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,70,0.05263157894736842,0.08771929824561403,0.14035087719298245,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,80,0.03508771929824561,0.08771929824561403,0.14035087719298245,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,90,0.03508771929824561,0.09649122807017543,0.16754385964912274,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,100,0.03508771929824561,0.11403508771929824,0.19298245614035087,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,110,0.07017543859649122,0.11403508771929824,0.22807017543859648,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,120,0.05263157894736842,0.12280701754385964,0.20263157894736838,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,130,0.060526315789473685,0.12280701754385964,0.20263157894736838,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,140,0.0780701754385965,0.14912280701754385,0.2201754385964912,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,150,0.10526315789473684,0.15789473684210525,0.237719298245614,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,160,0.08771929824561403,0.17543859649122806,0.24561403508771928,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,170,0.08771929824561403,0.15789473684210525,0.2631578947368421,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,180,0.12280701754385964,0.19298245614035087,0.2552631578947368,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,190,0.10526315789473684,0.17543859649122806,0.2631578947368421,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,200,0.11315789473684211,0.19298245614035087,0.2807017543859649,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,210,0.1307017543859649,0.21052631578947367,0.2999999999999999,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,220,0.12280701754385964,0.21052631578947367,0.2728070175438596,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,230,0.14035087719298245,0.22807017543859648,0.2903508771929824,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,240,0.1482456140350877,0.22807017543859648,0.2982456140350877,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,250,0.14035087719298245,0.23684210526315788,0.325438596491228,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,260,0.15789473684210525,0.22807017543859648,0.325438596491228,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,270,0.1482456140350877,0.24561403508771928,0.34298245614035083,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,280,0.18333333333333332,0.2631578947368421,0.34298245614035083,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,290,0.19298245614035087,0.2719298245614035,0.3333333333333333,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,300,0.156140350877193,0.2631578947368421,0.3684210526315789,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,310,0.19298245614035087,0.2807017543859649,0.36052631578947364,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,320,0.17543859649122806,0.2631578947368421,0.3508771929824561,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,330,0.20087719298245613,0.2982456140350877,0.38596491228070173,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,340,0.19298245614035087,0.2807017543859649,0.37807017543859645,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,350,0.21842105263157893,0.2982456140350877,0.36052631578947364,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,360,0.24561403508771928,0.2982456140350877,0.41315789473684206,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,370,0.1912280701754386,0.2982456140350877,0.41315789473684206,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,380,0.21842105263157893,0.2982456140350877,0.39561403508771925,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,390,0.2710526315789474,0.3508771929824561,0.41315789473684206,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,400,0.24561403508771928,0.3157894736842105,0.42105263157894735,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,410,0.24561403508771928,0.3333333333333333,0.42105263157894735,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,420,0.23596491228070174,0.3508771929824561,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,430,0.21842105263157893,0.34210526315789475,0.43070175438596486,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,440,0.2982456140350877,0.3684210526315789,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,450,0.2631578947368421,0.3508771929824561,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,460,0.2807017543859649,0.3684210526315789,0.45614035087719296,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,470,0.2982456140350877,0.3684210526315789,0.4657894736842105,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,480,0.2710526315789474,0.3684210526315789,0.4657894736842105,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,490,0.2885964912280702,0.3684210526315789,0.43859649122807015,57,node_55,realized,Uncertainty Sampling,Species richness
+1,layers,Species richness,500,0.2631578947368421,0.38596491228070173,0.475438596491228,57,node_55,realized,Uncertainty Sampling,Species richness
