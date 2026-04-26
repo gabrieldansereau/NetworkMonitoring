@@ -18,121 +18,36 @@ end
 monitored_test_all = CSV.read(datadir("monitored_test.csv"), DataFrame)
 monitored_test = summarize_focal(monitored_test_all; id=id)
 
-## Monitored types
+## Explore variations with different samplers & layers
 
-# Load & summarize results
-monitored_types_all = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
-monitored_types2_all = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
-monitored_types = summarize_focal(monitored_types_all; id=id)
-monitored_types2 = summarize_focal(monitored_types2_all; id=id)
-
-# Visualize
-fig_types = let
-    res = monitored_types
-    var = :type
-    vals = unique(res[:, var])
-    fig = Figure()
-    ax = Axis(
-        fig[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Monitored interactions",
-        xticks=0:25:100,
-    )
-    for v in vals
-        b = filter(var => ==(v), res)
-        deg = maximum(b.deg)
-        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
-        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
-    end
-    hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(; position=:rc, merge=true)
-    fig
-end
-save(plotsdir("supp", "focal_types.png"), fig_types)
-
-# Visualize result
-fig_types2 = let
-    res = monitored_types2
-    var = :type
-    vals = unique(res[:, var])
-    fig = Figure()
-    ax = Axis(
-        fig[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Monitored interactions",
-        xticks=0:2000:10_000,
-    )
-    for v in vals
-        b = filter(var => ==(v), res)
-        deg = maximum(b.deg)
-        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
-        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
-        hlines!(deg; linestyle=:dash, color=colours[v])
-    end
-    hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    axislegend(; position=:rb, merge=true)
-    fig
-end
-save(plotsdir("supp", "focal_types2.png"), fig_types2)
-
-## Repeat with 4 species with different degrees
-
-# Load & summarize results
-monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
-monitored_spp = summarize_focal(monitored_spp_all; id=id)
-if id == 1
-    CSV.write(datadir("monitored_spp.csv"), monitored_spp)
-end
-
-# Visualize result
-fig_spp = let
-    res = monitored_spp
-    var = :sp
-    vals = unique(res[:, var])
-    fig = Figure(; size=(600, 600))
-    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions", xticks=0:100:500, yticks=0:10:60)
-    ax2 = Axis(
-        fig[2, 1];
-        ylabel="Proportion monitored",
-        xlabel="Number of sites in BON",
-        xticks=0:100:500,
-        limits=((nothing, nothing), (0.0, 1.0)),
-        yticks=0:0.2:1.0,
-    )
-    for (i, v) in enumerate(vals)
-        b = filter(var => ==(v), res)
-        d = unique(b.deg)[1]
-        l = "sp$i: $d int"
-        # Monitored int
-        band!(ax1, b.nbon, b.low .* b.deg, b.upp .* b.deg; alpha=0.4, label=l)
-        lines!(ax1, b.nbon, b.med .* b.deg; label=l)
-        hlines!(ax1, d; linestyle=:dash, alpha=0.5)
-        # Proportion
-        band!(ax2, b.nbon, b.low, b.upp; alpha=0.4, label=l)
-        lines!(ax2, b.nbon, b.med; label=l)
-    end
-    fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
-    fig
-end
-save(plotsdir("supp", "focal_spp.png"), fig_spp)
-
-## Explore variations with different sampler
-
-# Load & summarize results
+# Load results
 monitored_samplers_all = CSV.read(datadir(OUTDIR, "monitored_samplers-$idp.csv"), DataFrame)
+monitored_optimized_all = CSV.read(
+    datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
+)
+
+# Summarize
 monitored_samplers = summarize_focal(monitored_samplers_all; id=idp)
+monitored_optimized = summarize_focal(monitored_optimized_all; id=id)
 if id == 1
     CSV.write(datadir("monitored_samplers.csv"), monitored_samplers)
+    CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
 end
 
 # Load layers used for optimization
 focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
+probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=2)
 focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
+richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness-$idp.tiff"); bandnumber=1)
+degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree-$idp.tiff"); bandnumber=1)
+
+unique(monitored_samplers.sampler)
 
 # Generate BON examples
 begin
     Random.seed!(42)
     bons = Dict()
+    # Samplers
     bons["Uncertainty Sampling"] = BON.sample(BON.UncertaintySampling(100), focal_sp_range)
     bons["Weighted Balanced Acceptance"] = BON.sample(
         BON.WeightedBalancedAcceptance(100), focal_sp_range
@@ -140,139 +55,7 @@ begin
     bons["Simple Random"] = BON.sample(BON.SimpleRandom(100), focal_sp_range)
     bons["Balanced Acceptance"] = BON.sample(BON.BalancedAcceptance(100), focal_sp_mask)
     bons["Simple Random Mask"] = BON.sample(BON.SimpleRandom(100), focal_sp_mask)
-    bons
-end
-
-# Plot
-fig_samplers = let
-    set = ["Uncertainty Sampling", "Weighted Balanced Acceptance", "Simple Random"]
-    var = :sampler
-    res = filter(var => in(set), monitored_samplers)
-    vals = unique(res[:, var])
-    fig = Figure()
-    # Create layouts
-    ga = GridLayout(fig[:, 1:3])
-    gb = GridLayout(fig[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Monitored interactions",
-        xticks=0:100:500,
-    )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-    # Sampling results
-    for v in vals
-        b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
-        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
-    end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    # axislegend(ax; position=:lt, merge=true, labelsize=14)
-    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
-    # Heatmaps & BON example
-    for (a, v) in zip([ax1, ax2, ax3], vals)
-        heatmap!(a, ifelse(v == "Balanced Acceptance", focal_sp_mask, focal_sp_range))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
-        a.ylabel = v
-    end
-    # Subpanel labels
-    Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    figA = fig
-end
-save(plotsdir("focal_samplers.png"), fig_samplers)
-
-# Plot
-fig_mask = let
-    set = ["Uncertainty Sampling", "Balanced Acceptance", "Simple Random Mask"]
-    var = :sampler
-    res = filter(var => in(set), monitored_samplers)
-    vals = unique(res[:, var])
-    fig = Figure()
-    # Create layouts
-    ga = GridLayout(fig[:, 1:3])
-    gb = GridLayout(fig[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Monitored interactions",
-        xticks=0:100:500,
-    )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-    # Sampling results
-    for v in vals
-        b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
-        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
-    end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    # axislegend(ax; position=:lt, merge=true, labelsize=14)
-    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
-    # Heatmaps & BON example
-    for (a, v) in zip([ax1, ax2, ax3], vals)
-        heatmap!(a, ifelse(v == "Uncertainty Sampling", focal_sp_range, focal_sp_mask))
-        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
-        a.ylabel = v
-    end
-    # Subpanel labels
-    Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    figA = fig
-end
-save(plotsdir("supp", "focal_mask.png"), fig_mask)
-
-## Optimized sampling
-
-# Load & summarize results
-monitored_optimized_all = CSV.read(
-    datadir(OUTDIR, "monitored_optimized-$idp.csv"), DataFrame
-)
-monitored_optimized = summarize_focal(monitored_optimized_all; id=id)
-if id == 1
-    CSV.write(datadir("monitored_optimized.csv"), monitored_optimized)
-end
-
-# Load layers used for optimization
-focal_sp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=1)
-focal_sp_mask = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=3)
-probsp_range = SDT.SDMLayer(datadir(OUTDIR, "layer_sp_range-$idp.tiff"); bandnumber=2)
-richness_spp = SDT.SDMLayer(datadir(OUTDIR, "layer_richness-$idp.tiff"); bandnumber=1)
-degree_realized = SDT.SDMLayer(datadir(OUTDIR, "layer_degree-$idp.tiff"); bandnumber=1)
-
-# Generate BON examples
-begin
-    Random.seed!(33)
-    if !(@isdefined bons)
-        bons = Dict()
-    end
+    # Layers
     bons["Focal species range"] = bons["Uncertainty Sampling"]
     bons["Species richness"] = BON.sample(BON.UncertaintySampling(100), richness_spp)
     bons["Realized interactions"] = BON.sample(
@@ -298,70 +81,6 @@ _order = Dict(
     "Species richness" => 4,
 )
 sort!(monitored_optimized, order(:layer; by=x -> _order[x]))
-
-# Plot
-fig_optimized = let
-    set = [
-        "Realized interactions",
-        "Focal species range",
-        "Species richness",
-        "Probabilistic range",
-    ]
-    var = :layer
-    res = filter(var => in(set), monitored_optimized)
-    vals = unique(res[:, var])
-    fig = Figure()
-    # Create layouts
-    ga = GridLayout(fig[:, 1:3])
-    gb = GridLayout(fig[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Monitored interactions",
-        xticks=0:100:500,
-    )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-    # Sampling results
-    for v in vals
-        b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
-        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
-    end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
-    # axislegend(ax; position=:lt, merge=true, labelsize=14)
-    Legend(ga[2, 1], ax; orientation=:horizontal, merge=true, nbanks=2)
-    # Heatmaps & BON example
-    example_layers = filter(!=("Probabilistic range"), vals)
-    for (a, l) in zip([ax1, ax2, ax3], example_layers)
-        heatmap!(a, layers[l])
-        scatter!(a, coordinates(bons[l]); markersize=5, color=colours[l], strokewidth=0.5)
-        a.ylabel = l
-    end
-    # Subpanel labels
-    Label(
-        ga[1, :, Top()],
-        "Optimization layer efficiency";
-        padding=(0, 0, 5, 0),
-        font=:bold,
-    )
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    figB = fig
-end
-save(plotsdir("focal_optimized.png"), fig_optimized)
 
 # Join
 fig_joined = let
@@ -905,3 +624,111 @@ plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax2, p=0.8, pma
 plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax3, p=0.8, pmax=true)
 plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax4, p=0.8, pmax=true)
 plot_focal(; adjust_effort=false, adjust_n=false, option=:n_at_pmax5, p=0.8, pmax=true)
+
+## Extras ####
+
+## Monitored types
+
+#=
+
+# Load & summarize results
+monitored_types_all = CSV.read(datadir(OUTDIR, "monitored_types-$idp.csv"), DataFrame)
+monitored_types2_all = CSV.read(datadir(OUTDIR, "monitored_types2-$idp.csv"), DataFrame)
+monitored_types = summarize_focal(monitored_types_all; id=id)
+monitored_types2 = summarize_focal(monitored_types2_all; id=id)
+
+# Visualize
+fig_types = let
+    res = monitored_types
+    var = :type
+    vals = unique(res[:, var])
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:25:100,
+    )
+    for v in vals
+        b = filter(var => ==(v), res)
+        deg = maximum(b.deg)
+        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
+        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
+    end
+    hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(; position=:rc, merge=true)
+    fig
+end
+save(plotsdir("supp", "focal_types.png"), fig_types)
+
+# Visualize result
+fig_types2 = let
+    res = monitored_types2
+    var = :type
+    vals = unique(res[:, var])
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Monitored interactions",
+        xticks=0:2000:10_000,
+    )
+    for v in vals
+        b = filter(var => ==(v), res)
+        deg = maximum(b.deg)
+        band!(b.nbon, b.low * deg, b.upp * deg; alpha=0.4, label=v, color=colours[v])
+        lines!(b.nbon, b.med * deg; label=v, color=colours[v])
+        hlines!(deg; linestyle=:dash, color=colours[v])
+    end
+    hlines!(ax, maximum(res.deg); linestyle=:dash, alpha=0.5, color=:grey, label="metaweb")
+    axislegend(; position=:rb, merge=true)
+    fig
+end
+save(plotsdir("supp", "focal_types2.png"), fig_types2)
+
+=#
+
+## Repeat with 4 species with different degrees
+
+#=
+
+# Load & summarize results
+monitored_spp_all = CSV.read(datadir(OUTDIR, "monitored_spp-$idp.csv"), DataFrame)
+monitored_spp = summarize_focal(monitored_spp_all; id=id)
+if id == 1
+    CSV.write(datadir("monitored_spp.csv"), monitored_spp)
+end
+
+# Visualize result
+fig_spp = let
+    res = monitored_spp
+    var = :sp
+    vals = unique(res[:, var])
+    fig = Figure(; size=(600, 600))
+    ax1 = Axis(fig[1, 1]; ylabel="Monitored interactions", xticks=0:100:500, yticks=0:10:60)
+    ax2 = Axis(
+        fig[2, 1];
+        ylabel="Proportion monitored",
+        xlabel="Number of sites in BON",
+        xticks=0:100:500,
+        limits=((nothing, nothing), (0.0, 1.0)),
+        yticks=0:0.2:1.0,
+    )
+    for (i, v) in enumerate(vals)
+        b = filter(var => ==(v), res)
+        d = unique(b.deg)[1]
+        l = "sp$i: $d int"
+        # Monitored int
+        band!(ax1, b.nbon, b.low .* b.deg, b.upp .* b.deg; alpha=0.4, label=l)
+        lines!(ax1, b.nbon, b.med .* b.deg; label=l)
+        hlines!(ax1, d; linestyle=:dash, alpha=0.5)
+        # Proportion
+        band!(ax2, b.nbon, b.low, b.upp; alpha=0.4, label=l)
+        lines!(ax2, b.nbon, b.med; label=l)
+    end
+    fig[:, end + 1] = Legend(fig, ax1, "Species"; framevisible=false, merge=true)
+    fig
+end
+save(plotsdir("supp", "focal_spp.png"), fig_spp)
+
+=#
