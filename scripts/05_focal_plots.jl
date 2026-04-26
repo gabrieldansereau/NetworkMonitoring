@@ -4,6 +4,7 @@
 include("include.jl") # see note regarding why we cannot use the module
 import BiodiversityObservationNetworks as BON
 using BiodiversityObservationNetworks: GI.coordinates
+CairoMakie.activate!(; type="png")
 
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
@@ -110,160 +111,78 @@ fig_joined = let
     ## Define sets to use in both panels
     # Set 1
     res1 = monitored_samplers
-    var1 = :sampler
-    set1 = [
-        "Balanced Mask",
-        "Uncertainty Sampling",
-        "Weighted Balanced Acceptance",
-        "Balanced Acceptance",
-    ]
     # Set 2
     res2 = monitored_optimized
-    var2 = :layer
-    set2 = [
-        "Realized interactions",
-        "Focal species range",
-        "Probabilistic range",
-        "Species richness",
-    ]
 
     # Create main figure elements
     fig = Figure(; size=(650, 1100))
     g1 = GridLayout(fig[1, :])
     g2 = GridLayout(fig[2, :])
 
-    ## Panel 1
-    # Define objects
-    set = set1
-    var = var1
-    res = filter(var => in(set), res1)
-    vals = unique(res[:, var])
+    # Function to create panels
+    function make_focal_panel!(g, res; var=:variable, label="")
+        # Create layouts
+        ga = GridLayout(g[:, 1:3])
+        gb = GridLayout(g[:, end + 1])
+        # Create axes
+        ax = Axis(
+            ga[1, 1];
+            xlabel="Sites in BON",
+            ylabel="Proportion of monitored interactions",
+            xticks=0:100:500,
+        )
+        axs = []
+        for i in 1:4
+            # Axis for heatmap
+            axi = Axis(
+                gb[i, 1];
+                aspect=1,
+                yaxisposition=:right,
+                ylabelrotation=1.5pi,
+                ylabelsize=10,
+            )
+            # Remove decorations
+            hidedecorations!(axi; label=false)
+            push!(axs, axi)
+        end
 
-    # Create layouts
-    ga = GridLayout(g1[:, 1:3])
-    gb = GridLayout(g1[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Proportion of monitored interactions",
-        xticks=0:100:500,
-    )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax4 = Axis(
-        gb[4, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-    hidedecorations!(ax4; label=false)
-    # hidespines!(ax4)
+        # Sampling results
+        vals = unique(res[:, var])
+        for v in vals
+            b = filter(var => ==(v), res)
+            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
+            lines!(ax, b.nbon, b.med; label=v, color=colours[v])
+        end
+        hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
+        # Heatmaps & BON example
+        for (a, v) in zip(axs, vals)
+            heatmap!(a, layers[v])
+            scatter!(
+                a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5
+            )
+            a.ylabel = v
+        end
 
-    # Sampling results
-    for v in vals
-        b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
-        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
+        # Subpanel labels
+        Label(ga[1, :, Top()], label; padding=(0, 0, 5, 0), font=:bold)
+        Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+        # Legend
+        Legend(
+            ga[end + 1, :],
+            ax;
+            merge=true,
+            tellwidth=false,
+            tellheight=true,
+            nbanks=2,
+            framevisible=false,
+            labelsize=12.0,
+        )
+
+        return ga, gb, ax
     end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
-    # Heatmaps & BON example
-    for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
-        heatmap!(a, layers[v])
-        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
-        a.ylabel = v
-    end
-
-    # Subpanel labels
-    Label(ga[1, :, Top()], "Sampler efficiency"; padding=(0, 0, 5, 0), font=:bold)
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Legend
-    Legend(
-        ga[end + 1, :],
-        ax;
-        merge=true,
-        tellwidth=false,
-        tellheight=true,
-        nbanks=2,
-        framevisible=false,
-        labelsize=12.0,
-    )
-
-    ## Panel 2
-    # Define objects
-    set = set2
-    var = var2
-    res = filter(var => in(set), res2)
-    vals = unique(res[:, var])
-
-    # Create layouts
-    ga = GridLayout(g2[:, 1:3])
-    gb = GridLayout(g2[:, end + 1])
-    # Create axes
-    ax = Axis(
-        ga[1, 1];
-        xlabel="Sites in BON",
-        ylabel="Proportion of monitored interactions",
-        xticks=0:100:500,
-    )
-    ax1 = Axis(
-        gb[1, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax2 = Axis(
-        gb[2, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax3 = Axis(
-        gb[3, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    ax4 = Axis(
-        gb[4, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
-    )
-    # Remove decorations for heatmaps
-    hidedecorations!(ax1; label=false)
-    hidedecorations!(ax2; label=false)
-    hidedecorations!(ax3; label=false)
-    hidedecorations!(ax4; label=false)
-
-    # Sampling results
-    for v in vals
-        b = filter(var => ==(v), res)
-        band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=v, color=colours[v])
-        lines!(ax, b.nbon, b.med; label=v, color=colours[v])
-    end
-    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
-    # Heatmaps & BON example
-    for (a, v) in zip([ax1, ax2, ax3, ax4], vals)
-        heatmap!(a, layers[v])
-        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
-        a.ylabel = v
-    end
-
-    # Subpanel labels
-    Label(
-        ga[1, :, Top()],
-        "Optimization layer efficiency";
-        padding=(0, 0, 5, 0),
-        font=:bold,
-    )
-    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-    # Legend
-    Legend(
-        ga[end + 1, :],
-        ax;
-        merge=true,
-        tellwidth=false,
-        tellheight=true,
-        nbanks=2,
-        framevisible=false,
-        labelsize=12.0,
+    g1a, g1b, ax1 = make_focal_panel!(g1, monitored_samplers; label="Sampler efficiency")
+    g2a, g2b, ax2 = make_focal_panel!(
+        g2, monitored_optimized; label="Optimization layer efficiency"
     )
 
     # Additional labels
