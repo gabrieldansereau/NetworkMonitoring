@@ -9,9 +9,12 @@ const SpeciesInteractionSamplers.INTERACTIVE_REPL = false
 ## Run parameter search
 
 # Define parameters to explore
+if !(@isdefined NREP)
+    const NREP = 3
+end
 STEP = (OUTDIR == "dev" ? 50 : 10)
 const params = Dict(
-    :nbon => collect([1, STEP:STEP:500...]), :nrep => collect(1:3), :refmethod => ["global"]
+    :nbon => collect([1, STEP:STEP:500...]), :nrep => collect(1:NREP), :refmethod => ["global"]
 )
 const output = :prop # :monitored or :prop
 const sampler = BON.BalancedAcceptance # or BON.SimpleRandom
