@@ -1,9 +1,9 @@
 function _median_confint(x; α=0.05)
     z = quantile(Distributions.Normal(0.0, 1.0), 1 - α / 2)
     n = length(x)
-    L = ceil(Int, 0.5 * n - z * sqrt(0.25 * n))
-    U = ceil(Int, 0.5 * n + z * sqrt(0.25 * n))
-    return (low=sort(x)[L], upp=sort(x)[U])
+    r = floor(Int, 0.5 * n - z * sqrt(0.25 * n))
+    s = ceil(Int, 0.5 * n + z * sqrt(0.25 * n))
+    return (low=sort(x)[r], upp=sort(x)[s])
 end
 
 function summarize_focal(df; id=0, confint=false, α=0.05)
