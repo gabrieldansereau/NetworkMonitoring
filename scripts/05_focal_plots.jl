@@ -28,8 +28,8 @@ monitored_optimized_all = CSV.read(
 )
 
 # Summarize
-monitored_samplers = summarize_focal(monitored_samplers_all; id=id)
-monitored_optimized = summarize_focal(monitored_optimized_all; id=id)
+monitored_samplers = summarize_focal(monitored_samplers_all; id=id, confint=true, α=0.10)
+monitored_optimized = summarize_focal(monitored_optimized_all; id=id, confint=true, α=0.10)
 
 # Reorder columns nicely
 @rtransform!(monitored_samplers, :variable = :sampler)
@@ -119,14 +119,14 @@ labs = Dict(
 )
 
 # Joined panels
-fig_joined = let
+fig_joined = begin
     # Create main figure elements
     fig = Figure(; size=(650, 1100))
     g1 = GridLayout(fig[1, :])
     g2 = GridLayout(fig[2, :])
 
     # Function to create panels
-    function make_focal_panel!(g, res; var=:variable, label="")
+    function make_focal_panel!(g, res; var=:variable, label="", confint=false)
         # Create layouts
         ga = GridLayout(g[:, 1:3])
         gb = GridLayout(g[:, end + 1])
@@ -157,8 +157,25 @@ fig_joined = let
         vals = unique(res[:, var])
         for v in vals
             b = filter(var => ==(v), res)
-            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=labs[v], color=colours[v])
-            lines!(ax, b.nbon, b.med; label=labs[v], color=colours[v])
+            c = colours[v]
+            l = labs[v]
+            if confint
+                # Saturation parameter
+                eff = efficiency(b.nbon, b.med; f=exp, option=:a)
+                eff_low = efficiency(b.nbon, b.confint_low; f=exp, option=:a)
+                eff_upp = efficiency(b.nbon, b.confint_upp; f=exp, option=:a)
+                # Values from saturation curve
+                xs = 1:maximum(b.nbon)
+                ys = saturation(eff)(xs)
+                ylows = saturation(eff_low)(xs)
+                yupps = saturation(eff_upp)(xs)
+                # Saturation median and bands
+                lines!(ax, xs, ys; color=c, linestyle=:dash, linewidth=1.5, alpha=0.7)
+                band!(ax, xs, ylows, yupps; alpha=0.4, label=l, color=c)
+            else
+                band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
+            end
+            lines!(ax, b.nbon, b.med; label=l, color=c, linewidth=1.5, alpha=0.5)
         end
         hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
         # Heatmaps & BON example
@@ -187,9 +204,11 @@ fig_joined = let
 
         return ga, gb, ax
     end
-    g1a, g1b, ax1 = make_focal_panel!(g1, monitored_samplers; label="Sampler efficiency")
+    g1a, g1b, ax1 = make_focal_panel!(
+        g1, monitored_samplers; label="Sampler efficiency", confint=true
+    )
     g2a, g2b, ax2 = make_focal_panel!(
-        g2, monitored_optimized; label="Optimization layer efficiency"
+        g2, monitored_optimized; label="Optimization layer efficiency", confint=true
     )
 
     # Additional labels
