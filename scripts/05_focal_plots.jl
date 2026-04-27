@@ -170,12 +170,13 @@ fig_joined = begin
                 ylows = saturation(eff_low)(xs)
                 yupps = saturation(eff_upp)(xs)
                 # Saturation median and bands
-                lines!(ax, xs, ys; color=c, linestyle=:dash, linewidth=1.5, alpha=0.7)
-                band!(ax, xs, ylows, yupps; alpha=0.4, label=l, color=c)
+                band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
+                band!(ax, xs, ylows, yupps; alpha=0.5, color=c)
+                lines!(ax, xs, ys; label=l, color=c, linestyle=:dash)
             else
                 band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
+                lines!(ax, b.nbon, b.med; label=l, color=c)
             end
-            lines!(ax, b.nbon, b.med; label=l, color=c, linewidth=1.5, alpha=0.5)
         end
         hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
         # Heatmaps & BON example
