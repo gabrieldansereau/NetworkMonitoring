@@ -9,6 +9,7 @@ using DrWatson
 using Statistics
 
 update_theme!(; CairoMakie=(; px_per_unit=2.0))
+CairoMakie.activate!(; type="svg")
 
 ## Proportion results
 
@@ -42,28 +43,6 @@ function load_and_prep(file)
 end
 param_stack = load_and_prep(datadir("param_grid.csv"))
 
-# Proportion results scatterplot
-fig =
-    data(param_stack) *
-    visual(
-        RainClouds; markersize=4, jitter_width=0.0, clouds=nothing, plot_boxplots=false
-    ) *
-    mapping(
-        :nbon => "Number of sites in BON",
-        :prop => "Proportion of sampled elements";
-        color=:variable => presorted => "Sampled element",
-        layout=:refmethod => renamer(
-            "global" => "Global reference", "metawebify" => "Per-element reference"
-        ),
-    ) |>
-    x -> draw(
-        x;
-        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
-        legend=(; framevisible=false),
-        figure=(; size=(700, 450)),
-    )
-save(plotsdir("supp", "nbon.png"), fig)
-
 # Summarize results across replicates
 param_combined = @chain param_stack begin
     groupby([:nbon, :variable, :refmethod])
@@ -73,29 +52,26 @@ param_combined = @chain param_stack begin
 end
 
 # Proportion results as linesfill plot (median line & bands for intervals)
-fig =
-    filter(:refmethod => ==("global"), param_combined) |>
-    x ->
-        data(x) *
-        visual(LinesFill; fillalpha=0.15) *
-        mapping(
-            :nbon => "Number of sites in BON",
-            :med;
-            lower=:low,
-            upper=:upp,
-            color=:variable => presorted => "Sampled element",
-            # layout=:refmethod => renamer(
-            #     "global" => "Global reference", "metawebify" => "Per-element reference"
-            # ),
-        ) |>
-        x -> draw(
-            x,
-            scales(; Y=(; label="Proportion of sampled elements"));
-            axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
-            legend=(; framevisible=false),
-            figure=(;),
-        )
-save(plotsdir("nbon_bands.png"), fig)
+let
+    d = data(filter(:refmethod => ==("global"), param_combined))
+    v = visual(LinesFill; fillalpha=0.15)
+    m = mapping(
+        :nbon => "Number of sites in BON",
+        :med;
+        lower=:low,
+        upper=:upp,
+        color=:variable => presorted => "Sampled element",
+    )
+    fig = draw(
+        d * v * m,
+        scales(; Y=(; label="Proportion of sampled elements"));
+        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:100:500)),
+        legend=(; framevisible=false),
+        figure=(;),
+    )
+    save(plotsdir("nbon_bands.png"), fig)
+    fig
+end
 
 ## Random sampling comparison
 
