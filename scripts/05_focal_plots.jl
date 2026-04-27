@@ -206,10 +206,10 @@ fig_joined = begin
         return ga, gb, ax
     end
     g1a, g1b, ax1 = make_focal_panel!(
-        g1, monitored_samplers; label="Sampler efficiency", confint=true
+        g1, monitored_samplers; label="Sampler efficiency", confint=false
     )
     g2a, g2b, ax2 = make_focal_panel!(
-        g2, monitored_optimized; label="Optimization layer efficiency", confint=true
+        g2, monitored_optimized; label="Optimization layer efficiency", confint=false
     )
 
     # Additional labels
