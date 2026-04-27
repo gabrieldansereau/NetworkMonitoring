@@ -27,10 +27,7 @@ for set in sets
         filter!(:monitored => !ismissing, monitored_all)
 
         # Summmarize results not combined previously
-        _confint = set == "estimations" ? true : false
-        monitored = summarize_focal(
-            monitored_all; id=parse(Int, id), confint=_confint, α=0.10
-        )
+        monitored = summarize_focal(monitored_all; id=parse(Int, id), confint=true, α=0.10)
 
         # Add species rank and occupancy
         if set == "spp"
@@ -89,24 +86,44 @@ save(plotsdir("supp", "efficiency_example.png"), f)
 
 ## Efficiency for species, samplers and optimized simulations
 
+# Set variable for groups
+rename!(sims_samplers, :sampler => :variable)
+rename!(sims_optimized, :layer => :variable)
+rename!(sims_species, :sp => :variable)
+
 # Calculate efficiency & assign occupancy
-effs_species = @chain sims_species begin
-    @groupby(:sim, :set, :sp, :deg, :rank, :occ)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
-    rename(:sp => :variable)
+eff_opt = (; f=exp, option=:n_at_p, p=0.8)
+gp_vars = [:sim, :set, :variable]
+ordered_vars = [:sim, :variable, :eff, :eff_low, :eff_upp, :rmse, :occ, :set]
+function get_sims_efficiency(sims, gp_vars=gp_vars; occ=true)
+    effs = @chain sims begin
+        # Group per simulation and variable
+        @groupby(gp_vars)
+        # Calculate efficiency per group
+        @combine(
+            :eff = Ref(efficiency(:nbon, :med; eff_opt..., rmse=true)),
+            :eff_confint_low = efficiency(:nbon, :confint_low; eff_opt...),
+            :eff_confint_upp = efficiency(:nbon, :confint_upp; eff_opt...),
+        )
+        @rtransform(:rmse = getfield(:eff, ^(:rmse)), :eff = getfield(:eff, ^(:ei)))
+        # Make sure the confidence intervals are not inversed
+        @rtransform(
+            :eff_low = min(:eff_confint_low, :eff_confint_upp),
+            :eff_upp = max(:eff_confint_low, :eff_confint_upp),
+        )
+        @select(Not(:eff_confint_low), Not(:eff_confint_upp))
+    end
+    # Get the species occupancy
+    if occ
+        @rtransform!(effs, :occ = occup[:sim])
+    end
+    # Order variables nicely
+    select!(effs, ordered_vars, All())
+    return effs
 end
-effs_samplers = @chain sims_samplers begin
-    @groupby(:sim, :set, :sampler)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
-    @rtransform(:occ = occup[:sim])
-    rename(:sampler => :variable)
-end
-effs_optimized = @chain sims_optimized begin
-    @groupby(:sim, :set, :layer)
-    @combine(:eff = efficiency(:nbon, :med; f=exp))
-    @rtransform(:occ = occup[:sim])
-    rename(:layer => :variable)
-end
+effs_samplers = get_sims_efficiency(sims_samplers)
+effs_optimized = get_sims_efficiency(sims_optimized)
+effs_species = get_sims_efficiency(sims_species, [gp_vars..., :deg, :rank, :occ]; occ=false)
 
 # Export
 CSV.write(datadir("efficiency_samplers.csv"), effs_samplers);
@@ -138,6 +155,7 @@ pmax_opt = :n_at_pmax4
     eff, rmse = efficiency(
         gd.nbon, gd.med; f=exp, pmax=pmax, p=0.80, option=pmax_opt, rmse=true
     )
+    # Compute confidence intervals - may be inversed depending on efficiency measure
     eff_low = efficiency(gd.nbon, gd.confint_low; f=exp, pmax=pmax, p=0.80, option=pmax_opt)
     eff_upp = efficiency(gd.nbon, gd.confint_upp; f=exp, pmax=pmax, p=0.80, option=pmax_opt)
     # Export
@@ -146,8 +164,8 @@ pmax_opt = :n_at_pmax4
         variable=layer,
         offset=offset,
         eff=eff,
-        eff_low=eff_low,
-        eff_upp=eff_upp,
+        eff_low=min(eff_low, eff_upp), # fixes cases where the bounds get inverted
+        eff_upp=max(eff_low, eff_upp),
         rmse=rmse,
         deg=deg,
         pmax=pmax,

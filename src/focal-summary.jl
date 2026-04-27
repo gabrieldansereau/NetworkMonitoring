@@ -43,13 +43,14 @@ function summarize_focal(df; id=0, confint=false, α=0.05)
             on=intersect(cols, Symbol.(names(monitored_confint))),
         )
         ordered = [:sim, :layer, :offset, :nbon, :deg, :degmax, :low, :med, :upp]
-        select!(monitored, ordered, r"^confint", All())
+        select!(monitored, filter(in(names(monitored)), ordered), r"^confint", All())
     end
     monitored.sampler =
         replace.(
             monitored.sampler,
             "UncertaintySampling" => "Uncertainty Sampling",
             "WeightedBalancedAcceptance" => "Weighted Balanced Acceptance",
+            "BalancedAcceptanceMask" => "Balanced Mask",
             "BalancedAcceptance" => "Balanced Acceptance",
             "SimpleRandomMask" => "Simple Random Mask",
             "SimpleRandom" => "Simple Random",
