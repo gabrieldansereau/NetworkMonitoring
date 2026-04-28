@@ -136,7 +136,8 @@ fig_joined = begin
             xlabel="Sites in BON",
             ylabel="Proportion of monitored interactions",
             xticks=0:100:500,
-            yticks=0:0.25:1.0,
+            yticks=0:0.20:1.0,
+            ytickformat="{:.2f}",
         )
         axs = []
         for i in 1:4

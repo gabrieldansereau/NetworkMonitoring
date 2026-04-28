@@ -65,7 +65,7 @@ let
     fig = draw(
         d * v * m,
         scales(; Y=(; label="Proportion of sampled elements"));
-        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:100:500)),
+        axis=(; xticks=(0:100:500), yticks=(0.0:0.20:1.0), ytickformat="{:.2f}"),
         legend=(; framevisible=false),
         figure=(;),
     )
