@@ -4,7 +4,7 @@
 include("include.jl") # see note regarding why we cannot use the module
 import BiodiversityObservationNetworks as BON
 using BiodiversityObservationNetworks: GI.coordinates
-CairoMakie.activate!(; type="png")
+CairoMakie.activate!(; type="svg")
 
 # Use job id to vary parameters
 id = parse(Int64, get(ENV, "SLURM_ARRAY_TASK_ID", "1"))
@@ -118,106 +118,101 @@ labs = Dict(
     "Species richness" => "Species Richness",
 )
 
-# Joined panels
-fig_joined = begin
-    # Create main figure elements
-    fig = Figure(; size=(650, 1100))
-    g1 = GridLayout(fig[1, :])
-    g2 = GridLayout(fig[2, :])
-
-    # Function to create panels
-    function make_focal_panel!(g, res; var=:variable, label="", confint=false)
-        # Create layouts
-        ga = GridLayout(g[:, 1:3])
-        gb = GridLayout(g[:, end + 1])
-        # Create axes
-        ax = Axis(
-            ga[1, 1];
-            xlabel="Sites in BON",
-            ylabel="Proportion of monitored interactions",
-            xticks=0:100:500,
-            yticks=0:0.20:1.0,
-            ytickformat="{:.2f}",
+# Function to create panels
+function make_focal_panel!(g, res; var=:variable, label="", legend="", confint=false)
+    # Create layouts
+    ga = GridLayout(g[:, 1:3])
+    gb = GridLayout(g[:, end + 1])
+    # Create axes
+    ax = Axis(
+        ga[1, 1];
+        xlabel="Sites in BON",
+        ylabel="Proportion of monitored interactions",
+        xticks=0:100:500,
+        yticks=0:0.20:1.0,
+        ytickformat="{:.2f}",
+    )
+    axs = []
+    for i in 1:4
+        # Axis for heatmap
+        axi = Axis(
+            gb[i, 1]; aspect=1, yaxisposition=:right, ylabelrotation=1.5pi, ylabelsize=10
         )
-        axs = []
-        for i in 1:4
-            # Axis for heatmap
-            axi = Axis(
-                gb[i, 1];
-                aspect=1,
-                yaxisposition=:right,
-                ylabelrotation=1.5pi,
-                ylabelsize=10,
-            )
-            # Remove decorations
-            hidedecorations!(axi; label=false)
-            push!(axs, axi)
-        end
-
-        # Sampling results
-        vals = unique(res[:, var])
-        for v in vals
-            b = filter(var => ==(v), res)
-            c = colours[v]
-            l = labs[v]
-            if confint
-                # Saturation parameter
-                eff = efficiency(b.nbon, b.med; f=exp, option=:a)
-                eff_low = efficiency(b.nbon, b.confint_low; f=exp, option=:a)
-                eff_upp = efficiency(b.nbon, b.confint_upp; f=exp, option=:a)
-                # Values from saturation curve
-                xs = 1:maximum(b.nbon)
-                ys = saturation(eff)(xs)
-                ylows = saturation(eff_low)(xs)
-                yupps = saturation(eff_upp)(xs)
-                # Saturation median and bands
-                band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
-                band!(ax, xs, ylows, yupps; alpha=0.5, color=c)
-                lines!(ax, xs, ys; label=l, color=c, linestyle=:dash)
-            else
-                band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
-                lines!(ax, b.nbon, b.med; label=l, color=c)
-            end
-        end
-        hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
-        # Heatmaps & BON example
-        for (a, v) in zip(axs, vals)
-            heatmap!(a, layers[v])
-            scatter!(
-                a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5
-            )
-            a.ylabel = labs[v]
-        end
-
-        # Subpanel labels
-        Label(ga[1, :, Top()], label; padding=(0, 0, 5, 0), font=:bold)
-        Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
-        # Legend
-        Legend(
-            ga[end + 1, :],
-            ax;
-            merge=true,
-            tellwidth=false,
-            tellheight=true,
-            nbanks=2,
-            framevisible=false,
-            labelsize=12.0,
-        )
-
-        return ga, gb, ax
+        # Remove decorations
+        hidedecorations!(axi; label=false)
+        push!(axs, axi)
     end
-    g1a, g1b, ax1 = make_focal_panel!(
-        g1, monitored_samplers; label="Site selection strategies", confint=false
-    )
-    g2a, g2b, ax2 = make_focal_panel!(
-        g2, monitored_optimized; label="Optimization targets", confint=false
+
+    # Sampling results
+    vals = unique(res[:, var])
+    for v in vals
+        b = filter(var => ==(v), res)
+        c = colours[v]
+        l = labs[v]
+        if confint
+            # Saturation parameter
+            eff = efficiency(b.nbon, b.med; f=exp, option=:a)
+            eff_low = efficiency(b.nbon, b.confint_low; f=exp, option=:a)
+            eff_upp = efficiency(b.nbon, b.confint_upp; f=exp, option=:a)
+            # Values from saturation curve
+            xs = 1:maximum(b.nbon)
+            ys = saturation(eff)(xs)
+            ylows = saturation(eff_low)(xs)
+            yupps = saturation(eff_upp)(xs)
+            # Saturation median and bands
+            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
+            band!(ax, xs, ylows, yupps; alpha=0.5, color=c)
+            lines!(ax, xs, ys; label=l, color=c, linestyle=:dash)
+        else
+            band!(ax, b.nbon, b.low, b.upp; alpha=0.4, label=l, color=c)
+            lines!(ax, b.nbon, b.med; label=l, color=c)
+        end
+    end
+    hlines!(ax, [1.0]; linestyle=:dash, alpha=0.5, color=:grey)
+    # Heatmaps & BON example
+    for (a, v) in zip(axs, vals)
+        heatmap!(a, layers[v])
+        scatter!(a, coordinates(bons[v]); markersize=5, color=colours[v], strokewidth=0.5)
+        a.ylabel = labs[v]
+    end
+
+    # Subpanel labels
+    Label(ga[1, :, Top()], label; padding=(0, 0, 5, 0), font=:bold)
+    Label(gb[1, :, Top()], "BON examples"; padding=(0, 0, 5, 0), font=:bold)
+    # Legend
+    Legend(
+        ga[end + 1, :],
+        ax,
+        legend;
+        merge=true,
+        tellwidth=false,
+        tellheight=true,
+        nbanks=2,
+        framevisible=false,
+        labelsize=12.0,
+        titleposition=:left,
     )
 
-    # Additional labels
-    Label(g1[1, :, TopLeft()], "A)"; padding=(0, 0, 5, 0), font=:bold)
-    Label(g2[1, :, TopLeft()], "B)"; padding=(0, 0, 5, 0), font=:bold)
-    # Show figure
-    save(plotsdir("focal_joined.png"), fig)
+    return ga, gb, ax
+end
+
+let
+    fig = Figure(; size=(650, 550))
+    g1 = GridLayout(fig[1, :])
+    g1a, g1b, ax1 = make_focal_panel!(
+        g1, monitored_samplers; legend="Site selection\nstrategies", confint=false
+    )
+    save(plotsdir("focal_samplers.png"), fig)
+    fig
+end
+
+let
+    fig = Figure(; size=(650, 550))
+    g1 = GridLayout(fig[1, :])
+    g1a, g1b, ax1 = make_focal_panel!(
+        g1, monitored_optimized; legend="Optimization\ntargets", confint=false
+    )
+    save(plotsdir("focal_optimized.png"), fig)
     fig
 end
 
