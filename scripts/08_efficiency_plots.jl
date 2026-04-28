@@ -188,8 +188,14 @@ begin
     end
     # Add labels
     pad = (-150, 0, 10, 0)
-    Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
-    Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
+    Label(
+        g1[1, 1, Top()],
+        "A) Site selection strategies";
+        halign=:left,
+        font=:bold,
+        padding=pad,
+    )
+    Label(g2[1, 1, Top()], "B) Optimization targets"; halign=:left, font=:bold, padding=pad)
 
     # Summary panels
     d3 = @rsubset(res_summary, :set == "samplers")
