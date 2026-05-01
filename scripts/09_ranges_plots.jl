@@ -173,7 +173,7 @@ begin
         ax = Axis(
             f;
             xlabel="Range estimation difference (%)",
-            ylabel="Proportion of sites comp to True Range",
+            ylabel=rich("Proportion of n", subscript("0.80"), " compared to reference"),
             xticks=ceil(t1; digits=1):0.1:floor(t2; digits=1),
             xtickformat=values ->
                 [v > 0.0 ? "+$(Int(100*v))" : "$(Int(100*v))" for v in values],
@@ -383,9 +383,7 @@ begin
     # Legends
     leg_opt = (; framevisible=false, merge=true, halign=:left)
     Legend(g1l[:, :], ax1, "Comparison values"; leg_opt...)
-    Legend(
-        g2l[:, :], ax2, "Sign proportion\nconfidence interval"; leg_opt..., tellwidth=false
-    )
+    Legend(g2l[:, :], ax2, "Comparison result"; leg_opt..., tellwidth=false)
 
     # Align axes
     linkxaxes!(ax1, ax2)
@@ -400,7 +398,7 @@ begin
     )
     Label(
         g2[1, 1, Top()],
-        "b) Proportion of simulations per comparison sign";
+        "b) Summary of comparisons across all simulations";
         lab_opt...,
         padding=(-65, 0, 15, 0),
     )

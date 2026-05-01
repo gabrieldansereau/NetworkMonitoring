@@ -152,8 +152,12 @@ begin
     xaxis = (;
         xticks=xticks, xtickformat="{:.0f}", limits=((-xmax, xmax), (nothing, nothing))
     )
-    xlab1 = "Number of sites compared to reference ($(vlabs[sortedsamplers[1]]))"
-    xlab2 = "Number of sites compared to reference ($(vlabs[sortedlayers[1]]))"
+    xlab1 = rich(
+        "n", subscript("0.80"), " compared to reference ($(vlabs[sortedsamplers[1]]))"
+    )
+    xlab2 = rich(
+        "n", subscript("0.80"), " compared to reference ($(vlabs[sortedlayers[1]]))"
+    )
     # Axis
     ax1 = Axis(g1[:, :]; xlabel=xlab1, xaxis...)
     ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
