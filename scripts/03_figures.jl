@@ -1,14 +1,7 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Statistics
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
 CairoMakie.activate!(; type="svg")
 
 ## Proportion results
@@ -49,6 +42,16 @@ param_combined = @chain param_stack begin
     @combine(
         :low = quantile(:prop, 0.05), :med = median(:prop), :upp = quantile(:prop, 0.95),
     )
+end
+
+# Get n0.80 efficiency
+eff_opt = (; f=exp, option=:n_at_p, p=0.8)
+effs = @chain param_combined begin
+    # Group per simulation and variable
+    @groupby(:variable, :refmethod)
+    # Calculate efficiency per group
+    @combine(:eff = Ref(efficiency(:nbon, :med; eff_opt..., rmse=true)),)
+    @rtransform(:rmse = getfield(:eff, ^(:rmse)), :eff = getfield(:eff, ^(:ei)))
 end
 
 # Proportion results as linesfill plot (median line & bands for intervals)
