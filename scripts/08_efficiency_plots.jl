@@ -127,230 +127,173 @@ begin
     )
 end
 begin
-    Random.seed!(42)
+    # Function
+    function make_rainclouds!(
+        f;
+        res_comps=res_comps,
+        res_summary=res_summary,
+        sortedcomps=sortedcomps,
+        vlabs=vlabs,
+        xlabref=true,
+        pad=(-150, 0, 10, 0),
+    )
+        Random.seed!(42)
+        # Panels
+        ga = GridLayout(f[1:3, :])
+        gb = GridLayout(f[4:6, :])
+        # Side panels
+        g1 = GridLayout(ga[:, 1:4])
+        g2 = GridLayout(gb[:, 1:4])
+        g3 = GridLayout(ga[:, (end + 1):(end + 2)])
+        g4 = GridLayout(gb[:, (end + 1):(end + 2)])
 
+        # Main panels
+        d1 = @rsubset(res_comps, :set == "samplers")
+        d2 = @rsubset(res_comps, :set == "layers")
+        # Axis options
+        xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
+        xticks = [-6, -4, -2, 0, 2, 4]
+        # xaxis = (; xticks=xticks, xtickformat=xlog2f)
+        xmax = maximum(res_comps.value)
+        xticks = collect(-6000:3000:6000)
+        xaxis = (;
+            xticks=xticks, xtickformat="{:.0f}", limits=((-xmax, xmax), (nothing, nothing))
+        )
+        if xlabref
+            xlab1 = rich(
+                "n",
+                subscript("0.80"),
+                " compared to reference ($(vlabs[sortedsamplers[1]]))",
+            )
+            xlab2 = rich(
+                "n", subscript("0.80"), " compared to reference ($(vlabs[sortedlayers[1]]))"
+            )
+        else
+            xlab1 = rich("n", subscript("0.80"), " comparison")
+            xlab2 = xlab1
+        end
+        # Axis
+        ax1 = Axis(g1[:, :]; xlabel=xlab1, xaxis...)
+        ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
+        linkxaxes!(ax1, ax2)
+        # Raincloud
+        overlapdict = Dict("higher" => 3, "lower" => 2, "equal" => 1)
+        for (ax, d) in zip([ax1, ax2], [d1, d2])
+            # Add vline for reference
+            vlines!(ax, [0.0]; linestyle=:dash, color=:black)
+            # Select variables
+            yvars = unique(d.variable)
+            ylabs = [vlabs[v] for v in yvars]
+            ax.yticks = (1:length(ylabs), ylabs)
+            for (i, v) in enumerate(yvars)
+                dc = @rsubset d :variable == v
+                nrow(dc) > 0 || continue
+                overlaps = sort(unique(dc.overlap); by=x -> overlapdict[x])
+                rainclouds!(
+                    ax,
+                    [i],
+                    dc.value;
+                    color=[pal[ov] for ov in dc.overlap],
+                    dodge=[first(indexin([ov], overlaps)) for ov in dc.overlap],
+                    markersize=5,
+                    jitter_width=0.4 * length(overlaps),
+                    plot_boxplots=false,
+                    clouds=nothing,
+                    orientation=:horizontal,
+                    side_nudge=0.0,
+                )
+            end
+        end
+        # Add labels
+        Label(
+            g1[1, 1, Top()],
+            "A) Site selection strategies";
+            halign=:left,
+            font=:bold,
+            padding=pad,
+        )
+        Label(
+            g2[1, 1, Top()],
+            "B) Optimization targets";
+            halign=:left,
+            font=:bold,
+            padding=pad,
+        )
+
+        # Summary panels
+        d3 = @rsubset(res_summary, :set == "samplers")
+        d4 = @rsubset(res_summary, :set == "layers")
+        labs = ["lower" => "Lower", "equal" => "Equal", "higher" => "Higher"]
+        ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], getindex.(labs, 2)))
+        ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5, 2.5], getindex.(labs, 2)))
+        m34 = mapping(
+            :variable => sorter(sortedcomps),
+            [1];
+            stack=:countmeasure => renamer(labs),
+            color=:countmeasure,
+            bar_labels=:label => verbatim,
+        )
+        v34 = visual(
+            BarPlot;
+            direction=:x,
+            label_position=:center,
+            label_color=:white,
+            label_font=:bold,
+            label_size=14,
+            alpha=0.85,
+        )
+        draw!(ax3, data(d3) * m34 * v34, scl)
+        draw!(ax4, data(d4) * m34 * v34, scl)
+
+        hideydecorations!(ax3)
+        hidexdecorations!(ax3; ticklabels=false, ticks=false)
+        hidespines!(ax3)
+
+        hideydecorations!(ax4)
+        hidexdecorations!(ax4; ticklabels=false, ticks=false)
+        hidespines!(ax4)
+
+        linkyaxes!(ax1, ax3)
+        linkyaxes!(ax2, ax4)
+
+        pad = (0, 0, 10, 0)
+        Label(g3[1, 1, Top()], "Comparison summary"; font=:bold, padding=pad)
+        Label(g4[1, 1, Top()], "Comparison summary"; font=:bold, padding=pad)
+        return (; f, ax1, ax2)
+    end
     # Figure
     f = Figure(; size=(850, 450))
-    # Panels
-    ga = GridLayout(f[1:3, :])
-    gb = GridLayout(f[4:6, :])
-    # Side panels
-    g1 = GridLayout(ga[:, 1:4])
-    g2 = GridLayout(gb[:, 1:4])
-    g3 = GridLayout(ga[:, (end + 1):(end + 2)])
-    g4 = GridLayout(gb[:, (end + 1):(end + 2)])
-
-    # Main panels
-    d1 = @rsubset(res_comps, :set == "samplers")
-    d2 = @rsubset(res_comps, :set == "layers")
-    # Axis options
-    xlog2f = vs -> [rich("2", superscript("$(Int(v))")) for v in vs]
-    xticks = [-6, -4, -2, 0, 2, 4]
-    # xaxis = (; xticks=xticks, xtickformat=xlog2f)
-    xmax = maximum(res_comps.value)
-    xticks = collect(-6000:3000:6000)
-    xaxis = (;
-        xticks=xticks, xtickformat="{:.0f}", limits=((-xmax, xmax), (nothing, nothing))
-    )
-    xlab1 = rich(
-        "n", subscript("0.80"), " compared to reference ($(vlabs[sortedsamplers[1]]))"
-    )
-    xlab2 = rich(
-        "n", subscript("0.80"), " compared to reference ($(vlabs[sortedlayers[1]]))"
-    )
-    # Axis
-    ax1 = Axis(g1[:, :]; xlabel=xlab1, xaxis...)
-    ax2 = Axis(g2[:, :]; xlabel=xlab2, xaxis...)
-    linkxaxes!(ax1, ax2)
-    # Raincloud
-    overlapdict = Dict("higher" => 3, "lower" => 2, "equal" => 1)
-    for (ax, d) in zip([ax1, ax2], [d1, d2])
-        # Add vline for reference
-        vlines!(ax, [0.0]; linestyle=:dash, color=:black)
-        # Select variables
-        yvars = unique(d.variable)
-        ylabs = [vlabs[v] for v in yvars]
-        ax.yticks = (1:length(ylabs), ylabs)
-        for (i, v) in enumerate(yvars)
-            dc = @rsubset d :variable == v
-            nrow(dc) > 0 || continue
-            overlaps = sort(unique(dc.overlap); by=x -> overlapdict[x])
-            rainclouds!(
-                ax,
-                [i],
-                dc.value;
-                color=[pal[ov] for ov in dc.overlap],
-                dodge=[first(indexin([ov], overlaps)) for ov in dc.overlap],
-                markersize=5,
-                jitter_width=0.4 * length(overlaps),
-                plot_boxplots=false,
-                clouds=nothing,
-                orientation=:horizontal,
-                side_nudge=0.0,
-            )
-        end
-    end
-    # Add labels
-    pad = (-150, 0, 10, 0)
-    Label(
-        g1[1, 1, Top()],
-        "A) Site selection strategies";
-        halign=:left,
-        font=:bold,
-        padding=pad,
-    )
-    Label(g2[1, 1, Top()], "B) Optimization targets"; halign=:left, font=:bold, padding=pad)
-
-    # Summary panels
-    d3 = @rsubset(res_summary, :set == "samplers")
-    d4 = @rsubset(res_summary, :set == "layers")
-    labs = ["lower" => "Lower", "equal" => "Equal", "higher" => "Higher"]
-    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5, 2.5], getindex.(labs, 2)))
-    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5, 2.5], getindex.(labs, 2)))
-    m34 = mapping(
-        :variable => sorter(sortedcomps),
-        [1];
-        stack=:countmeasure => renamer(labs),
-        color=:countmeasure,
-        bar_labels=:label => verbatim,
-    )
-    v34 = visual(
-        BarPlot;
-        direction=:x,
-        label_position=:center,
-        label_color=:white,
-        label_font=:bold,
-        label_size=14,
-        alpha=0.85,
-    )
-    draw!(ax3, data(d3) * m34 * v34, scl)
-    draw!(ax4, data(d4) * m34 * v34, scl)
-
-    hideydecorations!(ax3)
-    hidexdecorations!(ax3; ticklabels=false, ticks=false)
-    hidespines!(ax3)
-
-    hideydecorations!(ax4)
-    hidexdecorations!(ax4; ticklabels=false, ticks=false)
-    hidespines!(ax4)
-
-    linkyaxes!(ax1, ax3)
-    linkyaxes!(ax2, ax4)
-
-    pad = (0, 0, 10, 0)
-    Label(g3[1, 1, Top()], "Comparison summary"; font=:bold, padding=pad)
-    Label(g4[1, 1, Top()], "Comparison summary"; font=:bold, padding=pad)
-
-    save(plotsdir("efficiency_comparison.png"), current_figure())
+    # Rainclouds
+    make_rainclouds!(f)
+    save(plotsdir("efficiency_comparison.png"), f)
     f
 end
 
 ## Within-simulation - All comparisons
 
-#=
-
-# Visualize
-sortedcomps = [
-    # Samplers
-    "ΔBA_SRM"
-    "ΔUS_BA"
-    "ΔUS_SRM"
-    "ΔUS_RS"
-    "ΔUS_WBA"
-    "ΔWBA_RS"
-    # Layers
-    "ΔFR_PR"
-    "ΔFR_SR"
-    "ΔPR_SR"
-    "ΔRI_FR"
-    "ΔRI_PR"
-    "ΔRI_SR"
-]
-let res_comps = within_comps_all, res_summary = res_summary_all
-    Random.seed!(42)
-    d0 = @rsubset(res_comps, :variable in sortedcomps)
-    u0 = @rsubset(res_summary, :variable in sortedcomps)
-
-    # Figure & grid
-    f = Figure(; size=(700, 450))
-    g1 = GridLayout(f[1:4, 1:3])
-    g2 = GridLayout(f[5:10, 1:3])
-    g3 = GridLayout(f[1:4, end + 1])
-    g4 = GridLayout(f[5:end, end])
-
-    # Main panels
-    d1 = @rsubset(d0, :set == "samplers")
-    d2 = @rsubset(d0, :set == "layers")
-    m = mapping(
-        :variable => sorter(sortedcomps) => "comparison",
-        :value => "Efficiency difference";
-        color=:value => (x -> x <= 0.0),
+let
+    # Select all comparisons as results
+    res_comps_all = within_comps_all
+    res_summary_all = @rsubset(
+        comps_summary_all, :countmeasure in ["higher", "lower", "equal"]
     )
-    rains = visual(
-        RainClouds;
-        markersize=5,
-        jitter_width=0.4,
-        plot_boxplots=false,
-        clouds=nothing,
-        orientation=:horizontal,
+    sortedcomps_all = unique(res_summary_all.variable)
+
+    # Labels
+    vlabs_all = Dict(sc => replace(sc, "_" => " – ") for sc in sortedcomps_all)
+
+    # Figure
+    f = Figure(; size=(850, 600))
+    make_rainclouds!(
+        f;
+        res_comps=res_comps_all,
+        res_summary=res_summary_all,
+        sortedcomps=sortedcomps_all,
+        vlabs=vlabs_all,
+        xlabref=false,
+        pad=(-75, 0, 10, 0),
     )
-    vline = mapping([0.0]) * visual(VLines; linestyle=:dash)
-    # xlog2f = vs -> [rich("2", superscript("$(v)")) for v in vs]
-    # xlog2 = (; axis=(; xtickformat=xlog2f))
-    # xaxis = (; axis=(; xticks=0:2:10))
-    fg1 = draw!(g1, data(d1) * m * rains + vline;)
-    fg2 = draw!(g2, data(d2) * m * rains + vline;)
-    linkxaxes!(fg1..., fg2...)
-    pad = (-100, 0, 10, 0)
-    Label(g1[1, 1, Top()], "A) Samplers"; halign=:left, font=:bold, padding=pad)
-    Label(g2[1, 1, Top()], "B) Optimization Layers"; halign=:left, font=:bold, padding=pad)
-
-    # Summary panels
-    d3 = @rsubset(u0, :set == "samplers")
-    d4 = @rsubset(u0, :set == "layers")
-    ax3 = Axis(g3[1, 1]; xticks=([0.5, 1.5], ["lower", "higher"]))
-    ax4 = Axis(g4[1, 1]; xticks=([0.5, 1.5], ["lower", "higher"]))
-    m34 = mapping(
-        :variable => sorter(sortedcomps),
-        [1];
-        stack=:countmeasure => sorter(["count_neg", "count_pos"]),
-        color=:countmeasure => sorter(["count_pos", "count_neg"]),
-        bar_labels=:label => verbatim,
-    )
-    v3 = visual(
-        BarPlot;
-        direction=:x,
-        label_position=:center,
-        label_color=:white,
-        label_font=:bold,
-        label_size=14,
-        alpha=0.85,
-    )
-    v4 = visual(
-        BarPlot;
-        direction=:x,
-        label_position=:center,
-        label_color=:white,
-        label_font=:bold,
-        label_size=14,
-        alpha=0.85,
-    )
-    draw!(ax3, data(d3) * m34 * v3)
-    draw!(ax4, data(d4) * m34 * v4)
-
-    hideydecorations!(ax3)
-    hidexdecorations!(ax3; ticklabels=false, ticks=false)
-    hidespines!(ax3)
-
-    hideydecorations!(ax4)
-    hidexdecorations!(ax4; ticklabels=false, ticks=false)
-    hidespines!(ax4)
-
-    pad = (0, 0, 10, 0)
-    Label(g3[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-    Label(g4[1, 1, Top()], "Comparison sign"; font=:bold, padding=pad)
-
-    save(plotsdir("supp", "efficiency_comparison_all.png"), current_figure())
+    save(plotsdir("supp", "efficiency_comparison_all.png"), f)
     f
 end
 ## Distribution figures
