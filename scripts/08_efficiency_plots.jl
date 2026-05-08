@@ -280,6 +280,17 @@ let
     sortedcomps_all = unique(res_summary_all.variable)
 
     # Labels
+    new_names = [
+        "ΔBM_US" => "ΔBWR_TS",
+        "ΔWBA_US" => "ΔWS_TS",
+        "ΔBA_US" => "ΔBS_TS",
+        "ΔWBA_BM" => "ΔWS_BWR",
+        "ΔBA_BM" => "ΔBS_BWR",
+        "ΔBA_WBA" => "ΔBS_WS",
+    ]
+    replace!(res_comps_all.variable, new_names...)
+    replace!(res_summary_all.variable, new_names...)
+    replace!(sortedcomps_all, new_names...)
     vlabs_all = Dict(sc => replace(sc, "_" => " – ") for sc in sortedcomps_all)
 
     # Figure
@@ -297,6 +308,8 @@ let
     f
 end
 ## Distribution figures
+
+#=
 
 # Violin
 begin
