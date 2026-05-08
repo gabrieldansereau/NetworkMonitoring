@@ -1,4 +1,4 @@
-Manifest.toml
+# Manifest.toml
 scripts/_*
 scripts/_notebooks
 plots/_*
