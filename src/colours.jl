@@ -8,7 +8,9 @@ colours = Dict{Any,Any}(
     "Uncertainty Sampling" => Makie.wong_colors()[2],
     "Weighted Balanced Acceptance" => Makie.wong_colors()[3],
     "Simple Random" => Makie.wong_colors()[1],
-    "Balanced Acceptance" => :grey,
+    "Balanced Acceptance" => Makie.wong_colors()[1],
+    # "Balanced Mask" => Makie.wong_colors()[7],
+    "Balanced Mask" => :grey,
     "Simple Random Mask" => :turquoise,
     # Layers
     "Focal species range" => Makie.wong_colors()[2],

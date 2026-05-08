@@ -121,15 +121,22 @@ end
 
 # Compare efficiencies within simulations
 function comparewithin(
-    effs_combined, set; to=nothing, labels=Dict(set .=> set), f=(x, y) -> -(x, y)
+    effs_combined, set; to=nothing, labels=Dict(set .=> set), f=(x, y) -> -(x, y), vref=1.0
 )
     # Make sure all labels are defined
     all_labels = Dict(s in keys(labels) ? s => labels[s] : s => s for s in set)
     # Select variables in set & prepare for comparison
-    within_combined = @chain effs_combined begin
-        @rsubset(:variable in set)
-        @rtransform(:variable = all_labels[:variable])
-        unstack(:variable, :eff)
+    gpvars = [:sim, :set, :occ]
+    effs_selected = @chain effs_combined begin
+        # Select main columns
+        select(gpvars, :variable, :eff, :eff_low, :eff_upp)
+        # Select variables
+        @rsubset :variable in set
+        # Rename
+        @rtransform :variable = all_labels[:variable]
+        # Nest efficiencies in single column
+        @rtransform :eff = (eff=:eff, low=:eff_low, upp=:eff_upp)
+        select(gpvars, :variable, :eff)
     end
     # Define combinations to compare
     if isnothing(to)
@@ -151,19 +158,41 @@ function comparewithin(
         comps = reduce(vcat, comps)
     end
     # Compare efficiencies
+    comps_df = DataFrame()
     for (c1, c2) in comps
+        # Select variables for comparison
         l1 = all_labels[c1]
         l2 = all_labels[c2]
-        complabel = "Δ$(l1)_$(l2)"
-        @rtransform!(within_combined, $complabel = f($(l1), $(l2)))
+        comp_view = @rsubset(effs_selected, :variable in [l1, l2]; view=true)
+        # Unstack to compare column-wise
+        comp = unstack(comp_view, :variable, :eff)
+        rename!(comp, Dict(l1 => :v1, l2 => :v2))
+        # Create empty columns to hold results
+        comp.variable .= "Δ$(l1)_$(l2)"
+        comp.value = Vector{Union{Missing,Float64}}(missing, nrow(comp))
+        comp.overlap = Vector{Union{Missing,Bool}}(missing, nrow(comp))
+        comp.overlap_sign = Vector{Union{Missing,String}}(missing, nrow(comp))
+        # Loop to compare individual results
+        for r in eachrow(comp)
+            eff1 = r.v1
+            eff2 = r.v2
+            if !ismissing(eff1) && !ismissing(eff2)
+                # Actual comparison
+                r.value = f(eff1.eff, eff2.eff)
+                # Overlap of confidence intervals
+                r.overlap = eff1.low <= eff2.upp && eff2.low <= eff1.upp
+                r.overlap_sign =
+                    r.overlap ? "equal" : (r.value <= vref ? "lower" : "higher")
+            end
+        end
+        # Simplify & export
+        select!(comp, :sim, :set, :occ, :variable, :value, :overlap_sign => :overlap)
+        append!(comps_df, comp)
     end
-    # Select only the variables from the comparison
-    within_combined = @chain within_combined begin
-        select(:sim, :set, :occ, r"Δ")
-        stack(r"Δ")
-        dropmissing()
-    end
-    return within_combined
+    # Remove missing comparisons
+    dropmissing!(comps_df)
+    disallowmissing!(comps_df)
+    return comps_df
 end
 
 # Flip some comparison values
@@ -176,8 +205,38 @@ function flipthatcomp!(df, toflip; f=(x) -> -x)
         inds = findall(==(comp), df.variable)
         # Update
         new = @view df[inds, :]
-        @rtransform!(new, :variable = newcomp)
-        @rtransform!(new, :value = f(:value))
+        @rtransform!(
+            new,
+            :variable = newcomp,
+            :value = f(:value),
+            :overlap = replace(:overlap, "higher" => "lower", "lower" => "higher")
+        )
     end
     return df
+end
+
+# Count positive and negative comparisons per set and variable (across simulations/replicates)
+function summarizecomps(
+    within_comps; gp_vars=[:set, :variable], value=:value, overlap=:overlap
+)
+    unique_comps = @chain within_comps begin
+        @groupby(gp_vars)
+        @combine(
+            :n = length($value),
+            :sign_pos = count(>(1), $value) / length($value),
+            :sign_neg = count(<=(0), $value) / length($value),
+            :higher = count(==("higher"), $overlap) / length($overlap),
+            :lower = count(==("lower"), $overlap) / length($overlap),
+            :equal = count(==("equal"), $overlap) / length($overlap),
+        )
+        @transform :prop_sim = :n ./ maximum(:n)
+        stack(
+            [:sign_pos, :sign_neg, :higher, :lower, :equal];
+            variable_name=:countmeasure,
+            value_name=:count,
+        )
+        @rtransform :label = "$(round(Int, :count *100)) %"
+        @rtransform :label = (:count > 0.0 && :label == "0 %") ? "< 1 %" : :label
+    end
+    return unique_comps
 end

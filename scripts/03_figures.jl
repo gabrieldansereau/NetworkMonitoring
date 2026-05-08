@@ -1,14 +1,8 @@
 # using DrWatson
 # @quickactivate :NetworkMonitoring
 
-using AlgebraOfGraphics
-using CairoMakie
-using CSV
-using DataFramesMeta
-using DrWatson
-using Statistics
-
-update_theme!(; CairoMakie=(; px_per_unit=2.0))
+include("include.jl") # see note regarding why we cannot use the module
+CairoMakie.activate!(; type="svg")
 
 ## Proportion results
 
@@ -42,28 +36,6 @@ function load_and_prep(file)
 end
 param_stack = load_and_prep(datadir("param_grid.csv"))
 
-# Proportion results scatterplot
-fig =
-    data(param_stack) *
-    visual(
-        RainClouds; markersize=4, jitter_width=0.0, clouds=nothing, plot_boxplots=false
-    ) *
-    mapping(
-        :nbon => "Number of sites in BON",
-        :prop => "Proportion of sampled elements";
-        color=:variable => presorted => "Sampled element",
-        layout=:refmethod => renamer(
-            "global" => "Global reference", "metawebify" => "Per-element reference"
-        ),
-    ) |>
-    x -> draw(
-        x;
-        axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
-        legend=(; framevisible=false),
-        figure=(; size=(700, 450)),
-    )
-save(plotsdir("supp", "nbon.png"), fig)
-
 # Summarize results across replicates
 param_combined = @chain param_stack begin
     groupby([:nbon, :variable, :refmethod])
@@ -72,30 +44,37 @@ param_combined = @chain param_stack begin
     )
 end
 
+# Get n0.80 efficiency
+eff_opt = (; f=exp, option=:n_at_p, p=0.8)
+effs = @chain param_combined begin
+    # Group per simulation and variable
+    @groupby(:variable, :refmethod)
+    # Calculate efficiency per group
+    @combine(:eff = Ref(efficiency(:nbon, :med; eff_opt..., rmse=true)),)
+    @rtransform(:rmse = getfield(:eff, ^(:rmse)), :eff = getfield(:eff, ^(:ei)))
+end
+
 # Proportion results as linesfill plot (median line & bands for intervals)
-fig =
-    filter(:refmethod => ==("global"), param_combined) |>
-    x ->
-        data(x) *
-        visual(LinesFill; fillalpha=0.15) *
-        mapping(
-            :nbon => "Number of sites in BON",
-            :med;
-            lower=:low,
-            upper=:upp,
-            color=:variable => presorted => "Sampled element",
-            # layout=:refmethod => renamer(
-            #     "global" => "Global reference", "metawebify" => "Per-element reference"
-            # ),
-        ) |>
-        x -> draw(
-            x,
-            scales(; Y=(; label="Proportion of sampled elements"));
-            axis=(; yticks=(0.0:0.25:1.0), xticks=(0:25:100)),
-            legend=(; framevisible=false),
-            figure=(;),
-        )
-save(plotsdir("nbon_bands.png"), fig)
+let
+    d = data(filter(:refmethod => ==("global"), param_combined))
+    v = visual(LinesFill; fillalpha=0.15)
+    m = mapping(
+        :nbon => "Number of sites in BON",
+        :med;
+        lower=:low,
+        upper=:upp,
+        color=:variable => presorted => "Sampled element",
+    )
+    fig = draw(
+        d * v * m,
+        scales(; Y=(; label="Proportion of sampled elements"));
+        axis=(; xticks=(0:100:500), yticks=(0.0:0.20:1.0), ytickformat="{:.2f}"),
+        legend=(; framevisible=false),
+        figure=(;),
+    )
+    save(plotsdir("nbon_bands.png"), fig)
+    fig
+end
 
 ## Random sampling comparison
 
