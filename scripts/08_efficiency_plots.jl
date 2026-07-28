@@ -107,8 +107,8 @@ begin
     # Set colour palette
     pal = Dict(
         "lower" => Makie.wong_colors()[2],
-        "equal" => Makie.wong_colors()[4],
-        "higher" => Makie.wong_colors()[3],
+        "equal" => Makie.wong_colors()[3],
+        "higher" => Makie.wong_colors()[4],
     )
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
 
