@@ -149,9 +149,10 @@ begin
     # Set colour palette
     pal = Dict(
         "lower" => Makie.wong_colors()[2],
-        "equal" => Makie.wong_colors()[4],
-        "higher" => Makie.wong_colors()[3],
+        "equal" => Makie.wong_colors()[3],
+        "higher" => Makie.wong_colors()[4],
     )
+    sortedres = ["higher", "equal", "lower"]
     scl = scales(; Color=(; palette=[k => v for (k, v) in pal]))
 end
 
@@ -250,6 +251,12 @@ end
 # Comparison scatter axis
 begin
     function make_comps_ax!(ax; res=res_comps, bands=res_bands)
+        # Reorder given intended legend labels order
+        res = copy(res)
+        # sortedres_d = Dict(v => i for (i, v) in enumerate(sortedres))
+        # sort!(res, order(:overlap; by=x -> sortedres_d[x]))
+        sort!(res, order(:offset; rev=true))
+        # Plot
         Random.seed!(42)
         sc = scatter!(
             ax,
@@ -303,7 +310,7 @@ begin
         end
 
         # Bands
-        for mes in ["equal", "higher", "lower"]
+        for mes in sortedres
             r = @rsubset(res, :countmeasure == mes)
             x = r[:, var]
             med = r.med
@@ -392,13 +399,13 @@ begin
     lab_opt = (; halign=:left, font=:bold)
     Label(
         g1[1, 1, Top()],
-        "a) Comparison of efficiencies between range estimations";
+        "A) Comparison of efficiencies between range estimations";
         lab_opt...,
         padding=(-65, 0, 30, 0),
     )
     Label(
         g2[1, 1, Top()],
-        "b) Summary of comparisons across all simulations";
+        "B) Summary of comparisons across all simulations";
         lab_opt...,
         padding=(-65, 0, 15, 0),
     )

@@ -127,7 +127,7 @@ function make_focal_panel!(g, res; var=:variable, label="", legend="", confint=f
     ax = Axis(
         ga[1, 1];
         xlabel="Sites in BON",
-        ylabel="Proportion of monitored interactions",
+        ylabel="Proportion of realized interactions sampled",
         xticks=0:100:500,
         yticks=0:0.20:1.0,
         ytickformat="{:.2f}",
