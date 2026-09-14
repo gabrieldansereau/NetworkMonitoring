@@ -28,7 +28,7 @@ function load_and_prep(file)
     # Rename variables
     renamed = Dict(
         "prop_monitored_sp" => "Monitored species",
-        "prop_possible_int" => "Possible interactions",
+        "prop_possible_int" => "Potential interactions",
         "prop_realized_int" => "Realized interactions",
         "prop_detected_int" => "Detected interactions",
     )
@@ -67,7 +67,7 @@ let
     )
     fig = draw(
         d * v * m,
-        scales(; Y=(; label="Proportion of sampled elements"));
+        scales(; Y=(; label="Proportion of species and feasible interactions sampled"));
         axis=(; xticks=(0:100:500), yticks=(0.0:0.20:1.0), ytickformat="{:.2f}"),
         legend=(; framevisible=false),
         figure=(;),
@@ -142,8 +142,7 @@ fig =
     ) *
     mapping(
         :nbon => "Number of sites in BON",
-        [:monitored_sp, :βos_possible, :βos_realized, :βos_detected] .=>
-            "βos' (monitored vs real metaweb)";
+        [:monitored_sp, :βos_possible, :βos_realized, :βos_detected] .=> "βos' (monitored vs real metaweb)";
         color=dims(1) =>
             renamer(["Monitored sp", "Possible int", "Realized int", "Detected int"]) => "Sampled Element",
         # color=:variable => presorted => "Sampled element",

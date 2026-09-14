@@ -399,13 +399,13 @@ begin
     lab_opt = (; halign=:left, font=:bold)
     Label(
         g1[1, 1, Top()],
-        "a) Comparison of efficiencies between range estimations";
+        "A) Comparison of efficiencies between range estimations";
         lab_opt...,
         padding=(-65, 0, 30, 0),
     )
     Label(
         g2[1, 1, Top()],
-        "b) Summary of comparisons across all simulations";
+        "B) Summary of comparisons across all simulations";
         lab_opt...,
         padding=(-65, 0, 15, 0),
     )
